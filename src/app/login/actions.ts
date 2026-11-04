@@ -34,7 +34,7 @@ export async function loginAsDemoRole(role: UserRole) {
   };
 
   const email = emailMap[role];
-  const password = process.env.DEMO_PASSWORD?.trim() || '12110';
+  const password = process.env.DEMO_PASSWORD?.trim() || 'verdant12110';
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({
