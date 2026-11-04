@@ -3,6 +3,8 @@ import { getAdminClient } from '@/lib/supabase/admin';
 import { AppShell } from '@/components/AppShell';
 import type { Guideline, Fact, Term } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 export default async function LibraryPage() {
   const { user, profile } = await requireRole(['creator', 'manager', 'reviewer', 'admin']);
 

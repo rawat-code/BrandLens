@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { requireRole, getSessionProfile, UnauthorizedError, ForbiddenError } from '@/lib/auth';
+import { requireRole, UnauthorizedError, ForbiddenError } from '@/lib/auth';
 
 const mockGetUser = vi.fn();
 const mockFrom = vi.fn();

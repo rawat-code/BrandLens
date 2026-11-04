@@ -1,6 +1,8 @@
 import { requireRole } from '@/lib/auth';
 import { AppShell } from '@/components/AppShell';
 
+export const dynamic = 'force-dynamic';
+
 export default async function NewContentPage() {
   const { user, profile } = await requireRole(['creator', 'manager']);
 

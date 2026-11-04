@@ -4,6 +4,8 @@ import { AppShell } from '@/components/AppShell';
 import Link from 'next/link';
 import type { Content, ContentStatus } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 const STATUS_BADGES: Record<ContentStatus, { label: string; className: string }> = {
   draft: { label: 'Draft', className: 'bg-slate-100 text-slate-700 border-slate-300' },
   ai_reviewed: { label: 'AI Reviewed', className: 'bg-indigo-100 text-indigo-800 border-indigo-300' },
