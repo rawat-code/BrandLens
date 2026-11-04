@@ -12,3 +12,4 @@ describe('Health API Route', () => {
     expect(typeof data.timestamp).toBe('string');
   });
 });
+

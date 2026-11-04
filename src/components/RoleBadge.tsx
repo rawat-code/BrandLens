@@ -33,3 +33,4 @@ export function RoleBadge({ role, className = '' }: { role: UserRole; className?
     </span>
   );
 }
+

@@ -161,3 +161,4 @@ export function AppShell({ user, profile, children }: AppShellProps) {
     </div>
   );
 }
+
