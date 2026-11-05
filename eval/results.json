@@ -1,0 +1,572 @@
+{
+  "metadata": {
+    "generated_at": "2026-11-05T13:34:30.630Z",
+    "dataset_size": 40,
+    "clean_samples_count": 10,
+    "violation_samples_count": 30,
+    "model": "gemini-3.5-flash-lite",
+    "gemini_used": true
+  },
+  "summary": {
+    "overall_precision": 0.6111,
+    "overall_recall": 0.9429,
+    "overall_f1": 0.7416,
+    "false_flag_rate_on_clean_posts": 0.4,
+    "abstention_rate": 0.0143,
+    "total_findings": 70,
+    "needs_human_check_findings": 1
+  },
+  "category_metrics": {
+    "terminology": {
+      "tp": 10,
+      "fp": 4,
+      "fn": 0,
+      "precision": 0.7142857142857143,
+      "recall": 1,
+      "f1": 0.8333333333333333
+    },
+    "claim": {
+      "tp": 13,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    "fact": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1,
+      "recall": 0,
+      "f1": 0
+    },
+    "accessibility": {
+      "tp": 8,
+      "fp": 14,
+      "fn": 0,
+      "precision": 0.36363636363636365,
+      "recall": 1,
+      "f1": 0.5333333333333333
+    },
+    "security": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    "tone": {
+      "tp": 0,
+      "fp": 3,
+      "fn": 0,
+      "precision": 0,
+      "recall": 1,
+      "f1": 0
+    },
+    "messaging": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    "visual": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    }
+  },
+  "per_sample_results": [
+    {
+      "id": "syn-01",
+      "title": "Gentle Rosehip Sourcing Story",
+      "should_be_clean": true,
+      "detected_rules": [],
+      "expected_rules": [],
+      "is_correct": true
+    },
+    {
+      "id": "syn-02",
+      "title": "Barrier Support Moisturizer",
+      "should_be_clean": true,
+      "detected_rules": [],
+      "expected_rules": [],
+      "is_correct": true
+    },
+    {
+      "id": "syn-03",
+      "title": "Shipping Policy Announcement",
+      "should_be_clean": true,
+      "detected_rules": [],
+      "expected_rules": [],
+      "is_correct": true
+    },
+    {
+      "id": "syn-04",
+      "title": "Glass Packaging Milestone",
+      "should_be_clean": true,
+      "detected_rules": [
+        "a11y.readability"
+      ],
+      "expected_rules": [],
+      "is_correct": false
+    },
+    {
+      "id": "syn-05",
+      "title": "Clean Formulation Promise",
+      "should_be_clean": true,
+      "detected_rules": [
+        "a11y.readability"
+      ],
+      "expected_rules": [],
+      "is_correct": false
+    },
+    {
+      "id": "syn-06",
+      "title": "User Perception Survey",
+      "should_be_clean": true,
+      "detected_rules": [],
+      "expected_rules": [],
+      "is_correct": true
+    },
+    {
+      "id": "syn-07",
+      "title": "Dermatological Sensitivity Trial",
+      "should_be_clean": true,
+      "detected_rules": [
+        "a11y.readability"
+      ],
+      "expected_rules": [],
+      "is_correct": false
+    },
+    {
+      "id": "syn-08",
+      "title": "Botanical Face Mist Daily Habit",
+      "should_be_clean": true,
+      "detected_rules": [],
+      "expected_rules": [],
+      "is_correct": true
+    },
+    {
+      "id": "syn-09",
+      "title": "Winter Barrier Guide",
+      "should_be_clean": true,
+      "detected_rules": [],
+      "expected_rules": [],
+      "is_correct": true
+    },
+    {
+      "id": "syn-10",
+      "title": "Ethical Cultivation Overview",
+      "should_be_clean": true,
+      "detected_rules": [
+        "a11y.readability"
+      ],
+      "expected_rules": [],
+      "is_correct": false
+    },
+    {
+      "id": "syn-11",
+      "title": "Medical Cure Claim",
+      "should_be_clean": false,
+      "detected_rules": [
+        "term.banned",
+        "claim.absolute",
+        "claim.unsupported"
+      ],
+      "expected_rules": [
+        "term.banned",
+        "claim.absolute"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-12",
+      "title": "Sensational Magic Term",
+      "should_be_clean": false,
+      "detected_rules": [
+        "term.banned",
+        "a11y.readability"
+      ],
+      "expected_rules": [
+        "term.banned"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-13",
+      "title": "Guaranteed Outcome Promise",
+      "should_be_clean": false,
+      "detected_rules": [
+        "term.banned",
+        "claim.absolute",
+        "claim.unsupported"
+      ],
+      "expected_rules": [
+        "term.banned",
+        "claim.absolute"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-14",
+      "title": "Chemical Free Claim",
+      "should_be_clean": false,
+      "detected_rules": [
+        "term.banned",
+        "a11y.readability"
+      ],
+      "expected_rules": [
+        "term.banned"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-15",
+      "title": "Miracle Formulation Term",
+      "should_be_clean": false,
+      "detected_rules": [
+        "term.banned",
+        "claim.absolute",
+        "claim.unsupported"
+      ],
+      "expected_rules": [
+        "term.banned",
+        "claim.absolute"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-16",
+      "title": "Ambiguous Natural Caution",
+      "should_be_clean": false,
+      "detected_rules": [
+        "term.caution"
+      ],
+      "expected_rules": [
+        "term.caution"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-17",
+      "title": "Dermatologist Approved Caution",
+      "should_be_clean": false,
+      "detected_rules": [
+        "term.caution",
+        "a11y.readability"
+      ],
+      "expected_rules": [
+        "term.caution"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-18",
+      "title": "Concatenated Brand Name Variant",
+      "should_be_clean": false,
+      "detected_rules": [
+        "term.preferred_variant"
+      ],
+      "expected_rules": [
+        "term.preferred_variant"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-19",
+      "title": "Lowercase Brand Name Variant",
+      "should_be_clean": false,
+      "detected_rules": [
+        "term.preferred_variant",
+        "a11y.readability"
+      ],
+      "expected_rules": [
+        "term.preferred_variant"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-20",
+      "title": "Absolute Guarantee Statement",
+      "should_be_clean": false,
+      "detected_rules": [
+        "claim.absolute",
+        "claim.unsupported",
+        "a11y.readability"
+      ],
+      "expected_rules": [
+        "claim.absolute"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-21",
+      "title": "Instant Efficacy Absolute Claim",
+      "should_be_clean": false,
+      "detected_rules": [
+        "claim.absolute",
+        "claim.unsupported",
+        "a11y.readability"
+      ],
+      "expected_rules": [
+        "claim.absolute"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-22",
+      "title": "Clinically Proven Absolute Claim",
+      "should_be_clean": false,
+      "detected_rules": [
+        "claim.absolute",
+        "claim.unsupported",
+        "a11y.readability"
+      ],
+      "expected_rules": [
+        "claim.absolute"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-23",
+      "title": "7 Days Timeframe Claim",
+      "should_be_clean": false,
+      "detected_rules": [
+        "claim.unsupported"
+      ],
+      "expected_rules": [
+        "claim.timeframe"
+      ],
+      "is_correct": false
+    },
+    {
+      "id": "syn-24",
+      "title": "Overnight Transformation Claim",
+      "should_be_clean": false,
+      "detected_rules": [
+        "claim.unsupported"
+      ],
+      "expected_rules": [
+        "claim.timeframe"
+      ],
+      "is_correct": false
+    },
+    {
+      "id": "syn-25",
+      "title": "48 Hours Timeframe Claim",
+      "should_be_clean": false,
+      "detected_rules": [
+        "claim.unsupported"
+      ],
+      "expected_rules": [
+        "claim.timeframe"
+      ],
+      "is_correct": false
+    },
+    {
+      "id": "syn-26",
+      "title": "Unsupported Numeric Percentage Claim",
+      "should_be_clean": false,
+      "detected_rules": [
+        "a11y.readability",
+        "ai.claim.this_claim_lacks_sub"
+      ],
+      "expected_rules": [
+        "claim.numeric",
+        "claim.unsupported"
+      ],
+      "is_correct": false
+    },
+    {
+      "id": "syn-27",
+      "title": "Unsupported Statistical Metric",
+      "should_be_clean": false,
+      "detected_rules": [
+        "ai.claim.the_content_makes_a_"
+      ],
+      "expected_rules": [
+        "claim.numeric",
+        "claim.unsupported"
+      ],
+      "is_correct": false
+    },
+    {
+      "id": "syn-28",
+      "title": "Unsupported Survey Claim",
+      "should_be_clean": false,
+      "detected_rules": [
+        "a11y.readability",
+        "ai.claim.the_claim_regarding_"
+      ],
+      "expected_rules": [
+        "claim.numeric",
+        "claim.unsupported"
+      ],
+      "is_correct": false
+    },
+    {
+      "id": "syn-29",
+      "title": "Expired Discount Fact Reference",
+      "should_be_clean": false,
+      "detected_rules": [],
+      "expected_rules": [
+        "fact.expired"
+      ],
+      "is_correct": false
+    },
+    {
+      "id": "syn-30",
+      "title": "Expired Monsoon Kit Fact Reference",
+      "should_be_clean": false,
+      "detected_rules": [
+        "a11y.readability",
+        "ai.tone.the_phrase__order_to"
+      ],
+      "expected_rules": [
+        "fact.expired"
+      ],
+      "is_correct": false
+    },
+    {
+      "id": "syn-31",
+      "title": "All-Caps Aggressive Urgency",
+      "should_be_clean": false,
+      "detected_rules": [
+        "a11y.allcaps",
+        "ai.tone.the_content_uses_agg"
+      ],
+      "expected_rules": [
+        "a11y.allcaps"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-32",
+      "title": "All-Caps Promotion Headline",
+      "should_be_clean": false,
+      "detected_rules": [
+        "a11y.allcaps",
+        "a11y.readability",
+        "ai.tone.the_language_uses_ar"
+      ],
+      "expected_rules": [
+        "a11y.allcaps"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-33",
+      "title": "Vague Link 'click here'",
+      "should_be_clean": false,
+      "detected_rules": [
+        "term.preferred_variant",
+        "a11y.vague_link"
+      ],
+      "expected_rules": [
+        "a11y.vague_link"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-34",
+      "title": "Vague Link 'read more'",
+      "should_be_clean": false,
+      "detected_rules": [
+        "term.preferred_variant",
+        "a11y.vague_link"
+      ],
+      "expected_rules": [
+        "a11y.vague_link"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-35",
+      "title": "Vague Link 'here'",
+      "should_be_clean": false,
+      "detected_rules": [
+        "term.preferred_variant",
+        "a11y.vague_link",
+        "a11y.readability"
+      ],
+      "expected_rules": [
+        "a11y.vague_link"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-36",
+      "title": "Excessive Emoji Content",
+      "should_be_clean": false,
+      "detected_rules": [
+        "a11y.emoji_heavy"
+      ],
+      "expected_rules": [
+        "a11y.emoji_heavy"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-37",
+      "title": "Missing Alt Text In Markdown Image",
+      "should_be_clean": false,
+      "detected_rules": [
+        "term.preferred_variant",
+        "a11y.alt_missing"
+      ],
+      "expected_rules": [
+        "a11y.image_alt"
+      ],
+      "is_correct": false
+    },
+    {
+      "id": "syn-38",
+      "title": "Prompt Injection Override Attempt",
+      "should_be_clean": false,
+      "detected_rules": [
+        "security.injection_attempt"
+      ],
+      "expected_rules": [
+        "security.injection_attempt"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-39",
+      "title": "Prompt Injection Disregard Prompts",
+      "should_be_clean": false,
+      "detected_rules": [
+        "security.injection_attempt"
+      ],
+      "expected_rules": [
+        "security.injection_attempt"
+      ],
+      "is_correct": true
+    },
+    {
+      "id": "syn-40",
+      "title": "Multi-Violation Compound Post",
+      "should_be_clean": false,
+      "detected_rules": [
+        "term.banned",
+        "term.preferred_variant",
+        "claim.unsupported",
+        "a11y.vague_link"
+      ],
+      "expected_rules": [
+        "term.preferred_variant",
+        "term.banned",
+        "claim.timeframe",
+        "a11y.vague_link"
+      ],
+      "is_correct": false
+    }
+  ]
+}
