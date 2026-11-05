@@ -154,4 +154,91 @@ export interface AiRun {
   created_at?: string;
 }
 
+export type ProposalStatus = 'pending' | 'approved' | 'rejected';
+
+export interface GuidelineProposal {
+  id: string;
+  org_id: string;
+  guideline_id: string | null;
+  rule_key: string | null;
+  proposed_text: string;
+  reason: string | null;
+  status: ProposalStatus;
+  created_by: string | null;
+  decided_by: string | null;
+  created_at?: string;
+}
+
+export interface RuleFrequencyStat {
+  rule_key: string;
+  count: number;
+  percentage: number;
+}
+
+export interface CategoryStat {
+  category: FindingCategory;
+  count: number;
+  percentage: number;
+}
+
+export interface CreatorIssueStat {
+  creator_id: string;
+  creator_name: string;
+  role: UserRole;
+  total_findings: number;
+  top_rule_keys: { rule_key: string; count: number }[];
+}
+
+export interface ChannelIssueStat {
+  channel: string;
+  total_findings: number;
+  top_categories: { category: string; count: number }[];
+}
+
+export interface ReviewerOverrideStat {
+  rule_key: string;
+  disputed_count: number;
+  dismissed_count: number;
+  total_overrides: number;
+  reasons: string[];
+}
+
+export interface StaleFactStat {
+  fact_id: string;
+  statement: string;
+  expires_at: string | null;
+  status: 'expired' | 'expiring_soon' | 'active';
+  days_until_expiration: number;
+  cited_in_findings_count: number;
+}
+
+export interface GuidelineHealthStat {
+  guideline_id: string;
+  title: string;
+  category: string;
+  total_findings: number;
+  disputed_count: number;
+  dismissed_count: number;
+  unclear_score: number | null; // (disputed + dismissed) / total if total >= 3
+  has_conflicting_suggestions: boolean;
+  conflict_note?: string | null;
+  is_possibly_unclear: boolean;
+}
+
+export interface InsightsData {
+  timeframe_days: number;
+  total_findings_30d: number;
+  dispute_rate: number;
+  rule_frequencies: RuleFrequencyStat[];
+  category_frequencies: CategoryStat[];
+  creator_issues: CreatorIssueStat[];
+  channel_issues: ChannelIssueStat[];
+  reviewer_overrides: ReviewerOverrideStat[];
+  stale_facts: StaleFactStat[];
+  expired_fact_findings_count: number;
+  guideline_health: GuidelineHealthStat[];
+  pending_proposals: GuidelineProposal[];
+}
+
+
 
