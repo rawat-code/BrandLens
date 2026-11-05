@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
   runRuleChecks,
-  calculateFleschKincaidGrade,
-  calculateLexicalOverlap,
-  tokenizeWithoutStopwords,
 } from '@/lib/review/rules';
 import type { Term, Guideline, Fact } from '@/lib/types';
 

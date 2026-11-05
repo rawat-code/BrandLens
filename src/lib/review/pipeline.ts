@@ -8,6 +8,7 @@ import { logAudit } from '@/lib/audit';
 import type { Finding, Content, ContentVersion, Guideline, Fact, Term } from '@/lib/types';
 
 export interface ReviewResult {
+  status: Content['status'];
   findings: Finding[];
   content: Content;
   version: ContentVersion;
@@ -227,6 +228,7 @@ export async function runReview(contentId: string, actorId: string): Promise<Rev
   });
 
   return {
+    status: nextStatus,
     findings: savedFindings,
     content,
     version,

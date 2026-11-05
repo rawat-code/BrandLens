@@ -489,8 +489,8 @@ export function runRuleChecks({
     const isInsideMarkdown = findings.some(
       (f) =>
         f.rule_key === 'a11y.vague_link' &&
-        f.start_idx !== null &&
-        f.end_idx !== null &&
+        typeof f.start_idx === 'number' &&
+        typeof f.end_idx === 'number' &&
         ctam!.index >= f.start_idx &&
         ctam!.index <= f.end_idx
     );

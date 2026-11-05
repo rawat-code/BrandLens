@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { Finding, Guideline, Fact, Term, FindingSeverity, FindingCategory } from '@/lib/types';
+import type { Finding, Fact, Term, FindingSeverity, FindingCategory } from '@/lib/types';
 import type { RetrievedChunk } from './retrieve';
 import type { RedactionMapping } from './redact';
 import { unredact } from './redact';

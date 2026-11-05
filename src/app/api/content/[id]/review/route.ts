@@ -12,7 +12,7 @@ const userReviewTimestamps = new Map<string, number[]>();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX = 10;
 
-export function checkRateLimit(userId: string): boolean {
+function checkRateLimit(userId: string): boolean {
   const now = Date.now();
   const timestamps = userReviewTimestamps.get(userId) || [];
   const validTimestamps = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
