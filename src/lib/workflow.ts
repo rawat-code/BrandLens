@@ -36,8 +36,8 @@ export function canTransition(
   if (from === "draft" && to === "ai_reviewed") {
     return isCreator || isManager || isAdmin;
   }
-  // ai_reviewed → in_review (creator submits for approval)
-  if (from === "ai_reviewed" && to === "in_review") {
+  // ai_reviewed or draft → in_review (creator submits for approval)
+  if ((from === "ai_reviewed" || from === "draft") && to === "in_review") {
     return isCreator || isManager || isAdmin;
   }
   // in_review → approved

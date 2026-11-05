@@ -42,3 +42,4 @@ export const contentCreateSchema = z.object({
 });
 
 export type ContentCreateInput = z.infer<typeof contentCreateSchema>;
+
