@@ -88,3 +88,4 @@
 | **High** | [Issue description] | [Proposed UI/Logic change] | Pending |
 | **Medium** | [Issue description] | [Proposed UI/Logic change] | Pending |
 | **Low** | [Issue description] | [Proposed UI/Logic change] | Pending |
+

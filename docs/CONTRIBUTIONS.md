@@ -60,3 +60,4 @@ Fill out the sections below for each contributing team member prior to final pro
 - **Branching Strategy**: Dedicated feature and chore branches (`feat/*`, `chore/*`) with atomic commits adhering to Conventional Commits (`feat:`, `fix:`, `test:`, `chore:`, `docs:`).
 - **Code Reviews**: Every module merged into `main` via reviewed Pull Requests with passing Vitest suites, Next.js build verification, and strict TypeScript/ESLint checks.
 - **Pair Programming**: Antigravity AI-assisted coding partner utilized for accelerated scaffolding, test fixture generation, and accessibility compliance.
+

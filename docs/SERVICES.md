@@ -62,3 +62,4 @@ Extracted directly from `package.json`:
 
 - **Project Scaffolding**: Initial repository structure generated via official `create-next-app` (Next.js 15 App Router with TypeScript and Tailwind CSS).
 - **Custom Implementations**: All business logic, UI components, review pipeline algorithms, deterministic rules, lexical retrievers, and database schemas were built ground-up for BrandLens. No pre-built UI templates or third-party component libraries (e.g., shadcn, MUI, Chakra) were used, maintaining minimal dependencies and WCAG AA accessibility.
+

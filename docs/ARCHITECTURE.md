@@ -232,3 +232,4 @@ Before any text is sent to the Gemini API:
 - `Referrer-Policy: strict-origin-when-cross-origin` protects referrer URLs.
 - `Permissions-Policy: camera=(), microphone=(), geolocation=()` disables sensitive browser features.
 - `X-XSS-Protection: 1; mode=block` enables browser XSS filtering.
+
