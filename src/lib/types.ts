@@ -139,3 +139,19 @@ export interface AuditLogEntry {
   created_at?: string;
 }
 
+export interface AiRun {
+  id: string;
+  content_id: string;
+  version: number;
+  model: string | null;
+  used_ai: boolean;
+  skipped_reason: string | null;
+  redactions: number;
+  sent_preview: string | null;
+  rule_count: number;
+  ai_count: number;
+  error: string | null;
+  created_at?: string;
+}
+
+

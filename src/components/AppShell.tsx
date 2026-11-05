@@ -79,10 +79,40 @@ export function AppShell({ user, profile, children }: AppShellProps) {
   const allowedNav = NAV_ITEMS.filter((item) => item.roles.includes(profile.role));
 
   return (
-    <div className="min-h-screen flex bg-slate-50 text-slate-900">
-      {/* Left Navigation Sidebar */}
+    <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 text-slate-900">
+      {/* Mobile Header */}
+      <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white font-bold flex items-center justify-center text-xs shadow-sm">
+            BL
+          </div>
+          <span className="font-bold text-slate-900 tracking-tight text-sm">
+            BrandLens
+          </span>
+          <span className="text-[10px] text-slate-500 font-medium bg-slate-100 px-1.5 py-0.5 rounded">
+            demo
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <RoleBadge role={profile.role} />
+          <form action={signOut}>
+            <button
+              type="submit"
+              className="p-1.5 text-slate-500 hover:text-slate-800 rounded-md hover:bg-slate-100"
+              title="Sign out"
+              aria-label="Sign out"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* Left Navigation Sidebar (Desktop) */}
       <aside
-        className="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0"
+        className="hidden md:flex w-64 bg-white border-r border-slate-200 flex-col shrink-0"
         aria-label="Sidebar Navigation"
       >
         {/* Brand Header */}

@@ -3,7 +3,7 @@ import { requireRole } from '@/lib/auth';
 import { getAdminClient } from '@/lib/supabase/admin';
 import { AppShell } from '@/components/AppShell';
 import { ContentDetailView, type CommentWithProfile } from '@/components/ContentDetailView';
-import type { Content, ContentVersion, Finding } from '@/lib/types';
+import type { Content, ContentVersion, Finding, AiRun } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,6 +49,15 @@ export default async function ContentDetailPage({
     .eq('content_id', id)
     .order('created_at', { ascending: true });
 
+  // 5. Fetch latest AI run
+  const { data: latestAiRun } = await admin
+    .from('ai_runs')
+    .select('*')
+    .eq('content_id', id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   return (
     <AppShell user={user} profile={profile}>
       <ContentDetailView
@@ -58,6 +67,7 @@ export default async function ContentDetailPage({
         initialVersions={(versions as ContentVersion[]) || []}
         initialFindings={(findings as Finding[]) || []}
         initialComments={(comments as unknown as CommentWithProfile[]) || []}
+        initialAiRun={(latestAiRun as AiRun) || null}
       />
     </AppShell>
   );

@@ -47,7 +47,14 @@ export async function POST(
       return NextResponse.json({ error: 'Creators can only modify their own content' }, { status: 403 });
     }
 
-    if (!finding.suggestion) {
+    const requestJson = await _req.json().catch(() => ({}));
+    const appliedSuggestion = (
+      typeof requestJson.custom_suggestion === 'string' && requestJson.custom_suggestion.trim()
+        ? requestJson.custom_suggestion.trim()
+        : finding.suggestion
+    );
+
+    if (!appliedSuggestion) {
       return NextResponse.json({ error: 'This finding has no suggestion to apply' }, { status: 400 });
     }
 
@@ -74,12 +81,12 @@ export async function POST(
     ) {
       newBody =
         newBody.slice(0, finding.start_idx) +
-        finding.suggestion +
+        appliedSuggestion +
         newBody.slice(finding.end_idx);
     } else if (finding.excerpt && newBody.includes(finding.excerpt)) {
-      newBody = newBody.replace(finding.excerpt, finding.suggestion);
+      newBody = newBody.replace(finding.excerpt, appliedSuggestion);
     } else if (finding.source_quote && newBody.includes(finding.source_quote)) {
-      newBody = newBody.replace(finding.source_quote, finding.suggestion);
+      newBody = newBody.replace(finding.source_quote, appliedSuggestion);
     }
 
     // 6. Create next version
@@ -113,7 +120,10 @@ export async function POST(
     // 8. Mark finding as accepted
     await admin
       .from('findings')
-      .update({ status: 'accepted' })
+      .update({
+        status: 'accepted',
+        suggestion: appliedSuggestion,
+      })
       .eq('id', finding.id);
 
     // 9. Log audit
