@@ -14,7 +14,7 @@
 
 ## Live Deployment & Demo
 
-- **Live URL**: `https://brandlens.vercel.app` *(or self-host via Vercel instructions below)*
+- **Live URL**: [https://brandlens-zeta.vercel.app](https://brandlens-zeta.vercel.app)
 - **Demo Organization**: `Verdant Skin (demo)` (Fictional clean skincare brand)
 - **Demo Password**: `verdant12110` (Configured in `.env` via `DEMO_PASSWORD`)
 
