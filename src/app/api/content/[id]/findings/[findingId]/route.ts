@@ -87,7 +87,7 @@ export async function PUT(
           version: nextVersion,
           body: newBody,
           created_by: profile.id,
-          note: `Applied suggestion: ${finding.rule_key}`,
+          note: `Applied suggestion for ${finding.rule_key}`,
         })
         .select()
         .single();

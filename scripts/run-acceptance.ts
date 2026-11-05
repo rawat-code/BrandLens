@@ -146,3 +146,4 @@ main().catch((err) => {
   console.error('Fatal error in acceptance tests:', err);
   process.exit(1);
 });
+

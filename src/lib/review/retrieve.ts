@@ -117,3 +117,4 @@ export function retrieve(
 ): RetrievedChunk[] {
   return defaultRetriever.retrieve(sentences, guidelines, facts, terms);
 }
+

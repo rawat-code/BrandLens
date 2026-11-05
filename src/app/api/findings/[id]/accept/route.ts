@@ -91,7 +91,7 @@ export async function POST(
         version: nextVersion,
         body: newBody,
         created_by: profile.id,
-        note: `Applied suggestion: ${finding.rule_key}`,
+        note: `Applied suggestion for ${finding.rule_key}`,
       })
       .select()
       .single();
@@ -146,3 +146,4 @@ export async function POST(
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+

@@ -125,3 +125,4 @@ describe('Suggestion & Batched Intent Check (suggest.ts)', () => {
     expect(geminiModule.callGeminiJson).not.toHaveBeenCalled();
   });
 });
+

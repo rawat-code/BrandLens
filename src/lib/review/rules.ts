@@ -197,7 +197,7 @@ export function runRuleChecks({
 
     if (termItem.kind === 'banned') {
       const escaped = rawTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`\\b${escaped}\\b`, 'gi');
+      const regex = new RegExp(`\\b${escaped}(?:s|d|ed|ing)?\\b`, 'gi');
       let m: RegExpExecArray | null;
       while ((m = regex.exec(body)) !== null) {
         findings.push(
@@ -225,7 +225,7 @@ export function runRuleChecks({
       }
     } else if (termItem.kind === 'caution') {
       const escaped = rawTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`\\b${escaped}\\b`, 'gi');
+      const regex = new RegExp(`\\b${escaped}(?:s|d|ed|ing)?\\b`, 'gi');
       let m: RegExpExecArray | null;
       while ((m = regex.exec(body)) !== null) {
         findings.push(

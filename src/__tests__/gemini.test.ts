@@ -99,3 +99,4 @@ describe('Gemini Wrapper (callGeminiJson)', () => {
     ).rejects.toThrow(/timed out/);
   });
 });
+

@@ -59,20 +59,27 @@ export async function runReview(contentId: string, actorId: string): Promise<Rev
   }
   const version = versionData as ContentVersion;
 
-  // 3. Fetch governance library items for the organization (approved facts only)
+  // 3. Fetch governance library items for the organization
   const [
     { data: guidelinesData },
     { data: factsData },
     { data: termsData },
   ] = await Promise.all([
     admin.from('guidelines').select('*').eq('org_id', content.org_id),
-    admin.from('facts').select('*').eq('org_id', content.org_id).eq('status', 'approved'),
+    admin.from('facts').select('*').eq('org_id', content.org_id),
     admin.from('terms').select('*').eq('org_id', content.org_id),
   ]);
 
   const guidelines = (guidelinesData as Guideline[]) || [];
   const facts = (factsData as Fact[]) || [];
   const terms = (termsData as Term[]) || [];
+
+  // Approved, unexpired facts for AI grounding
+  const approvedFacts = facts.filter(
+    (f) =>
+      f.status === 'approved' &&
+      (!f.expires_at || new Date(f.expires_at).getTime() >= Date.now())
+  );
 
   // 4. Run deterministic rules FIRST (always)
   const ruleFindings = runRuleChecks({
@@ -116,7 +123,7 @@ export async function runReview(contentId: string, actorId: string): Promise<Rev
         .split(/[.!?\n]+/)
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
-      const retrievedChunks = retrieve(sentences, guidelines, facts, terms);
+      const retrievedChunks = retrieve(sentences, guidelines, approvedFacts, terms);
 
       // 5c. Run AI Judge
       const judgeResult = await judgeContentWithAi({
@@ -126,7 +133,7 @@ export async function runReview(contentId: string, actorId: string): Promise<Rev
         redactedText: redactionResult.redactedText,
         mappings: redactionResult.mappings,
         retrievedChunks,
-        facts,
+        facts: approvedFacts,
         terms,
         ruleFindings,
       });
