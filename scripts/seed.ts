@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import { loadEnvConfig } from '@next/env';
-import path from 'path';
 
 // Load environment variables from .env
 loadEnvConfig(process.cwd());
