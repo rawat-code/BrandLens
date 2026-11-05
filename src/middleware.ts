@@ -42,8 +42,11 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // If unauthenticated and not on /login, redirect to /login
+  // If unauthenticated and not on /login, redirect pages to /login or return 401 for /api
   if (!user && pathname !== '/login') {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = '/login';
     return NextResponse.redirect(redirectUrl);

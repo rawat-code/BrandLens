@@ -1,4 +1,5 @@
 export type UserRole = 'creator' | 'manager' | 'reviewer' | 'admin';
+export type Role = UserRole;
 
 export type ContentStatus =
   | 'draft'
@@ -62,7 +63,7 @@ export interface Fact {
   source_note?: string | null;
   owner?: string | null;
   expires_at?: string | null;
-  status: 'approved' | 'expired';
+  status: 'approved' | 'retired' | 'expired';
   created_at?: string;
 }
 
@@ -129,7 +130,7 @@ export interface Finding {
 }
 
 export interface AuditLogEntry {
-  id: string;
+  id: string | number;
   org_id: string;
   content_id?: string | null;
   actor: string;
