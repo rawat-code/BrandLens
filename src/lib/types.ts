@@ -53,6 +53,7 @@ export interface Guideline {
   clarification?: string | null;
   version: number;
   updated_at?: string;
+  created_at?: string;
   created_by?: string | null;
 }
 
