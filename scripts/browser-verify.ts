@@ -1,4 +1,5 @@
-// @ts-ignore
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// @ts-expect-error ws declarations optional for script execution
 import { WebSocket } from 'ws';
 import * as fs from 'fs';
 import * as path from 'path';
