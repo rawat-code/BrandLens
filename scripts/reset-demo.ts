@@ -63,6 +63,7 @@ async function main() {
     const title = (c.title || '').trim().toLowerCase();
     return (
       title.startsWith('acceptance test') ||
+      title.startsWith('smoke test') ||
       title.startsWith('test') ||
       title.startsWith('tmp') ||
       title.startsWith('temp') ||
