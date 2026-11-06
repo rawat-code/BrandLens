@@ -223,3 +223,4 @@ run().catch((err) => {
   console.error('Error during browser verification:', err);
   process.exit(1);
 });
+

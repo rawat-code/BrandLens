@@ -65,3 +65,4 @@ Never guarantee miracle results or promise medical disease treatment.
     expect(inferGuidelineCategory('General Standard', 'Standard operations')).toBe('general');
   });
 });
+
