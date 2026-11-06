@@ -3,6 +3,9 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Button } from '@/components/ui/Button';
+import { Input, Textarea, Select } from '@/components/ui/Input';
+import { Card } from '@/components/ui/Card';
 
 const MAX_CHAR_LIMIT = 10000;
 
@@ -64,7 +67,6 @@ export function ContentForm() {
         throw new Error(data.error || 'Failed to create content draft');
       }
 
-      // Redirect to content detail or dashboard
       router.push(`/content/${data.content.id}`);
       router.refresh();
     } catch (err) {
@@ -79,28 +81,28 @@ export function ContentForm() {
       {errorMessage && (
         <div
           role="alert"
-          className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-start gap-3 shadow-sm"
+          className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/25 text-[#ff7a8a] text-xs flex items-start gap-3 shadow-lg"
         >
-          <svg className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg className="w-4 h-4 text-[#ff7a8a] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div>
-            <strong className="font-semibold block">Submission Error</strong>
+            <strong className="font-medium text-[#ececf6] block">Submission error</strong>
             <span>{errorMessage}</span>
           </div>
         </div>
       )}
 
-      <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+      <Card variant="panel" className="p-6 md:p-8 space-y-6">
         {/* Title */}
         <div>
           <label
             htmlFor="content-title"
-            className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+            className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1.5"
           >
-            Content Title <span className="text-rose-500">*</span>
+            Content title <span className="text-[#ff7a8a]">*</span>
           </label>
-          <input
+          <Input
             id="content-title"
             type="text"
             required
@@ -108,169 +110,143 @@ export function ContentForm() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Spring Botanical Dew Serum Launch Copy"
-            className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
           />
         </div>
 
         {/* Channel & Audience grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* Channel */}
           <div>
             <label
               htmlFor="content-channel"
-              className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+              className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1.5"
             >
-              Publication Channel <span className="text-rose-500">*</span>
+              Publication channel <span className="text-[#ff7a8a]">*</span>
             </label>
-            <select
+            <Select
               id="content-channel"
-              required
               value={channel}
               onChange={(e) => setChannel(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
             >
-              <option value="instagram">Instagram / Social Media</option>
-              <option value="blog">Blog / Editorial Guide</option>
-              <option value="email">Email Newsletter / Campaign</option>
-              <option value="website">Website Landing Page</option>
-              <option value="packaging">Packaging / Bottle Label</option>
-              <option value="press_release">Press Release / Media Kit</option>
-              <option value="other">Other Channel</option>
-            </select>
+              <option value="instagram" className="bg-[#171724]">Instagram / Social Media</option>
+              <option value="blog" className="bg-[#171724]">Brand Blog & Editorial</option>
+              <option value="newsletter" className="bg-[#171724]">Email Newsletter</option>
+              <option value="packaging" className="bg-[#171724]">Product Packaging & Labels</option>
+              <option value="ad_copy" className="bg-[#171724]">Paid Advertising / Search Ads</option>
+              <option value="press_release" className="bg-[#171724]">Press Release / Public Notice</option>
+              <option value="website" className="bg-[#171724]">E-Commerce / Website Copy</option>
+            </Select>
           </div>
 
           {/* Target Audience */}
           <div>
             <label
               htmlFor="content-audience"
-              className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+              className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1.5"
             >
-              Target Audience
+              Target audience (optional)
             </label>
-            <input
+            <Input
               id="content-audience"
               type="text"
-              maxLength={200}
+              maxLength={100}
               value={audience}
               onChange={(e) => setAudience(e.target.value)}
-              placeholder="e.g. Sensitive skin skincare enthusiasts"
-              className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
+              placeholder="e.g. Sensitive skin consumers, Dermatologists"
             />
           </div>
         </div>
 
-        {/* Confidentiality Guard Checkbox */}
-        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-          <div className="flex items-start gap-3">
-            <input
-              id="content-confidential"
-              type="checkbox"
-              checked={confidential}
-              onChange={(e) => setConfidential(e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-            />
-            <div className="text-sm">
-              <label
-                htmlFor="content-confidential"
-                className="font-semibold text-slate-900 cursor-pointer flex items-center gap-1.5"
-              >
-                <span>Mark content as confidential</span>
-                {confidential && (
-                  <span className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">
-                    LOCAL RULES ONLY
-                  </span>
-                )}
-              </label>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                When checked, this submission is <strong>never transmitted to external AI services</strong>. In
-                strict adherence to brand governance policies, only deterministic local library rules will run on confidential drafts.
-              </p>
-            </div>
-          </div>
+        {/* Confidentiality Toggle (Rule 4) */}
+        <div className="p-4 rounded-xl bg-[#171724] border border-white/[0.06] flex items-start gap-3">
+          <input
+            id="confidential-toggle"
+            type="checkbox"
+            checked={confidential}
+            onChange={(e) => setConfidential(e.target.checked)}
+            className="mt-1 h-4 w-4 rounded bg-[#11111a] border-white/20 text-indigo-500 focus:ring-indigo-400"
+          />
+          <label htmlFor="confidential-toggle" className="text-xs cursor-pointer select-none">
+            <span className="font-medium text-[#ececf6] block">
+              Mark content as confidential
+            </span>
+            <span className="text-[#a3a3bb] block mt-0.5 leading-relaxed">
+              When checked, this text will strictly be audited using deterministic organization rules.
+              It will never be transmitted to external AI services.
+            </span>
+          </label>
         </div>
 
-        {/* Content Body Textarea with 10k Character Counter */}
+        {/* Content Body Editor */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label
               htmlFor="content-body"
-              className="block text-xs font-semibold text-slate-700 uppercase tracking-wider"
+              className="block text-xs font-mono uppercase text-[#a3a3bb]"
             >
-              Content Body <span className="text-rose-500">*</span>
+              Copy draft text <span className="text-[#ff7a8a]">*</span>
             </label>
             <span
-              id="char-count-label"
-              className={`text-xs font-mono font-medium ${
+              className={`text-xs font-mono ${
                 isAtLimit
-                  ? 'text-rose-600 font-bold'
+                  ? 'text-[#ff7a8a] font-bold'
                   : isNearLimit
-                  ? 'text-amber-600 font-semibold'
-                  : 'text-slate-500'
+                  ? 'text-[#f5b74f]'
+                  : 'text-[#7b7b94]'
               }`}
             >
-              {charCount.toLocaleString()} / {MAX_CHAR_LIMIT.toLocaleString()} characters
+              {charCount.toLocaleString()} / {MAX_CHAR_LIMIT.toLocaleString()} chars
             </span>
           </div>
-          <textarea
+
+          <Textarea
             id="content-body"
             required
-            rows={10}
+            rows={12}
             maxLength={MAX_CHAR_LIMIT}
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            aria-describedby="char-count-label"
-            placeholder="Type or paste the campaign copy, product claims, or caption here..."
-            className="w-full p-4 text-sm font-sans bg-white border border-slate-300 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 leading-relaxed"
+            placeholder="Type or paste your copy draft here. It will be checked against brand guidelines, approved facts, and registered terminology..."
           />
         </div>
 
-        {/* Version Note */}
+        {/* Initial Version Note */}
         <div>
           <label
-            htmlFor="content-note"
-            className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+            htmlFor="version-note"
+            className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1.5"
           >
-            Version Note (Optional)
+            Version note (optional)
           </label>
-          <input
-            id="content-note"
+          <Input
+            id="version-note"
             type="text"
-            maxLength={500}
+            maxLength={200}
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="e.g. Initial draft for Q2 launch approval"
-            className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
+            placeholder="e.g. Initial concept draft for Q3 campaign"
           />
         </div>
-      </div>
 
-      {/* Action Buttons */}
-      <div className="flex items-center justify-end gap-3 pt-2">
-        <Link
-          href="/dashboard"
-          className="px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-        >
-          Cancel
-        </Link>
-        <button
-          type="submit"
-          disabled={isSubmitting || isAtLimit && body.length > MAX_CHAR_LIMIT}
-          className="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2"
-        >
-          {isSubmitting ? (
-            <>
-              <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-              </svg>
-              <span>Creating Draft...</span>
-            </>
-          ) : (
-            <span>Create Draft</span>
-          )}
-        </button>
-      </div>
+        {/* Action Buttons */}
+        <div className="pt-4 border-t border-white/[0.06] flex items-center justify-between gap-4">
+          <Link href="/dashboard">
+            <Button variant="ghost" size="md">
+              ← Cancel
+            </Button>
+          </Link>
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="md"
+            disabled={isSubmitting || !title.trim() || !body.trim() || isAtLimit}
+            isLoading={isSubmitting}
+          >
+            {isSubmitting ? 'Creating draft...' : 'Create draft & open workbench →'}
+          </Button>
+        </div>
+      </Card>
     </form>
   );
 }
-

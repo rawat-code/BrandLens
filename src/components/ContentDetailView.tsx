@@ -1,12 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { RoleBadge } from '@/components/RoleBadge';
 import { computeWordDiff, type DiffChange } from '@/lib/diff';
 import { HighlightedText } from '@/components/HighlightedText';
 import { FindingsGroup } from '@/components/FindingsGroup';
 import { AiDisclosureTab } from '@/components/AiDisclosureTab';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { Dialog } from '@/components/ui/Dialog';
+import { Textarea } from '@/components/ui/Input';
+import { Kbd } from '@/components/ui/Kbd';
 import type { Content, ContentVersion, Finding, Profile, UserRole, AiRun } from '@/lib/types';
 import type { User } from '@supabase/supabase-js';
 
@@ -127,15 +134,57 @@ export function ContentDetailView({
   const openLowCount = findings.filter((f) => f.status === 'open' && f.severity === 'low').length;
   const totalOpenCount = openHighCount + openMediumCount + openLowCount;
 
+  // Ordered list of open findings for keyboard navigation
+  const openFindingsList = useMemo(() => {
+    return findings.filter((f) => f.status === 'open');
+  }, [findings]);
+
   // Two-way selection handler
-  const handleSelectFinding = (findingId: string) => {
+  const handleSelectFinding = useCallback((findingId: string) => {
     setActiveFindingId(findingId);
-    // Smooth scroll to card or excerpt if element exists
     const cardEl = document.getElementById(`card-${findingId}`);
     if (cardEl) {
       cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-  };
+  }, []);
+
+  // Keyboard navigation: J (next), K (previous), Enter (focus)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept when user is typing in form controls
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if (!openFindingsList.length) return;
+
+      if (e.key === 'j' || e.key === 'J') {
+        e.preventDefault();
+        const currentIndex = openFindingsList.findIndex((f) => f.id === activeFindingId);
+        const nextIndex = currentIndex < openFindingsList.length - 1 ? currentIndex + 1 : 0;
+        handleSelectFinding(openFindingsList[nextIndex].id);
+      } else if (e.key === 'k' || e.key === 'K') {
+        e.preventDefault();
+        const currentIndex = openFindingsList.findIndex((f) => f.id === activeFindingId);
+        const prevIndex = currentIndex > 0 ? currentIndex - 1 : openFindingsList.length - 1;
+        handleSelectFinding(openFindingsList[prevIndex].id);
+      } else if (e.key === 'Enter' && activeFindingId) {
+        const cardEl = document.getElementById(`card-${activeFindingId}`);
+        if (cardEl) {
+          cardEl.focus();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [openFindingsList, activeFindingId, handleSelectFinding]);
 
   // Load activity logs when activity tab is clicked
   const handleTabChange = async (tab: BottomTab) => {
@@ -238,47 +287,38 @@ export function ContentDetailView({
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to accept suggestion');
-      }
+      if (!res.ok) throw new Error(data.error || 'Failed to accept finding');
 
-      // Mark finding as accepted in state
       setFindings((prev) =>
-        prev.map((f) => (f.id === finding.id ? { ...f, status: 'accepted' } : f))
+        prev.map((f) => (f.id === finding.id ? { ...f, status: 'accepted' as const } : f))
       );
 
-      // Add new version & reset status to draft
       if (data.new_version) {
-        const nv = data.new_version as ContentVersion;
-        setVersions((prev) => [nv, ...prev]);
-        setContent((prev) => ({ ...prev, current_version: nv.version, status: 'draft' }));
-        setSelectedVersionNum(nv.version);
-        setEditorBody(nv.body);
-
-        setReRunPromptMessage(
-          `Applied suggestion for "${finding.rule_key}". Content updated to draft v${nv.version}. Please re-run review to audit the updated text.`
-        );
+        setVersions((prev) => [data.new_version, ...prev]);
+        setContent((prev) => ({ ...prev, current_version: data.new_version.version, status: 'draft' }));
+        setSelectedVersionNum(data.new_version.version);
+        setEditorBody(data.new_version.body);
       }
 
-      setBannerMessage({
-        text: `Accepted fix for ${finding.rule_key}!`,
-        type: 'success',
-      });
+      setReRunPromptMessage(
+        `Applied fix for "${finding.category}". New Version ${data.new_version?.version || 'created'}. Re-run review to verify.`
+      );
+      setBannerMessage({ text: 'Suggestion accepted and new draft version created!', type: 'success' });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Error accepting finding';
+      const msg = err instanceof Error ? err.message : 'Failed to accept finding';
       setBannerMessage({ text: msg, type: 'error' });
     } finally {
       setIsProcessingAction(false);
     }
   };
 
-  // Open Edit-then-accept Modal
+  // Open Edit-then-Accept Modal
   const handleOpenEditThenAccept = (finding: Finding) => {
     setEditThenAcceptFinding(finding);
-    setCustomSuggestionText(finding.suggestion || '');
+    setCustomSuggestionText(finding.suggestion || finding.excerpt || '');
   };
 
-  // Submit Edit-then-accept
+  // Submit Edit-then-Accept
   const handleSubmitEditThenAccept = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editThenAcceptFinding || !customSuggestionText.trim()) return;
@@ -288,60 +328,44 @@ export function ContentDetailView({
       const res = await fetch(`/api/findings/${editThenAcceptFinding.id}/accept`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          custom_suggestion: customSuggestionText.trim(),
-        }),
+        body: JSON.stringify({ custom_replacement: customSuggestionText.trim() }),
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to apply custom suggestion');
-      }
+      if (!res.ok) throw new Error(data.error || 'Failed to apply custom edit');
 
-      const appliedText = customSuggestionText.trim();
-
-      // Mark finding as accepted with custom suggestion
       setFindings((prev) =>
-        prev.map((f) =>
-          f.id === editThenAcceptFinding.id
-            ? { ...f, status: 'accepted', suggestion: appliedText }
-            : f
-        )
+        prev.map((f) => (f.id === editThenAcceptFinding.id ? { ...f, status: 'accepted' as const } : f))
       );
 
       if (data.new_version) {
-        const nv = data.new_version as ContentVersion;
-        setVersions((prev) => [nv, ...prev]);
-        setContent((prev) => ({ ...prev, current_version: nv.version, status: 'draft' }));
-        setSelectedVersionNum(nv.version);
-        setEditorBody(nv.body);
-
-        setReRunPromptMessage(
-          `Applied custom suggestion for "${editThenAcceptFinding.rule_key}". Draft updated to v${nv.version}. Please re-run review.`
-        );
+        setVersions((prev) => [data.new_version, ...prev]);
+        setContent((prev) => ({ ...prev, current_version: data.new_version.version, status: 'draft' }));
+        setSelectedVersionNum(data.new_version.version);
+        setEditorBody(data.new_version.body);
       }
 
       setEditThenAcceptFinding(null);
       setCustomSuggestionText('');
-      setBannerMessage({
-        text: `Applied refined suggestion for ${editThenAcceptFinding.rule_key}!`,
-        type: 'success',
-      });
+      setReRunPromptMessage(
+        `Custom edit applied to Version ${data.new_version?.version || 'created'}. Re-run review to confirm.`
+      );
+      setBannerMessage({ text: 'Custom fix applied and saved as new version!', type: 'success' });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Error applying custom suggestion';
-      alert(msg);
+      const msg = err instanceof Error ? err.message : 'Error applying edit';
+      setBannerMessage({ text: msg, type: 'error' });
     } finally {
       setIsProcessingAction(false);
     }
   };
 
-  // Open Dismiss Modal (requires reason)
+  // Open Dismiss Modal
   const handleOpenDismissModal = (findingId: string) => {
     setDismissingFindingId(findingId);
     setDismissReasonText('');
   };
 
-  // Submit Dismiss with Reason
+  // Submit Dismiss
   const handleSubmitDismiss = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!dismissingFindingId || !dismissReasonText.trim()) return;
@@ -353,24 +377,25 @@ export function ContentDetailView({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: dismissReasonText.trim() }),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to dismiss finding');
 
       setFindings((prev) =>
-        prev.map((f) => (f.id === dismissingFindingId ? { ...f, status: 'dismissed' } : f))
+        prev.map((f) => (f.id === dismissingFindingId ? { ...f, status: 'dismissed' as const } : f))
       );
       setDismissingFindingId(null);
       setDismissReasonText('');
       setBannerMessage({ text: 'Finding dismissed with documented reason.', type: 'success' });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Error dismissing finding';
-      alert(msg);
+      const msg = err instanceof Error ? err.message : 'Failed to dismiss finding';
+      setBannerMessage({ text: msg, type: 'error' });
     } finally {
       setIsProcessingAction(false);
     }
   };
 
-  // Submit Dispute with Reason
+  // Submit Dispute
   const handleSubmitDispute = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!disputingFinding || !disputeReasonText.trim()) return;
@@ -380,26 +405,25 @@ export function ContentDetailView({
       const res = await fetch(`/api/findings/${disputingFinding.id}/dispute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          dispute_reason: disputeReasonText.trim(),
-        }),
+        body: JSON.stringify({ reason: disputeReasonText.trim() }),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to dispute finding');
 
       setFindings((prev) =>
         prev.map((f) =>
           f.id === disputingFinding.id
-            ? { ...f, status: 'disputed', dispute_reason: disputeReasonText.trim() }
+            ? { ...f, status: 'disputed' as const, dispute_reason: disputeReasonText.trim() }
             : f
         )
       );
       setDisputingFinding(null);
       setDisputeReasonText('');
-      setBannerMessage({ text: 'Finding marked as disputed with documented reason.', type: 'success' });
+      setBannerMessage({ text: 'Finding disputed. Reviewers will examine your justification.', type: 'success' });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error submitting dispute';
-      alert(msg);
+      setBannerMessage({ text: msg, type: 'error' });
     } finally {
       setIsProcessingAction(false);
     }
@@ -466,7 +490,7 @@ export function ContentDetailView({
       setNewCommentText('');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to post comment';
-      alert(msg);
+      setBannerMessage({ text: msg, type: 'error' });
     } finally {
       setIsPostingComment(false);
     }
@@ -485,16 +509,17 @@ export function ContentDetailView({
       {bannerMessage && (
         <div
           role="alert"
-          className={`p-4 rounded-xl text-sm flex items-center justify-between shadow-sm border ${
+          className={`p-3.5 rounded-xl text-xs flex items-center justify-between border ${
             bannerMessage.type === 'success'
-              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-              : 'bg-rose-50 text-rose-800 border-rose-200'
+              ? 'bg-[#5fd1a0]/10 text-[#5fd1a0] border-[#5fd1a0]/30'
+              : 'bg-[#ff7a8a]/10 text-[#ff7a8a] border-[#ff7a8a]/30'
           }`}
         >
           <span>{bannerMessage.text}</span>
           <button
+            type="button"
             onClick={() => setBannerMessage(null)}
-            className="text-xs font-bold underline hover:opacity-75 focus-visible:ring-1 focus-visible:ring-emerald-600 rounded"
+            className="text-xs font-mono underline hover:opacity-75 cursor-pointer"
           >
             Dismiss
           </button>
@@ -505,104 +530,92 @@ export function ContentDetailView({
       {reRunPromptMessage && (
         <div
           role="status"
-          className="p-4 rounded-xl text-xs bg-emerald-50 border-2 border-emerald-500 text-emerald-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md"
+          className="p-4 rounded-xl text-xs bg-[#5fd1a0]/10 border border-[#5fd1a0]/30 text-[#ececf6] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg shadow-black/40"
         >
-          <div className="flex items-center gap-2">
-            <span className="text-lg">🔄</span>
+          <div className="flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-[#5fd1a0] animate-pulse" />
             <div>
-              <strong className="font-bold block text-sm">Action Applied Successfully</strong>
-              <span>{reRunPromptMessage}</span>
+              <strong className="font-medium text-[#ececf6] block">Action applied successfully</strong>
+              <span className="text-[#a3a3bb]">{reRunPromptMessage}</span>
             </div>
           </div>
 
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={handleRunReview}
             disabled={isReviewing}
-            className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-lg shadow-sm whitespace-nowrap self-start sm:self-auto transition-colors"
           >
-            {isReviewing ? 'Auditing...' : 'Re-run Review Now'}
-          </button>
+            {isReviewing ? 'Auditing...' : 'Re-run review now'}
+          </Button>
         </div>
       )}
 
       {/* Header bar: Summary Header with Severity Breakdown and Status Chip */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
         <div>
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <Link
               href="/dashboard"
-              className="text-xs text-slate-500 hover:text-slate-800 font-medium mr-2"
+              className="text-xs text-[#a3a3bb] hover:text-[#ececf6] font-medium mr-2 transition-colors"
             >
-              ← Dashboard
+              ← Content
             </Link>
 
-            {/* Clear Status Chip with Non-Color Indicator */}
-            <span
-              className={`text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider border flex items-center gap-1.5 shadow-sm ${
-                content.status === 'approved'
-                  ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
-                  : content.status === 'published'
-                  ? 'bg-blue-100 text-blue-900 border-blue-300'
-                  : content.status === 'needs_changes' || content.status === 'rejected'
-                  ? 'bg-rose-100 text-rose-900 border-rose-300'
+            {/* Clear Status Chip */}
+            <Badge
+              variant={
+                content.status === 'approved' || content.status === 'published'
+                  ? 'success'
+                  : content.status === 'needs_changes'
+                  ? 'medium'
+                  : content.status === 'rejected'
+                  ? 'high'
                   : content.status === 'in_review'
-                  ? 'bg-amber-100 text-amber-900 border-amber-300'
-                  : 'bg-slate-100 text-slate-800 border-slate-300'
-              }`}
+                  ? 'low'
+                  : 'neutral'
+              }
             >
-              <span>
-                {content.status === 'approved' ? '✓' : content.status === 'published' ? '🚀' : content.status === 'needs_changes' ? '⚠️' : '📝'}
-              </span>
-              <span>{content.status.replace('_', ' ')}</span>
-            </span>
+              {content.status.replace('_', ' ')}
+            </Badge>
 
-            <span className="text-xs px-2.5 py-0.5 rounded bg-slate-100 text-slate-700 font-mono font-medium">
+            <span className="text-xs px-2 py-0.5 rounded bg-[#171724] text-[#a3a3bb] font-mono border border-white/[0.06]">
               v{content.current_version}
             </span>
 
-            <span className="text-xs px-2.5 py-0.5 rounded bg-slate-100 text-slate-700 font-medium capitalize">
+            <span className="text-xs px-2 py-0.5 rounded bg-[#171724] text-[#a3a3bb] capitalize border border-white/[0.06]">
               {content.channel}
             </span>
 
             {content.confidential && (
-              <span className="text-xs px-2.5 py-0.5 rounded bg-amber-100 text-amber-900 font-bold border border-amber-200">
-                🔒 Confidential (Local Rules Only)
+              <span className="text-xs px-2 py-0.5 rounded bg-[#f5b74f]/10 text-[#f5b74f] font-medium border border-[#f5b74f]/30">
+                Confidential
               </span>
             )}
           </div>
 
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">{content.title}</h1>
+          <h1 className="font-serif text-2xl sm:text-3xl font-normal text-[#ececf6] tracking-tight">
+            {content.title}
+          </h1>
 
           {/* Open Findings Summary Badges by Severity */}
-          <div className="flex items-center gap-2.5 mt-2.5 flex-wrap">
-            <span className="text-xs font-semibold text-slate-500">Open Findings:</span>
+          <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+            <span className="text-xs text-[#7b7b94]">Open findings:</span>
 
-            <span
-              className="text-xs px-2.5 py-0.5 rounded-md font-bold bg-rose-100 text-rose-900 border border-rose-300 flex items-center gap-1"
-              title="High severity findings (dashed red underline)"
-            >
-              <span>🚨</span>
-              <span>{openHighCount} High</span>
-            </span>
+            <Badge variant="high">
+              {openHighCount} high
+            </Badge>
 
-            <span
-              className="text-xs px-2.5 py-0.5 rounded-md font-bold bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1"
-              title="Medium severity findings (dotted amber underline)"
-            >
-              <span>⚡</span>
-              <span>{openMediumCount} Medium</span>
-            </span>
+            <Badge variant="medium">
+              {openMediumCount} medium
+            </Badge>
 
-            <span
-              className="text-xs px-2.5 py-0.5 rounded-md font-bold bg-blue-100 text-blue-900 border border-blue-300 flex items-center gap-1"
-              title="Low severity findings (solid blue underline)"
-            >
-              <span>ℹ️</span>
-              <span>{openLowCount} Low</span>
-            </span>
+            <Badge variant="low">
+              {openLowCount} low
+            </Badge>
 
-            <span className="text-xs text-slate-500 font-medium">
-              ({totalOpenCount} total unresolved)
+            <span className="text-xs text-[#7b7b94] font-mono">
+              ({totalOpenCount} unresolved)
             </span>
           </div>
         </div>
@@ -611,30 +624,34 @@ export function ContentDetailView({
         <div className="flex items-center gap-2 flex-wrap">
           {/* Creator submit */}
           {isCreator && isOwnContent && (content.status === 'ai_reviewed' || content.status === 'draft') && (
-            <button
+            <Button
+              variant="primary"
+              size="md"
               onClick={() => handleTransition('in_review')}
               disabled={isTransitioning}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
             >
-              Submit for Approval
-            </button>
+              Submit for approval
+            </Button>
           )}
 
           {/* Creator publish */}
           {isCreator && isOwnContent && content.status === 'approved' && (
-            <button
+            <Button
+              variant="primary"
+              size="md"
               onClick={() => handleTransition('published')}
               disabled={isTransitioning}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
             >
-              Mark as Published
-            </button>
+              Mark as published
+            </Button>
           )}
 
           {/* Manager / Reviewer actions when in_review */}
           {(isManager || isReviewer || isAdmin) && content.status === 'in_review' && (
             <>
-              <button
+              <Button
+                variant="primary"
+                size="md"
                 onClick={() => handleTransition('approved')}
                 disabled={
                   isTransitioning ||
@@ -649,26 +666,27 @@ export function ContentDetailView({
                     ? 'Open high-severity findings require Reviewer role'
                     : 'Approve content draft'
                 }
-                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-emerald-600"
               >
                 Approve
-              </button>
+              </Button>
 
-              <button
+              <Button
+                variant="secondary"
+                size="md"
                 onClick={() => setTransitionCommentModal('needs_changes')}
                 disabled={isTransitioning}
-                className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-amber-600"
               >
-                Request Changes
-              </button>
+                Request changes
+              </Button>
 
-              <button
+              <Button
+                variant="danger"
+                size="md"
                 onClick={() => setTransitionCommentModal('rejected')}
                 disabled={isTransitioning}
-                className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-rose-600"
               >
                 Reject
-              </button>
+              </Button>
             </>
           )}
         </div>
@@ -677,10 +695,10 @@ export function ContentDetailView({
       {/* Main Dual-Pane Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Pane: Editor & Highlighted Text Viewer (7 cols) */}
-        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-3">
-            <div className="flex items-center gap-3">
-              <label htmlFor="version-picker" className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+        <div className="lg:col-span-7 bg-[#11111a] rounded-xl border border-white/[0.08] p-5 sm:p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/[0.06] pb-3 gap-3">
+            <div className="flex items-center gap-2.5">
+              <label htmlFor="version-picker" className="text-xs font-mono uppercase text-[#7b7b94]">
                 Version:
               </label>
               <select
@@ -692,7 +710,7 @@ export function ContentDetailView({
                   const v = versions.find((ver) => ver.version === num);
                   if (v) setEditorBody(v.body);
                 }}
-                className="text-xs font-semibold bg-slate-50 border border-slate-300 rounded px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                className="text-xs font-mono bg-[#171724] text-[#ececf6] border border-white/10 rounded-lg px-2.5 py-1 focus:outline-none focus:border-indigo-400"
               >
                 {versions.map((ver) => (
                   <option key={ver.id} value={ver.version}>
@@ -703,28 +721,28 @@ export function ContentDetailView({
             </div>
 
             {/* Mode Switcher Toggle: Read-only Highlighted vs Edit Text */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+            <div className="flex items-center gap-1 bg-[#171724] p-1 rounded-lg border border-white/[0.06]">
               <button
                 type="button"
                 onClick={() => setEditorMode('readonly')}
-                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
                   editorMode === 'readonly'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-[#11111a] text-[#ececf6] shadow-sm shadow-black/40 border border-white/10'
+                    : 'text-[#a3a3bb] hover:text-[#ececf6]'
                 }`}
               >
-                👁️ Highlights View
+                Highlights view
               </button>
               <button
                 type="button"
                 onClick={() => setEditorMode('edit')}
-                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
                   editorMode === 'edit'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-[#11111a] text-[#ececf6] shadow-sm shadow-black/40 border border-white/10'
+                    : 'text-[#a3a3bb] hover:text-[#ececf6]'
                 }`}
               >
-                ✏️ Edit Draft
+                Edit draft
               </button>
             </div>
           </div>
@@ -732,9 +750,9 @@ export function ContentDetailView({
           {/* Mode 1: Highlighting View */}
           {editorMode === 'readonly' ? (
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-slate-500">
-                <span>Click any highlighted phrase to focus and jump to the corresponding card.</span>
-                <span className="font-mono">{editorBody.length.toLocaleString()} characters</span>
+              <div className="flex items-center justify-between text-xs text-[#7b7b94]">
+                <span>Click any highlighted segment to jump to the cited finding.</span>
+                <span className="font-mono">{editorBody.length.toLocaleString()} / 10,000 characters</span>
               </div>
 
               <HighlightedText
@@ -749,7 +767,7 @@ export function ContentDetailView({
             <form onSubmit={handleSaveVersion} className="space-y-4">
               <div>
                 <label htmlFor="content-editor-textarea" className="sr-only">
-                  Edit Content Draft
+                  Edit content draft
                 </label>
                 <textarea
                   id="content-editor-textarea"
@@ -758,7 +776,7 @@ export function ContentDetailView({
                   value={editorBody}
                   onChange={(e) => setEditorBody(e.target.value)}
                   placeholder="Draft body content..."
-                  className="w-full p-4 text-sm font-sans bg-slate-50/50 border border-slate-200 rounded-xl shadow-inner focus:outline-none focus:bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 leading-relaxed font-normal"
+                  className="w-full p-4 text-sm font-sans bg-[#171724] text-[#ececf6] border border-white/10 rounded-xl focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/40 leading-relaxed font-normal"
                 />
               </div>
 
@@ -767,97 +785,117 @@ export function ContentDetailView({
                   type="text"
                   value={versionNote}
                   onChange={(e) => setVersionNote(e.target.value)}
-                  placeholder="Note for new version (e.g. Applied tone edits)..."
-                  className="text-xs px-3 py-2 border border-slate-300 rounded-lg w-full sm:w-72 focus:outline-none focus:border-emerald-600"
+                  placeholder="Revision note (e.g. Fixed claims from feedback)..."
+                  className="text-xs px-3 py-2 bg-[#171724] text-[#ececf6] placeholder-[#7b7b94] border border-white/10 rounded-lg w-full sm:w-72 focus:outline-none focus:border-indigo-400"
                 />
 
-                <button
+                <Button
                   type="submit"
+                  variant="primary"
+                  size="sm"
                   disabled={isSavingVersion || editorBody === currentVersion?.body}
-                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors whitespace-nowrap"
                 >
-                  {isSavingVersion ? 'Saving...' : 'Save as New Version'}
-                </button>
+                  {isSavingVersion ? 'Saving...' : 'Save as new version'}
+                </Button>
               </div>
             </form>
           )}
         </div>
 
-        {/* Right Pane: Review Findings (5 cols) */}
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        {/* Right Pane: Review Findings Workbench Centrepiece (5 cols) */}
+        <div className="lg:col-span-5 bg-[#11111a] rounded-xl border border-white/[0.08] p-5 sm:p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
             <div>
-              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                Governance Findings ({findings.length})
-              </h2>
-              <p className="text-xs text-slate-500">Grouped by severity &amp; rule categories</p>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-medium text-[#ececf6]">
+                  Governance findings ({findings.length})
+                </h2>
+                <div className="hidden sm:flex items-center gap-1 text-[11px] text-[#7b7b94]">
+                  <Kbd>J</Kbd>
+                  <Kbd>K</Kbd>
+                </div>
+              </div>
+              <p className="text-xs text-[#a3a3bb] mt-0.5">Citations against approved guidelines & facts</p>
             </div>
 
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={handleRunReview}
               disabled={isReviewing}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+              isLoading={isReviewing}
+              icon={
+                <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 0L9.5 5.5L15 7L9.5 8.5L8 14L6.5 8.5L1 7L6.5 5.5L8 0Z" />
+                </svg>
+              }
             >
-              {isReviewing ? (
-                <>
-                  <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                  </svg>
-                  <span>Auditing...</span>
-                </>
-              ) : (
-                <span>Run Review</span>
-              )}
-            </button>
+              {isReviewing ? 'Auditing...' : 'Run review'}
+            </Button>
           </div>
 
           {/* AI Review Unavailable Banner (Rule 8 Graceful Degradation) */}
           {aiUnavailable && (
             <div
-              className="p-3.5 rounded-xl border border-amber-300 bg-amber-50 text-amber-900 text-xs flex items-start gap-2.5 shadow-sm"
+              className="p-3.5 rounded-lg border border-[#f5b74f]/30 bg-[#f5b74f]/10 text-xs flex items-start gap-2.5"
               role="alert"
             >
-              <span className="text-base leading-none">⚠️</span>
+              <span className="w-2 h-2 rounded-full bg-[#f5b74f] shrink-0 mt-1" />
               <div className="space-y-0.5">
-                <strong className="font-bold block text-amber-950">AI review unavailable</strong>
-                <p className="text-amber-900 leading-relaxed">
-                  The AI service encountered an error or timed out ({aiRun?.error || 'external service unreachable'}). Deterministic rule-based findings are still active and shown below.
+                <strong className="font-medium text-[#fde68a] block">AI review unavailable</strong>
+                <p className="text-[#a3a3bb] leading-relaxed">
+                  The AI service encountered a temporary error ({aiRun?.error || 'external service unreachable'}). Deterministic rule-based findings remain active.
                 </p>
               </div>
             </div>
           )}
 
-          {/* Grouped Findings Cards */}
-          <div className="max-h-[700px] overflow-y-auto pr-1">
-            <FindingsGroup
-              findings={findings}
-              activeFindingId={activeFindingId}
-              onSelectFinding={handleSelectFinding}
-              onAcceptFinding={handleAcceptFinding}
-              onEditThenAccept={handleOpenEditThenAccept}
-              onDisputeFinding={(f) => {
-                setDisputingFinding(f);
-                setDisputeReasonText('');
-              }}
-              onDismissFinding={handleOpenDismissModal}
-              isProcessingAction={isProcessingAction}
-            />
-          </div>
+          {/* Shimmer skeleton loader when isReviewing is active */}
+          {isReviewing ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((n) => (
+                <div key={n} className="p-4 rounded-xl bg-[#171724] border border-white/[0.04] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                  <Skeleton className="h-3 w-4/5" />
+                  <Skeleton className="h-14 w-full" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            /* Grouped Findings Cards */
+            <div className="max-h-[720px] overflow-y-auto pr-1">
+              <FindingsGroup
+                findings={findings}
+                activeFindingId={activeFindingId}
+                onSelectFinding={handleSelectFinding}
+                onAcceptFinding={handleAcceptFinding}
+                onEditThenAccept={handleOpenEditThenAccept}
+                onDisputeFinding={(f) => {
+                  setDisputingFinding(f);
+                  setDisputeReasonText('');
+                }}
+                onDismissFinding={handleOpenDismissModal}
+                isProcessingAction={isProcessingAction}
+              />
+            </div>
+          )}
         </div>
       </div>
 
       {/* Bottom Tabs Section: Comments, History, Activity, AI Disclosure */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
-        <nav className="flex space-x-2 border-b border-slate-100 pb-3 flex-wrap gap-y-2" role="tablist">
+      <Card variant="panel" className="p-5 sm:p-6 space-y-6">
+        <nav className="flex space-x-1 border-b border-white/[0.08] pb-3 flex-wrap gap-y-2" role="tablist">
           <button
             role="tab"
             aria-selected={activeTab === 'comments'}
             onClick={() => handleTabChange('comments')}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors ${
+            className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
               activeTab === 'comments'
-                ? 'bg-emerald-50 text-emerald-800'
-                : 'text-slate-600 hover:bg-slate-100'
+                ? 'bg-[#171724] text-[#ececf6] border border-white/10'
+                : 'text-[#a3a3bb] hover:text-[#ececf6]'
             }`}
           >
             Comments ({comments.length})
@@ -867,40 +905,40 @@ export function ContentDetailView({
             role="tab"
             aria-selected={activeTab === 'history'}
             onClick={() => handleTabChange('history')}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors ${
+            className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
               activeTab === 'history'
-                ? 'bg-emerald-50 text-emerald-800'
-                : 'text-slate-600 hover:bg-slate-100'
+                ? 'bg-[#171724] text-[#ececf6] border border-white/10'
+                : 'text-[#a3a3bb] hover:text-[#ececf6]'
             }`}
           >
-            Version History &amp; Diff ({versions.length})
+            Version history &amp; diff ({versions.length})
           </button>
 
           <button
             role="tab"
             aria-selected={activeTab === 'activity'}
             onClick={() => handleTabChange('activity')}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors ${
+            className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
               activeTab === 'activity'
-                ? 'bg-emerald-50 text-emerald-800'
-                : 'text-slate-600 hover:bg-slate-100'
+                ? 'bg-[#171724] text-[#ececf6] border border-white/10'
+                : 'text-[#a3a3bb] hover:text-[#ececf6]'
             }`}
           >
-            Audit Activity Trail
+            Activity trail
           </button>
 
           <button
             role="tab"
             aria-selected={activeTab === 'disclosure'}
             onClick={() => handleTabChange('disclosure')}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'disclosure'
-                ? 'bg-purple-50 text-purple-900 border border-purple-200 font-bold'
-                : 'text-slate-600 hover:bg-slate-100'
+                ? 'bg-indigo-500/15 text-[#a5b4fc] border border-indigo-500/30'
+                : 'text-[#a3a3bb] hover:text-[#ececf6]'
             }`}
           >
             <span>✨</span>
-            <span>AI Governance &amp; Disclosure</span>
+            <span>AI governance &amp; disclosure</span>
           </button>
         </nav>
 
@@ -909,60 +947,61 @@ export function ContentDetailView({
           <div className="space-y-4">
             <div className="space-y-3 max-h-72 overflow-y-auto">
               {comments.length === 0 ? (
-                <p className="text-xs text-slate-500 italic">No feedback comments yet.</p>
+                <p className="text-xs text-[#7b7b94] italic">No review feedback comments yet.</p>
               ) : (
                 comments.map((cm) => (
-                  <div key={cm.id} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-1">
+                  <div key={cm.id} className="p-3.5 rounded-lg border border-white/[0.06] bg-[#171724] space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-900">
+                        <span className="font-medium text-[#ececf6]">
                           {cm.profiles?.full_name || 'Team Member'}
                         </span>
                         {cm.profiles?.role && (
                           <RoleBadge role={cm.profiles.role as UserRole} />
                         )}
                       </div>
-                      <span className="text-slate-400 font-mono">
+                      <span className="text-[#7b7b94] font-mono">
                         {new Date(cm.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-700 leading-relaxed">{cm.body}</p>
+                    <p className="text-xs text-[#a3a3bb] leading-relaxed">{cm.body}</p>
                   </div>
                 ))
               )}
             </div>
 
             {/* Post comment */}
-            <form onSubmit={handlePostComment} className="flex gap-3">
+            <form onSubmit={handlePostComment} className="flex gap-2.5">
               <input
                 type="text"
                 required
                 value={newCommentText}
                 onChange={(e) => setNewCommentText(e.target.value)}
                 placeholder="Write an internal review comment..."
-                className="flex-1 px-3.5 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                className="flex-1 px-3.5 py-2 text-xs bg-[#171724] text-[#ececf6] placeholder-[#7b7b94] border border-white/10 rounded-lg focus:outline-none focus:border-indigo-400"
               />
-              <button
+              <Button
                 type="submit"
+                variant="secondary"
+                size="sm"
                 disabled={isPostingComment || !newCommentText.trim()}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors"
               >
                 {isPostingComment ? 'Posting...' : 'Comment'}
-              </button>
+              </Button>
             </form>
           </div>
         )}
 
         {/* Tab 2: History & Word-level Diff */}
         {activeTab === 'history' && (
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-2 text-xs">
-                <span className="font-semibold text-slate-700">Compare Current (v{selectedVersionNum}) against:</span>
+                <span className="text-[#a3a3bb]">Compare current (v{selectedVersionNum}) against:</span>
                 <select
                   value={diffCompareVersion}
                   onChange={(e) => setDiffCompareVersion(parseInt(e.target.value, 10))}
-                  className="bg-white border border-slate-300 rounded px-2 py-1 text-xs"
+                  className="bg-[#171724] text-[#ececf6] border border-white/10 rounded px-2.5 py-1 text-xs"
                 >
                   {versions.map((ver) => (
                     <option key={ver.id} value={ver.version}>
@@ -972,29 +1011,29 @@ export function ContentDetailView({
                 </select>
               </div>
 
-              <span className="text-xs text-slate-400">
-                Word-level diff: <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-mono">+Add</span> <span className="bg-rose-100 text-rose-800 line-through px-1.5 py-0.5 rounded font-mono">-Del</span>
+              <span className="text-xs text-[#7b7b94]">
+                Word diff: <span className="text-[#5fd1a0] font-mono">+Add</span> · <span className="text-[#ff7a8a] line-through font-mono">-Del</span>
               </span>
             </div>
 
             {/* Diff View Box */}
-            <div className="p-5 rounded-xl border border-slate-200 bg-slate-50/70 font-sans text-xs leading-relaxed">
+            <div className="p-4 sm:p-5 rounded-xl border border-white/[0.08] bg-[#0a0a10] font-mono text-xs leading-relaxed max-h-72 overflow-y-auto">
               {diffTokens.map((token, idx) => {
                 if (token.type === 'insert') {
                   return (
-                    <span key={idx} className="bg-emerald-100 text-emerald-900 font-semibold px-0.5 rounded">
+                    <span key={idx} className="bg-emerald-500/15 text-[#5fd1a0] font-medium underline px-0.5 rounded">
                       {token.value}
                     </span>
                   );
                 }
                 if (token.type === 'delete') {
                   return (
-                    <span key={idx} className="bg-rose-100 text-rose-800 line-through px-0.5 rounded opacity-75">
+                    <span key={idx} className="bg-rose-500/15 text-[#ff7a8a] line-through px-0.5 rounded opacity-75">
                       {token.value}
                     </span>
                   );
                 }
-                return <span key={idx}>{token.value}</span>;
+                return <span key={idx} className="text-[#ececf6]">{token.value}</span>;
               })}
             </div>
           </div>
@@ -1002,17 +1041,17 @@ export function ContentDetailView({
 
         {/* Tab 3: Activity Audit Log */}
         {activeTab === 'activity' && (
-          <div className="space-y-3 max-h-72 overflow-y-auto">
+          <div className="space-y-2.5 max-h-72 overflow-y-auto">
             {activityLogs.length === 0 ? (
-              <p className="text-xs text-slate-500 italic">No activity recorded yet.</p>
+              <p className="text-xs text-[#7b7b94] italic">No activity recorded yet.</p>
             ) : (
               activityLogs.map((log) => (
-                <div key={log.id} className="p-3 rounded-lg border border-slate-200 bg-slate-50 text-xs flex items-center justify-between">
+                <div key={log.id} className="p-3 rounded-lg border border-white/[0.06] bg-[#171724] text-xs flex items-center justify-between">
                   <div>
-                    <span className="font-mono font-bold text-slate-900 uppercase tracking-wider">{log.action}</span>
-                    <span className="text-slate-500 ml-2">{JSON.stringify(log.detail)}</span>
+                    <span className="font-mono font-medium text-[#ececf6] uppercase tracking-wider">{log.action}</span>
+                    <span className="text-[#7b7b94] ml-2 font-mono text-[11px]">{JSON.stringify(log.detail)}</span>
                   </div>
-                  <span className="text-slate-400 font-mono">
+                  <span className="text-[#7b7b94] font-mono">
                     {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -1025,211 +1064,186 @@ export function ContentDetailView({
         {activeTab === 'disclosure' && (
           <AiDisclosureTab aiRun={aiRun} confidential={content.confidential} />
         )}
-      </div>
+      </Card>
 
-      {/* EDIT-THEN-ACCEPT MODAL */}
-      {editThenAcceptFinding && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
-        >
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4">
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <span>✏️</span>
-              <span>Edit Suggestion &amp; Accept</span>
-            </h2>
-            <p className="text-xs text-slate-600">
-              Refine the suggested fix before applying it to create a new draft version:
-            </p>
-
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-1">
-              <span className="text-[10px] uppercase font-bold text-slate-500 block">Original Excerpt:</span>
-              <p className="font-mono text-slate-800">&ldquo;{editThenAcceptFinding.excerpt}&rdquo;</p>
+      {/* EDIT-THEN-ACCEPT DIALOG */}
+      <Dialog
+        isOpen={Boolean(editThenAcceptFinding)}
+        onClose={() => setEditThenAcceptFinding(null)}
+        title="Edit suggestion and accept"
+        description="Refine the replacement text before applying it to create a new draft version:"
+      >
+        {editThenAcceptFinding && (
+          <form onSubmit={handleSubmitEditThenAccept} className="space-y-4">
+            <div className="p-3 bg-[#11111a] rounded-lg border border-white/[0.06] text-xs space-y-1">
+              <span className="text-[10px] uppercase font-mono text-[#7b7b94] block">Original excerpt:</span>
+              <p className="font-mono text-[#ff7a8a] line-through">&ldquo;{editThenAcceptFinding.excerpt}&rdquo;</p>
             </div>
 
-            <form onSubmit={handleSubmitEditThenAccept} className="space-y-4">
-              <div>
-                <label htmlFor="custom-suggestion-input" className="block text-xs font-bold text-slate-700 mb-1">
-                  Your Refined Replacement Text:
-                </label>
-                <textarea
-                  id="custom-suggestion-input"
-                  required
-                  rows={3}
-                  value={customSuggestionText}
-                  onChange={(e) => setCustomSuggestionText(e.target.value)}
-                  className="w-full p-3 text-xs font-mono border border-slate-300 rounded-lg focus:outline-none focus:border-emerald-600"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setEditThenAcceptFinding(null)}
-                  disabled={isProcessingAction}
-                  className="px-3.5 py-1.5 text-xs text-slate-700 hover:bg-slate-100 rounded"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isProcessingAction || !customSuggestionText.trim()}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg shadow-sm"
-                >
-                  {isProcessingAction ? 'Applying...' : 'Apply & Create Version'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* DISMISS MODAL (Reason Required) */}
-      {dismissingFindingId && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
-        >
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
-              <span>✕</span>
-              <span>Dismiss Governance Finding</span>
-            </h2>
-            <p className="text-xs text-slate-600">
-              A reason is required to document why this finding is being dismissed:
-            </p>
-            <form onSubmit={handleSubmitDismiss} className="space-y-4">
-              <textarea
+            <div>
+              <label htmlFor="custom-suggestion-input" className="block text-xs font-medium text-[#ececf6] mb-1.5">
+                Replacement text:
+              </label>
+              <Textarea
+                id="custom-suggestion-input"
                 required
                 rows={3}
-                value={dismissReasonText}
-                onChange={(e) => setDismissReasonText(e.target.value)}
-                placeholder="Document reason for dismissing this check..."
-                className="w-full p-3 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-emerald-600"
+                value={customSuggestionText}
+                onChange={(e) => setCustomSuggestionText(e.target.value)}
+                className="font-mono"
               />
-              <div className="flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDismissingFindingId(null);
-                    setDismissReasonText('');
-                  }}
-                  className="px-3.5 py-1.5 text-xs text-slate-700 hover:bg-slate-100 rounded"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isProcessingAction || !dismissReasonText.trim()}
-                  className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white text-xs font-semibold rounded"
-                >
-                  Confirm Dismissal
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            </div>
 
-      {/* DISPUTE MODAL (Reason Required) */}
-      {disputingFinding && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
-        >
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-1.5">
-              <span>⚡</span>
-              <span>Dispute Governance Finding</span>
-            </h2>
-            <p className="text-xs text-slate-600">
-              Explain why this finding does not apply to this specific copy context:
-            </p>
-            <form onSubmit={handleSubmitDispute} className="space-y-4">
-              <textarea
-                required
-                rows={3}
-                value={disputeReasonText}
-                onChange={(e) => setDisputeReasonText(e.target.value)}
-                placeholder="Provide reason for dispute..."
-                className="w-full p-3 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-emerald-600"
-              />
-              <div className="flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setDisputingFinding(null)}
-                  className="px-3.5 py-1.5 text-xs text-slate-700 hover:bg-slate-100 rounded"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isProcessingAction || !disputeReasonText.trim()}
-                  className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-xs font-semibold rounded"
-                >
-                  Submit Dispute
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditThenAcceptFinding(null)}
+                disabled={isProcessingAction}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                disabled={isProcessingAction || !customSuggestionText.trim()}
+              >
+                {isProcessingAction ? 'Applying...' : 'Apply & create version'}
+              </Button>
+            </div>
+          </form>
+        )}
+      </Dialog>
 
-      {/* TRANSITION COMMENT MODAL (Required for Request Changes and Reject) */}
-      {transitionCommentModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
-        >
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
-            <h2 className="text-base font-bold text-slate-900">
-              {transitionCommentModal === 'needs_changes' ? 'Request Changes' : 'Reject Content Draft'}
-            </h2>
-            <p className="text-xs text-slate-600">
-              A review comment is required to explain what modifications are necessary:
-            </p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleTransition(transitionCommentModal, transitionCommentText);
+      {/* DISMISS DIALOG (Reason Required) */}
+      <Dialog
+        isOpen={Boolean(dismissingFindingId)}
+        onClose={() => {
+          setDismissingFindingId(null);
+          setDismissReasonText('');
+        }}
+        title="Dismiss governance finding"
+        description="A reason is required to document why this finding is being dismissed in the audit trail:"
+      >
+        <form onSubmit={handleSubmitDismiss} className="space-y-4">
+          <Textarea
+            required
+            rows={3}
+            value={dismissReasonText}
+            onChange={(e) => setDismissReasonText(e.target.value)}
+            placeholder="Document reason for dismissing this check..."
+          />
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setDismissingFindingId(null);
+                setDismissReasonText('');
               }}
-              className="space-y-4"
             >
-              <textarea
-                required
-                rows={3}
-                value={transitionCommentText}
-                onChange={(e) => setTransitionCommentText(e.target.value)}
-                placeholder="Specify feedback for the creator..."
-                className="w-full p-3 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-emerald-600"
-              />
-              <div className="flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTransitionCommentModal(null);
-                    setTransitionCommentText('');
-                  }}
-                  className="px-3.5 py-1.5 text-xs text-slate-700 hover:bg-slate-100 rounded"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={!transitionCommentText.trim() || isTransitioning}
-                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-semibold rounded"
-                >
-                  {isTransitioning ? 'Submitting...' : 'Confirm'}
-                </button>
-              </div>
-            </form>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="secondary"
+              size="sm"
+              disabled={isProcessingAction || !dismissReasonText.trim()}
+            >
+              Confirm dismissal
+            </Button>
           </div>
-        </div>
-      )}
+        </form>
+      </Dialog>
+
+      {/* DISPUTE DIALOG (Reason Required) */}
+      <Dialog
+        isOpen={Boolean(disputingFinding)}
+        onClose={() => setDisputingFinding(null)}
+        title="Dispute governance finding"
+        description="Explain why this finding does not apply to this specific copy context:"
+      >
+        <form onSubmit={handleSubmitDispute} className="space-y-4">
+          <Textarea
+            required
+            rows={3}
+            value={disputeReasonText}
+            onChange={(e) => setDisputeReasonText(e.target.value)}
+            placeholder="Provide justification for dispute..."
+          />
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setDisputingFinding(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              disabled={isProcessingAction || !disputeReasonText.trim()}
+            >
+              Submit dispute
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+
+      {/* TRANSITION COMMENT DIALOG (Required for Request Changes and Reject) */}
+      <Dialog
+        isOpen={Boolean(transitionCommentModal)}
+        onClose={() => {
+          setTransitionCommentModal(null);
+          setTransitionCommentText('');
+        }}
+        title={transitionCommentModal === 'needs_changes' ? 'Request changes' : 'Reject content draft'}
+        description="A review comment is required to explain what modifications are necessary:"
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (transitionCommentModal) {
+              handleTransition(transitionCommentModal, transitionCommentText);
+            }
+          }}
+          className="space-y-4"
+        >
+          <Textarea
+            required
+            rows={3}
+            value={transitionCommentText}
+            onChange={(e) => setTransitionCommentText(e.target.value)}
+            placeholder="Specify feedback for the author..."
+          />
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setTransitionCommentModal(null);
+                setTransitionCommentText('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              disabled={!transitionCommentText.trim() || isTransitioning}
+            >
+              {isTransitioning ? 'Submitting...' : 'Confirm'}
+            </Button>
+          </div>
+        </form>
+      </Dialog>
     </div>
   );
 }

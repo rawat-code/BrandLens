@@ -2,6 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import type { Finding } from '@/lib/types';
 
 interface FindingsGroupProps {
@@ -29,13 +31,15 @@ export function FindingsGroup({
 }: FindingsGroupProps) {
   if (!findings.length) {
     return (
-      <div className="text-center py-12 px-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
-        <svg className="w-10 h-10 text-emerald-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <p className="text-xs font-bold text-slate-800">No issues flagged</p>
-        <p className="text-xs text-slate-500 mt-1">
-          Click &ldquo;Run Review&rdquo; to scan this version against the organization library.
+      <div className="text-center py-12 px-5 rounded-xl border border-white/[0.08] bg-[#11111a]">
+        <div className="w-10 h-10 rounded-xl bg-[#171724] border border-white/[0.08] flex items-center justify-center text-[#5fd1a0] mx-auto mb-3">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <p className="text-sm font-medium text-[#ececf6]">No issues flagged</p>
+        <p className="text-xs text-[#a3a3bb] mt-1">
+          Click &ldquo;Run review&rdquo; to scan this version against the organization library.
         </p>
       </div>
     );
@@ -75,40 +79,35 @@ export function FindingsGroup({
         const severityFindings = groupedBySeverity[severity];
         if (!severityFindings.length) return null;
 
-        // Sub-group by category
         const categories = Array.from(new Set(severityFindings.map((f) => f.category)));
 
         const severityHeading =
           severity === 'high'
-            ? { title: 'High Severity', icon: '🚨', pattern: 'Dashed Red Underline', badgeClass: 'bg-rose-100 text-rose-900 border-rose-300' }
+            ? { title: 'High severity', variant: 'high' as const, borderClass: 'border-l-[#ff7a8a]' }
             : severity === 'medium'
-            ? { title: 'Medium Severity', icon: '⚡', pattern: 'Dotted Amber Underline', badgeClass: 'bg-amber-100 text-amber-900 border-amber-300' }
-            : { title: 'Low Severity', icon: 'ℹ️', pattern: 'Solid Blue Underline', badgeClass: 'bg-blue-100 text-blue-900 border-blue-300' };
+            ? { title: 'Medium severity', variant: 'medium' as const, borderClass: 'border-l-[#f5b74f]' }
+            : { title: 'Low severity', variant: 'low' as const, borderClass: 'border-l-[#7fb4ff]' };
 
         return (
           <div key={severity} className="space-y-3">
             {/* Severity Section Header */}
-            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-2">
               <div className="flex items-center gap-2">
-                <span className="text-sm" aria-hidden="true">{severityHeading.icon}</span>
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                <Badge variant={severityHeading.variant}>
                   {severityHeading.title} ({severityFindings.length})
-                </h3>
+                </Badge>
               </div>
-              <span className="text-[11px] font-mono text-slate-500 hidden sm:inline">
-                {severityHeading.pattern}
-              </span>
             </div>
 
             {/* Findings under this severity */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {categories.map((category) => {
                 const categoryFindings = severityFindings.filter((f) => f.category === category);
 
                 return (
                   <div key={category} className="space-y-2.5">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block ml-1">
-                      Category: {category}
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-[#7b7b94] block ml-1">
+                      {category}
                     </span>
 
                     {categoryFindings.map((f) => {
@@ -126,69 +125,59 @@ export function FindingsGroup({
                               onSelectFinding(f.id);
                             }
                           }}
-                          className={`p-4 rounded-xl border transition-all space-y-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                          className={`p-4 rounded-xl border border-white/[0.08] border-l-[3px] ${severityHeading.borderClass} bg-[#11111a] transition-all space-y-3 focus:outline-none ${
                             isActive
-                              ? 'ring-2 ring-emerald-500 bg-emerald-50/30 border-emerald-300 shadow-md'
+                              ? 'ring-1 ring-indigo-400 bg-[#171724]/90 shadow-xl shadow-indigo-950/40'
                               : f.status === 'accepted'
-                              ? 'bg-emerald-50/20 border-emerald-200 opacity-75'
+                              ? 'opacity-60 bg-[#11111a]/70'
                               : f.status === 'disputed'
-                              ? 'bg-amber-50/20 border-amber-200 opacity-80'
+                              ? 'opacity-70 bg-[#11111a]/80'
                               : f.status === 'dismissed'
-                              ? 'bg-slate-50 border-slate-200 opacity-50'
-                              : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'
+                              ? 'opacity-40 bg-[#11111a]/50'
+                              : 'hover:bg-[#171724]/50'
                           }`}
                         >
                           {/* Card Header */}
                           <div className="flex items-center justify-between gap-2 flex-wrap">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              {/* Severity Badge with Icon + Text */}
-                              <span
-                                className={`text-[11px] px-2 py-0.5 rounded font-bold uppercase tracking-wider border flex items-center gap-1 ${severityHeading.badgeClass}`}
-                              >
-                                <span>{severityHeading.icon}</span>
-                                <span>{f.severity}</span>
-                              </span>
+                              <Badge variant={severityHeading.variant}>
+                                {f.severity}
+                              </Badge>
 
-                              {/* Category Badge */}
-                              <span className="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold uppercase">
+                              <span className="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-[#171724] text-[#a3a3bb] border border-white/[0.06]">
                                 {f.category}
                               </span>
 
-                              {/* AI Origin Badge */}
                               {f.origin === 'ai' && (
-                                <span
-                                  className="text-[11px] px-2 py-0.5 rounded-full font-bold bg-purple-100 text-purple-800 border border-purple-200 inline-flex items-center gap-1"
-                                  title="Grounded finding produced by Gemini AI review"
-                                >
-                                  <span>✨</span>
-                                  <span>AI-assisted review</span>
-                                </span>
+                                <Badge variant="ai">
+                                  AI-assisted
+                                </Badge>
                               )}
                             </div>
 
                             {/* Status Badge */}
-                            <span
-                              className={`text-[11px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                            <Badge
+                              variant={
                                 f.status === 'accepted'
-                                  ? 'bg-emerald-100 text-emerald-800'
+                                  ? 'success'
                                   : f.status === 'disputed'
-                                  ? 'bg-amber-100 text-amber-800'
+                                  ? 'medium'
                                   : f.status === 'dismissed'
-                                  ? 'bg-slate-200 text-slate-700'
-                                  : 'bg-slate-100 text-slate-600'
-                              }`}
+                                  ? 'neutral'
+                                  : 'neutral'
+                              }
                             >
                               {f.status}
-                            </span>
+                            </Badge>
                           </div>
 
-                          {/* "Needs human check" prominent styling (Rule 1) */}
+                          {/* "Needs human check" (Rule 1) */}
                           {f.needs_human_check && (
-                            <div className="p-2.5 rounded-lg bg-amber-50 border-2 border-dashed border-amber-400 text-amber-900 text-xs flex items-start gap-2">
-                              <span className="text-base leading-none">⚠️</span>
+                            <div className="p-3 rounded-lg bg-[#f5b74f]/10 border border-[#f5b74f]/30 text-[#fde68a] text-xs flex items-start gap-2.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#f5b74f] shrink-0 mt-1" />
                               <div>
-                                <strong className="font-bold block">Needs human check</strong>
-                                <span className="text-amber-800 text-[11px]">
+                                <strong className="font-medium text-[#ececf6] block">Needs human check</strong>
+                                <span className="text-[#a3a3bb] text-[11px] leading-relaxed">
                                   This issue could not be definitively cited to an exact library guideline or fact. Human review is required before taking action.
                                 </span>
                               </div>
@@ -196,7 +185,7 @@ export function FindingsGroup({
                           )}
 
                           {/* Reason */}
-                          <p className="text-xs text-slate-800 leading-relaxed font-normal">
+                          <p className="text-xs sm:text-sm text-[#ececf6] leading-relaxed">
                             {f.reason}
                           </p>
 
@@ -208,21 +197,21 @@ export function FindingsGroup({
                                 e.stopPropagation();
                                 onSelectFinding(f.id);
                               }}
-                              className="w-full text-left p-2 rounded bg-slate-100/80 hover:bg-slate-200/80 transition-colors text-xs font-mono text-slate-700 block border border-slate-200 group"
-                              title="Click to view and highlight in text editor"
+                              className="w-full text-left p-2.5 rounded-lg bg-[#171724] hover:bg-[#1d1d2e] transition-colors text-xs font-mono text-[#ececf6] block border border-white/[0.06] group cursor-pointer"
+                              title="Click to focus in editor"
                             >
-                              <span className="text-[10px] uppercase font-bold text-slate-500 block mb-0.5 group-hover:text-emerald-700">
-                                Excerpt (click to focus):
+                              <span className="text-[10px] font-mono uppercase text-[#7b7b94] block mb-0.5 group-hover:text-indigo-300">
+                                Excerpt:
                               </span>
                               &ldquo;{f.excerpt}&rdquo;
                             </button>
                           )}
 
                           {/* Source Section with link to library item */}
-                          <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1">
+                          <div className="p-3 rounded-lg bg-[#171724] border border-white/[0.06] text-xs space-y-1.5">
                             <div className="flex items-center justify-between">
-                              <span className="font-semibold text-slate-700 capitalize flex items-center gap-1 text-[11px]">
-                                <span>{f.source_type === 'guideline' ? '📜' : f.source_type === 'fact' ? '🔬' : '📖'}</span>
+                              <span className="font-medium text-[#a3a3bb] capitalize text-[11px] flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
                                 <span>Source ({f.source_type || 'Unspecified'}):</span>
                               </span>
 
@@ -231,73 +220,65 @@ export function FindingsGroup({
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
-                                className="text-[11px] text-emerald-700 hover:text-emerald-900 font-semibold underline"
+                                className="text-[11px] text-[#a5b4fc] hover:underline font-medium"
                               >
-                                Open Library ↗
+                                View in library ↗
                               </Link>
                             </div>
 
                             {f.source_quote ? (
-                              <blockquote className="italic text-slate-800 pl-2 border-l-2 border-emerald-500 font-serif text-xs">
+                              <blockquote className="text-[#ececf6] pl-2.5 border-l-2 border-indigo-400 font-mono text-xs italic break-words">
                                 &ldquo;{f.source_quote}&rdquo;
                               </blockquote>
                             ) : (
-                              <span className="italic text-slate-500 text-[11px] block">
+                              <span className="italic text-[#7b7b94] text-[11px] block">
                                 No exact quote cited (requires human verification).
                               </span>
                             )}
 
                             {typeof f.confidence === 'number' && (
-                              <div className="pt-1 text-[10px] text-slate-500 font-mono">
+                              <div className="pt-1 text-[10px] text-[#7b7b94] font-mono">
                                 Confidence: {Math.round(f.confidence * 100)}%
                               </div>
                             )}
                           </div>
 
-                          {/* Suggestion Block: Side-by-side comparison & Intent badge */}
+                          {/* Suggestion Block: Diff & Intent badge */}
                           {f.suggestion && (
-                            <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-2.5">
+                            <div className="p-3 rounded-xl bg-[#171724] border border-[#5fd1a0]/30 space-y-2.5">
                               {/* Header & Intent Badge */}
                               <div className="flex items-center justify-between gap-2 flex-wrap">
-                                <span className="text-xs font-bold text-emerald-950 uppercase tracking-wide">
-                                  Suggested Fix
+                                <span className="text-xs font-medium text-[#5fd1a0] uppercase tracking-wide">
+                                  Suggested fix
                                 </span>
 
                                 {f.intent_check === 'preserved' ? (
-                                  <span
-                                    className="text-[11px] px-2 py-0.5 rounded-full font-bold bg-emerald-200/70 text-emerald-900 border border-emerald-300 flex items-center gap-1"
-                                    title={f.intent_note || 'Suggestion preserves the author intent'}
-                                  >
-                                    <span>✓</span>
-                                    <span>Meaning preserved</span>
-                                  </span>
+                                  <Badge variant="success">
+                                    Meaning preserved
+                                  </Badge>
                                 ) : f.intent_check === 'changed' ? (
-                                  <span
-                                    className="text-[11px] px-2 py-0.5 rounded-full font-bold bg-amber-200/80 text-amber-950 border border-amber-300 flex items-center gap-1"
-                                    title={f.intent_note || 'Suggestion may alter author meaning'}
-                                  >
-                                    <span>⚠️</span>
-                                    <span>Meaning may have changed</span>
-                                  </span>
+                                  <Badge variant="medium">
+                                    Meaning may have changed
+                                  </Badge>
                                 ) : null}
                               </div>
 
-                              {/* Side-by-Side Original vs Suggestion */}
+                              {/* Diff View */}
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                                <div className="p-2 rounded bg-white/80 border border-rose-200">
-                                  <span className="text-[10px] uppercase font-bold text-rose-700 block mb-0.5">
+                                <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                                  <span className="text-[10px] uppercase font-mono text-[#ff7a8a] block mb-1">
                                     Original
                                   </span>
-                                  <span className="font-mono text-rose-950 break-words">
+                                  <span className="font-mono text-[#ff7a8a] line-through break-words">
                                     {f.excerpt || '(Unspecified)'}
                                   </span>
                                 </div>
 
-                                <div className="p-2 rounded bg-white/80 border border-emerald-300">
-                                  <span className="text-[10px] uppercase font-bold text-emerald-800 block mb-0.5">
+                                <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                                  <span className="text-[10px] uppercase font-mono text-[#5fd1a0] block mb-1">
                                     Suggested
                                   </span>
-                                  <span className="font-mono text-emerald-950 font-semibold break-words">
+                                  <span className="font-mono text-[#5fd1a0] font-medium underline underline-offset-2 break-words">
                                     {f.suggestion}
                                   </span>
                                 </div>
@@ -305,7 +286,7 @@ export function FindingsGroup({
 
                               {/* Intent Note */}
                               {f.intent_note && (
-                                <p className="text-[11px] text-emerald-900 italic leading-snug">
+                                <p className="text-[11px] text-[#a3a3bb] italic leading-snug">
                                   Note: {f.intent_note}
                                 </p>
                               )}
@@ -314,65 +295,67 @@ export function FindingsGroup({
 
                           {/* Action Buttons (Rule 2: AI suggests, humans decide) */}
                           {f.status === 'open' && (
-                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 flex-wrap">
+                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.06] flex-wrap">
                               {f.suggestion && (
                                 <>
-                                  <button
-                                    type="button"
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       onAcceptFinding(f);
                                     }}
                                     disabled={isProcessingAction}
-                                    className="px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                                   >
                                     Accept
-                                  </button>
+                                  </Button>
 
-                                  <button
-                                    type="button"
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       onEditThenAccept(f);
                                     }}
                                     disabled={isProcessingAction}
-                                    className="px-3 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white rounded-lg transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
                                   >
                                     Edit then accept
-                                  </button>
+                                  </Button>
                                 </>
                               )}
 
-                              <button
-                                type="button"
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   onDisputeFinding(f);
                                 }}
                                 disabled={isProcessingAction}
-                                className="px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100/70 border border-amber-300 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                                className="text-[#f5b74f] hover:text-[#fde68a]"
                               >
                                 Dispute
-                              </button>
+                              </Button>
 
-                              <button
-                                type="button"
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   onDismissFinding(f.id);
                                 }}
                                 disabled={isProcessingAction}
-                                className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+                                className="text-[#7b7b94] hover:text-[#a3a3bb]"
                               >
                                 Dismiss
-                              </button>
+                              </Button>
                             </div>
                           )}
 
                           {f.status === 'disputed' && f.dispute_reason && (
-                            <div className="p-2 rounded bg-amber-50 text-amber-900 text-xs border border-amber-200">
-                              <strong className="block text-[11px] font-bold">Dispute Reason:</strong>
-                              <p className="mt-0.5">{f.dispute_reason}</p>
+                            <div className="p-2.5 rounded-lg bg-[#f5b74f]/10 text-[#fde68a] text-xs border border-[#f5b74f]/20">
+                              <strong className="block text-[11px] font-mono uppercase text-[#a3a3bb]">Dispute reason:</strong>
+                              <p className="mt-0.5 text-[#ececf6]">{f.dispute_reason}</p>
                             </div>
                           )}
                         </div>
