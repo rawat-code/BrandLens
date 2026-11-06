@@ -22,7 +22,7 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <div
-      className={`pb-5 mb-6 border-b border-white/[0.08] flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${className}`}
+      className={`pb-5 border-b border-white/[0.08] flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${className}`}
     >
       <div>
         {backHref && (
@@ -46,7 +46,7 @@ export function PageHeader({
             <span>{backLabel}</span>
           </Link>
         )}
-        <h1 className="font-serif text-2xl sm:text-3xl font-normal text-[#ececf6] tracking-tight">
+        <h1 className="font-serif text-2xl sm:text-3xl font-normal text-[#ececf6] tracking-normal leading-snug">
           {title}
         </h1>
         {description && (

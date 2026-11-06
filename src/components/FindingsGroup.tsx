@@ -187,7 +187,7 @@ export function FindingsGroup({
                           )}
 
                           {/* Reason */}
-                          <p className="text-xs sm:text-sm text-[#ececf6] leading-relaxed">
+                          <p className="text-xs sm:text-[13px] text-[#ececf6] leading-relaxed">
                             {f.reason}
                           </p>
 
@@ -199,18 +199,18 @@ export function FindingsGroup({
                                 e.stopPropagation();
                                 onSelectFinding(f.id);
                               }}
-                              className="w-full text-left p-2.5 rounded-lg bg-[#171724] hover:bg-[#1d1d2e] transition-colors text-xs font-mono text-[#ececf6] block border border-white/[0.06] group cursor-pointer"
+                              className="w-full text-left p-3 rounded-lg bg-[#0c0c14] hover:bg-[#151522] transition-colors text-xs font-mono text-[#ececf6] block border border-white/[0.06] group cursor-pointer"
                               title="Click to focus in editor"
                             >
-                              <span className="text-[10px] font-mono uppercase text-[#7b7b94] block mb-0.5 group-hover:text-indigo-300">
-                                Excerpt:
+                              <span className="text-[10px] font-mono uppercase text-[#7b7b94] block mb-1 group-hover:text-indigo-300">
+                                Excerpt under review:
                               </span>
                               &ldquo;{f.excerpt}&rdquo;
                             </button>
                           )}
 
                           {/* Source Section with link to library item */}
-                          <div className="p-3 rounded-lg bg-[#171724] border border-white/[0.06] text-xs space-y-1.5">
+                          <div className="p-3 rounded-lg bg-[#0c0c14] border border-white/[0.06] text-xs space-y-2">
                             <div className="flex items-center justify-between">
                               <span className="font-medium text-[#a3a3bb] capitalize text-[11px] flex items-center gap-1.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
@@ -229,17 +229,17 @@ export function FindingsGroup({
                             </div>
 
                             {f.source_quote ? (
-                              <blockquote className="text-[#ececf6] pl-2.5 border-l-2 border-indigo-400 font-mono text-xs italic break-words">
+                              <blockquote className="text-[#ececf6] pl-3 border-l-2 border-indigo-400 font-mono text-xs leading-relaxed italic break-words my-1.5">
                                 &ldquo;{f.source_quote}&rdquo;
                               </blockquote>
                             ) : (
-                              <span className="italic text-[#7b7b94] text-[11px] block">
+                              <span className="italic text-[#7b7b94] text-[11px] block pl-1">
                                 No exact quote cited (requires human verification).
                               </span>
                             )}
 
                             {typeof f.confidence === 'number' && (
-                              <div className="pt-1 text-[10px] text-[#7b7b94] font-mono">
+                              <div className="pt-1 text-[10px] text-[#7b7b94] font-mono border-t border-white/[0.04]">
                                 Confidence: {Math.round(f.confidence * 100)}%
                               </div>
                             )}
@@ -247,7 +247,7 @@ export function FindingsGroup({
 
                           {/* Suggestion Block: Diff & Intent badge */}
                           {f.suggestion && (
-                            <div className="p-3 rounded-xl bg-[#171724] border border-[#5fd1a0]/30 space-y-2.5">
+                            <div className="p-3.5 rounded-xl bg-[#0c0c14] border border-[#5fd1a0]/30 space-y-2.5">
                               {/* Header & Intent Badge */}
                               <div className="flex items-center justify-between gap-2 flex-wrap">
                                 <span className="text-xs font-medium text-[#5fd1a0] uppercase tracking-wide">
@@ -271,7 +271,7 @@ export function FindingsGroup({
                                   <span className="text-[10px] uppercase font-mono text-[#ff7a8a] block mb-1">
                                     Original
                                   </span>
-                                  <span className="font-mono text-[#ff7a8a] line-through break-words">
+                                  <span className="font-mono text-xs text-[#ff7a8a] line-through leading-relaxed break-words block">
                                     {f.excerpt || '(Unspecified)'}
                                   </span>
                                 </div>
@@ -280,7 +280,7 @@ export function FindingsGroup({
                                   <span className="text-[10px] uppercase font-mono text-[#5fd1a0] block mb-1">
                                     Suggested
                                   </span>
-                                  <span className="font-mono text-[#5fd1a0] font-medium underline underline-offset-2 break-words">
+                                  <span className="font-mono text-xs text-[#5fd1a0] font-medium underline underline-offset-2 leading-relaxed break-words block">
                                     {f.suggestion}
                                   </span>
                                 </div>
@@ -288,7 +288,7 @@ export function FindingsGroup({
 
                               {/* Intent Note */}
                               {f.intent_note && (
-                                <p className="text-[11px] text-[#a3a3bb] italic leading-snug">
+                                <p className="text-[11px] text-[#a3a3bb] italic leading-snug pt-1">
                                   Note: {f.intent_note}
                                 </p>
                               )}
@@ -297,7 +297,7 @@ export function FindingsGroup({
 
                           {/* Action Buttons (Rule 2: AI suggests, humans decide) */}
                           {f.status === 'open' && (
-                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.06] flex-wrap">
+                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.06] flex-wrap">
                               {f.suggestion && (
                                 <>
                                   <Button

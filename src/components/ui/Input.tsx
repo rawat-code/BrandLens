@@ -44,7 +44,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       <div className="relative w-full">
         <textarea
           ref={ref}
-          className={`w-full bg-[#171724] text-[#ececf6] placeholder-[#7b7b94] border rounded-lg px-3 py-2 text-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400/40 disabled:opacity-50 disabled:bg-[#11111a] resize-y ${
+          className={`w-full bg-[#171724] text-[#ececf6] placeholder-[#7b7b94] border rounded-lg px-3.5 py-2.5 text-sm leading-relaxed transition-colors focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400/40 disabled:opacity-50 disabled:bg-[#11111a] resize-y ${
             error
               ? "border-rose-500/60 focus:border-rose-400 focus:ring-rose-400/30"
               : "border-white/10 hover:border-white/15"
@@ -70,7 +70,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
       <div className="relative w-full">
         <select
           ref={ref}
-          className={`w-full bg-[#171724] text-[#ececf6] border rounded-lg px-3 py-2 text-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400/40 disabled:opacity-50 disabled:bg-[#11111a] appearance-none cursor-pointer ${
+          className={`w-full bg-[#171724] text-[#ececf6] border rounded-lg pl-3.5 pr-9 py-2 text-sm transition-colors focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400/40 disabled:opacity-50 disabled:bg-[#11111a] appearance-none cursor-pointer ${
             error
               ? "border-rose-500/60 focus:border-rose-400 focus:ring-rose-400/30"
               : "border-white/10 hover:border-white/15"

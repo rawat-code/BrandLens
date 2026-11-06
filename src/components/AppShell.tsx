@@ -180,7 +180,7 @@ export function AppShell({ user, profile, orgName, children }: AppShellProps) {
             BL
           </div>
           <div className="min-w-0 flex-1">
-            <span className="font-serif text-lg font-normal text-[#ececf6] tracking-tight block leading-tight">
+            <span className="font-serif text-lg font-normal text-[#ececf6] tracking-normal block leading-tight">
               BrandLens
             </span>
             <span

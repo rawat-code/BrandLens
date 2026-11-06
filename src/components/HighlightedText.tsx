@@ -109,7 +109,7 @@ export function HighlightedText({
 
   return (
     <div
-      className="p-6 font-sans text-sm sm:text-base leading-relaxed whitespace-pre-wrap select-text text-[#ececf6] bg-[#11111a] rounded-xl border border-white/[0.08] min-h-[360px]"
+      className="p-6 font-sans text-[15px] sm:text-base leading-7 tracking-normal whitespace-pre-wrap select-text text-[#ececf6] bg-[#0c0c14] rounded-lg border border-white/[0.06] min-h-[380px] shadow-inner focus:outline-none focus:ring-1 focus:ring-indigo-400/40"
       tabIndex={0}
       aria-label="Highlighted content text viewer"
     >
@@ -130,19 +130,19 @@ export function HighlightedText({
 
         if (isActive) {
           styleClass =
-            'ring-2 ring-indigo-400 bg-indigo-500/20 text-white font-medium rounded px-1';
+            'ring-2 ring-indigo-400 bg-indigo-500/25 text-white font-medium rounded px-1.5 py-0.5';
           patternLabel = 'Active highlight: ';
         } else if (f.severity === 'high') {
           styleClass =
-            'bg-[#ff7a8a]/15 text-[#ffd0d6] font-medium underline decoration-wavy decoration-[#ff7a8a] underline-offset-4 px-0.5 rounded-sm hover:bg-[#ff7a8a]/25 transition-colors';
+            'bg-[#ff7a8a]/15 text-[#ffd0d6] font-medium underline decoration-wavy decoration-[#ff7a8a] underline-offset-[5px] px-1 py-0.5 rounded hover:bg-[#ff7a8a]/25 transition-colors';
           patternLabel = 'High severity issue (wavy underline): ';
         } else if (f.severity === 'medium') {
           styleClass =
-            'bg-[#f5b74f]/15 text-[#fde68a] font-medium underline decoration-solid decoration-[#f5b74f] underline-offset-4 px-0.5 rounded-sm hover:bg-[#f5b74f]/25 transition-colors';
+            'bg-[#f5b74f]/15 text-[#fde68a] font-medium underline decoration-solid decoration-[#f5b74f] underline-offset-[5px] px-1 py-0.5 rounded hover:bg-[#f5b74f]/25 transition-colors';
           patternLabel = 'Medium severity issue (solid underline): ';
         } else {
           styleClass =
-            'bg-[#7fb4ff]/10 text-[#bfdbfe] underline decoration-dotted decoration-[#7fb4ff] underline-offset-4 px-0.5 rounded-sm hover:bg-[#7fb4ff]/20 transition-colors';
+            'bg-[#7fb4ff]/10 text-[#bfdbfe] underline decoration-dotted decoration-[#7fb4ff] underline-offset-[5px] px-1 py-0.5 rounded hover:bg-[#7fb4ff]/20 transition-colors';
           patternLabel = 'Low severity issue (dotted underline): ';
         }
 
@@ -169,9 +169,9 @@ export function HighlightedText({
           >
             {seg.text}
             {seg.indexInFindings && (
-              <sup className="ml-0.5 text-[10px] font-mono font-bold text-inherit opacity-80 select-none">
+              <span className="inline-flex items-center justify-center ml-1 px-1 py-0.5 text-[10px] font-mono font-semibold bg-white/10 rounded text-inherit select-none align-baseline leading-none -translate-y-0.5">
                 [{seg.indexInFindings}]
-              </sup>
+              </span>
             )}
           </mark>
         );

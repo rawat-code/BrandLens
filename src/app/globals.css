@@ -74,6 +74,15 @@ html {
   font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 {
+  text-wrap: balance;
+}
+
+p, blockquote {
+  text-wrap: pretty;
 }
 
 body {

@@ -87,7 +87,7 @@ export default function LoginPage() {
               BL
             </div>
             <div>
-              <span className="font-serif text-xl font-normal text-[#ececf6] tracking-tight block leading-tight">
+              <span className="font-serif text-xl font-normal text-[#ececf6] tracking-normal block leading-tight">
                 BrandLens
               </span>
               <span className="text-xs text-[#7b7b94]">Pre-publication brand governance</span>
@@ -97,7 +97,7 @@ export default function LoginPage() {
 
         {/* Editorial Value Proposition */}
         <div className="my-8 lg:my-0 max-w-xl">
-          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal tracking-tight text-[#ececf6] leading-[1.15]">
+          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal tracking-normal text-[#ececf6] leading-[1.18]">
             Every claim cited. Every fix reviewed. Human decided.
           </h1>
           <p className="mt-4 text-sm sm:text-base text-[#a3a3bb] leading-relaxed">
@@ -156,7 +156,7 @@ export default function LoginPage() {
         <div className="max-w-md w-full mx-auto">
           <div className="bg-[#11111a] p-6 sm:p-8 rounded-xl border border-white/[0.08] shadow-2xl shadow-black/80">
             <div className="mb-6">
-              <h2 className="font-serif text-2xl font-normal text-[#ececf6] tracking-tight">
+              <h2 className="font-serif text-2xl font-normal text-[#ececf6] tracking-normal">
                 Sign in
               </h2>
               <p className="mt-1 text-xs text-[#a3a3bb]">

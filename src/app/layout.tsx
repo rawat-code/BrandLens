@@ -36,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${instrumentSerif.variable} ${geistSans.variable} ${geistMono.variable} antialiased bg-[#0a0a10] text-[#ececf6] min-h-screen`}
+        className={`${instrumentSerif.variable} ${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-[#0a0a10] text-[#ececf6] min-h-screen`}
       >
         <ToastProvider>{children}</ToastProvider>
       </body>

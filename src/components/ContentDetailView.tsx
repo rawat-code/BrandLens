@@ -594,7 +594,7 @@ export function ContentDetailView({
             )}
           </div>
 
-          <h1 className="font-serif text-2xl sm:text-3xl font-normal text-[#ececf6] tracking-tight">
+          <h1 className="font-serif text-2xl sm:text-3xl font-normal text-[#ececf6] tracking-normal leading-snug">
             {content.title}
           </h1>
 
@@ -803,7 +803,7 @@ export function ContentDetailView({
         </div>
 
         {/* Right Pane: Review Findings Workbench Centrepiece (5 cols) */}
-        <div className="lg:col-span-5 bg-[#11111a] rounded-xl border border-white/[0.08] p-5 sm:p-6 space-y-4">
+        <div className="lg:col-span-5 lg:sticky lg:top-6 self-start bg-[#11111a] rounded-xl border border-white/[0.08] p-5 sm:p-6 space-y-4 max-h-[calc(100vh-3rem)] overflow-y-auto">
           <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
             <div>
               <div className="flex items-center gap-2">
