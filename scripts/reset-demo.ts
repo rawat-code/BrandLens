@@ -66,6 +66,9 @@ async function main() {
       title.startsWith('test') ||
       title.startsWith('tmp') ||
       title.startsWith('temp') ||
+      title.startsWith('e2e') ||
+      title.startsWith('confidential secret project') ||
+      title.startsWith('prompt injection') ||
       title.includes('[test]') ||
       title.includes('development test')
     );

@@ -216,21 +216,21 @@ async function seed() {
       expires_at: new Date(Date.now() + 270 * 24 * 60 * 60 * 1000).toISOString(),
       status: 'approved',
     },
-    // Expired Fact 1
+    // Expired Fact 1 (Expired by past date)
     {
       statement: 'Introductory launch discount: 20% off all bundles until October 2025',
       owner: 'Growth Marketing',
       source_note: 'Q3 2025 Promotional Plan',
       expires_at: '2025-10-31T23:59:59.000Z',
-      status: 'expired',
+      status: 'approved',
     },
-    // Expired Fact 2
+    // Expired Fact 2 (Expired by past date)
     {
       statement: 'Complimentary botanical sample kit with every monsoon order',
       owner: 'Retention Marketing',
       source_note: 'Monsoon Seasonal Campaign 2025',
       expires_at: '2025-09-15T23:59:59.000Z',
-      status: 'expired',
+      status: 'approved',
     },
   ];
 
