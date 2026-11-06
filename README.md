@@ -15,8 +15,10 @@
 ## Live Deployment & Demo
 
 - **Live URL**: [https://brandlens-zeta.vercel.app](https://brandlens-zeta.vercel.app)
-- **Demo Organization**: `Verdant Skin (demo)` (Fictional clean skincare brand)
+- **Demo Workspace**: `Verdant Skin (demo)` (Fictional botanical skincare brand used for demo data)
 - **Demo Password**: `verdant12110` (Configured in `.env` via `DEMO_PASSWORD`)
+
+> **Brand-Agnostic Architecture**: BrandLens contains zero hard-coded brand assumptions. "Verdant Skin" exists solely as a seeded demo dataset in PostgreSQL. You can rename the workspace and import any company's brand guidelines in minutes using `/settings` and the Library import tool.
 
 ### Seeded Demo Accounts
 
@@ -58,7 +60,38 @@ The `/login` screen includes convenient **"Try a demo role"** one-click buttons 
 
 ---
 
-## System Architecture
+## Brand-Agnostic Architecture & Loading Your Brand
+
+BrandLens is designed to govern **any organisation or brand**. The default brand, *"Verdant Skin"*, is strictly a fictional skincare brand dataset provided for demonstration purposes.
+
+```mermaid
+flowchart LR
+    A["Admin Enters /settings"] --> B["Rename Organisation"]
+    B --> C["Start Fresh (Reset Demo Data)"]
+    C --> D["Library: Import Guidelines (.md / .txt)"]
+    D --> E["Add Approved Facts & Terminology"]
+    E --> F["Launch Brand Review Pipeline"]
+```
+
+### How to Load a Different Brand in 3 Minutes
+
+1. **Log in as Administrator**:
+   Sign in with `admin@verdant.demo` (or any administrative account) using password `verdant12110`.
+2. **Rename Your Organisation**:
+   Go to `/settings` in the sidebar. In the **Organisation Details** card, enter your real company or brand name (e.g. *"Acme Corp"*, *"Lumina Health"*) and click **Save Name**. The navigation header and badges update instantly across all views.
+3. **Reset Workspace Data (Start Fresh)**:
+   Under **Danger Zone: Start Fresh**, review the summary of demo data. Click **Start fresh...**, type the current organisation name to confirm, and submit. All fictional guidelines, clinical facts, terms, and sample content drafts will be deleted. User accounts and audit log history are permanently preserved.
+4. **Import Brand Guidelines in Bulk**:
+   Navigate to the **Brand Library** (`/library`) and click **"Import guidelines"**:
+   - **Upload** an existing markdown or text style guide (`.md`, `.txt`), or paste your copy into the text area.
+   - BrandLens parses Markdown headings (`# Heading`) into individual guidelines with automatic category classification (`tone`, `messaging`, `claim`, `accessibility`, `general`).
+   - Review or edit titles and categories inline in the preview tab, then click **Import Guidelines**.
+5. **Add Key Facts & Terminology**:
+   Use the **Approved Facts** tab to record verified statements and expiry dates, and the **Terminology Dictionary** tab to configure banned, caution, or preferred word variants.
+6. **Start Auditing Content**:
+   Content creators can now draft content in **New Content** (`/content/new`) and review copy grounded exclusively in your real brand guidelines and verified facts.
+
+---
 
 ```mermaid
 flowchart TD
