@@ -3,6 +3,11 @@
 import React, { useState } from 'react';
 import type { Guideline, Fact, Term, Profile } from '@/lib/types';
 import type { User } from '@supabase/supabase-js';
+import {
+  parseGuidelinesMarkdown,
+  type ParsedGuideline,
+  type GuidelineCategory,
+} from '@/lib/library/markdown-parser';
 
 interface LibraryManagerProps {
   user?: User;
@@ -36,6 +41,16 @@ export function LibraryManager({
   const [editingItem, setEditingItem] = useState<Guideline | Fact | Term | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Import guidelines state
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importRawText, setImportRawText] = useState('');
+  const [importDefaultCategory, setImportDefaultCategory] = useState<GuidelineCategory>('general');
+  const [parsedGuidelines, setParsedGuidelines] = useState<ParsedGuideline[]>([]);
+  const [importStep, setImportStep] = useState<'input' | 'preview'>('input');
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importSuccess, setImportSuccess] = useState<string | null>(null);
 
   // Delete confirmation state
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -124,6 +139,85 @@ export function LibraryManager({
     setIsModalOpen(false);
     setEditingItem(null);
     setFormError(null);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportError(null);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (content) {
+        setImportRawText(content);
+      }
+    };
+    reader.onerror = () => {
+      setImportError('Failed to read uploaded file.');
+    };
+    reader.readAsText(file);
+  };
+
+  const handleParseGuidelines = () => {
+    setImportError(null);
+    const results = parseGuidelinesMarkdown(importRawText, importDefaultCategory);
+    if (!results.length) {
+      setImportError('No guidelines found. Please ensure your document has headings (# Heading) or distinct paragraphs.');
+      return;
+    }
+    setParsedGuidelines(results);
+    setImportStep('preview');
+  };
+
+  const handleUpdateParsedItem = (
+    index: number,
+    field: keyof ParsedGuideline,
+    value: string
+  ) => {
+    setParsedGuidelines((prev) =>
+      prev.map((item, idx) =>
+        idx === index ? { ...item, [field]: value } : item
+      )
+    );
+  };
+
+  const handleRemoveParsedItem = (index: number) => {
+    setParsedGuidelines((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  const handleExecuteImport = async () => {
+    if (!parsedGuidelines.length) {
+      setImportError('No guidelines to import.');
+      return;
+    }
+
+    setIsImporting(true);
+    setImportError(null);
+
+    try {
+      const res = await fetch('/api/library/guidelines/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guidelines: parsedGuidelines }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to import guidelines');
+      }
+
+      setGuidelines((prev) => [...data.guidelines, ...prev]);
+      setActiveTab('guidelines');
+      setIsImportModalOpen(false);
+      setImportRawText('');
+      setParsedGuidelines([]);
+      setImportStep('input');
+      setImportSuccess(`Successfully imported ${data.count} guidelines into your brand library!`);
+    } catch (err: unknown) {
+      setImportError((err as Error).message);
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -329,7 +423,7 @@ export function LibraryManager({
               Governance Library
             </h1>
             <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Verdant Skin
+              {profile.org_name || 'Workspace'}
             </span>
           </div>
           <p className="text-sm text-slate-500 mt-1">
@@ -345,32 +439,73 @@ export function LibraryManager({
             </span>
           )}
           {isAdmin && (
-            <button
-              onClick={openCreateModal}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setImportError(null);
+                  setImportStep('input');
+                  setIsImportModalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-lg border border-slate-300 shadow-xs transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              <span>
-                {activeTab === 'guidelines' && 'Add Guideline'}
-                {activeTab === 'facts' && 'Add Fact'}
-                {activeTab === 'terms' && 'Add Term'}
-              </span>
-            </button>
+                <svg
+                  className="w-4 h-4 text-slate-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                <span>Import guidelines</span>
+              </button>
+              <button
+                onClick={openCreateModal}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                <span>
+                  {activeTab === 'guidelines' && 'Add Guideline'}
+                  {activeTab === 'facts' && 'Add Fact'}
+                  {activeTab === 'terms' && 'Add Term'}
+                </span>
+              </button>
+            </div>
           )}
         </div>
       </div>
+
+      {/* Import Success Banner */}
+      {importSuccess && (
+        <div
+          role="alert"
+          className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-900 flex items-center justify-between"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-600 font-bold">✓</span>
+            <span className="font-semibold">{importSuccess}</span>
+          </div>
+          <button
+            onClick={() => setImportSuccess(null)}
+            className="text-xs text-emerald-700 hover:text-emerald-900 font-semibold px-2 py-1 rounded hover:bg-emerald-100"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Search and Tabs Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-3">
@@ -1164,6 +1299,277 @@ export function LibraryManager({
                 {isDeleting ? 'Deleting...' : 'Delete Permanently'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* IMPORT GUIDELINES MODAL */}
+      {isImportModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="import-dialog-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' && !isImporting) setIsImportModalOpen(false);
+          }}
+        >
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-5 animate-in fade-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h2 id="import-dialog-title" className="text-lg font-bold text-slate-900">
+                  Import Brand Guidelines
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Load any brand&apos;s style guide or compliance manual in seconds.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(false)}
+                disabled={isImporting}
+                aria-label="Close import dialog"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 disabled:opacity-50"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Error banner */}
+            {importError && (
+              <div
+                role="alert"
+                className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-sm text-rose-800"
+              >
+                {importError}
+              </div>
+            )}
+
+            {/* STEP 1: INPUT */}
+            {importStep === 'input' && (
+              <div className="space-y-4">
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Upload a <code>.md</code> or <code>.txt</code> file, or paste raw copy. BrandLens
+                  will parse Markdown headings (<code># Title</code>) into individual brand guidelines.
+                </p>
+
+                {/* File upload box */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Upload Document (.md / .txt)
+                  </label>
+                  <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-300 rounded-xl hover:border-emerald-500 hover:bg-emerald-50/20 cursor-pointer transition-colors text-center group">
+                    <svg className="w-8 h-8 text-slate-400 group-hover:text-emerald-600 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <span className="text-xs font-semibold text-slate-700 group-hover:text-emerald-700">
+                      Choose file or drag & drop
+                    </span>
+                    <span className="text-[11px] text-slate-400 mt-0.5">
+                      Plain text or Markdown documents (.md, .txt)
+                    </span>
+                    <input
+                      type="file"
+                      accept=".md,.txt,.markdown,text/plain,text/markdown"
+                      onChange={handleFileUpload}
+                      className="sr-only"
+                    />
+                  </label>
+                </div>
+
+                {/* Paste Textarea */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label htmlFor="import-textarea" className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                      Or Paste Formatted Text
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setImportRawText(`# Brand Tone & Voice
+Speak with empathy, warmth, and authority. Never pressure buyers with false urgency.
+Clarification: Avoid clickbait tactics.
+
+# Digital Accessibility
+All images must include descriptive alt text.
+
+# Health & Medical Claims Policy
+Never claim to cure illness or guarantee 100% results.`)
+                      }
+                      className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+                    >
+                      Fill sample markdown
+                    </button>
+                  </div>
+                  <textarea
+                    id="import-textarea"
+                    rows={8}
+                    value={importRawText}
+                    onChange={(e) => setImportRawText(e.target.value)}
+                    placeholder={`# Guideline Title\nGuideline rule explanation and standards.\n\n# Second Guideline Title\nGuidance and policy details...`}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  />
+                </div>
+
+                {/* Default category */}
+                <div>
+                  <label htmlFor="default-category" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Default Category (if not detected)
+                  </label>
+                  <select
+                    id="default-category"
+                    value={importDefaultCategory}
+                    onChange={(e) => setImportDefaultCategory(e.target.value as GuidelineCategory)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  >
+                    <option value="general">General</option>
+                    <option value="tone">Tone</option>
+                    <option value="messaging">Messaging</option>
+                    <option value="claim">Claim</option>
+                    <option value="accessibility">Accessibility</option>
+                  </select>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsImportModalOpen(false)}
+                    className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleParseGuidelines}
+                    disabled={!importRawText.trim()}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                  >
+                    Parse Guidelines →
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: PREVIEW */}
+            {importStep === 'preview' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-slate-800">
+                    Found {parsedGuidelines.length} Guideline{parsedGuidelines.length === 1 ? '' : 's'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setImportStep('input')}
+                    className="text-xs text-slate-500 hover:text-slate-800 font-medium"
+                  >
+                    ← Back to raw text
+                  </button>
+                </div>
+
+                <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+                  {parsedGuidelines.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3 text-left"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs font-bold text-slate-400">
+                          #{idx + 1}
+                        </span>
+                        <div className="flex items-center gap-2 flex-1">
+                          <input
+                            type="text"
+                            value={item.title}
+                            onChange={(e) => handleUpdateParsedItem(idx, 'title', e.target.value)}
+                            aria-label={`Guideline ${idx + 1} title`}
+                            className="flex-1 px-2.5 py-1 text-sm font-semibold border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          />
+                          <select
+                            value={item.category}
+                            onChange={(e) =>
+                              handleUpdateParsedItem(
+                                idx,
+                                'category',
+                                e.target.value as GuidelineCategory
+                              )
+                            }
+                            aria-label={`Guideline ${idx + 1} category`}
+                            className="px-2 py-1 text-xs font-medium border border-slate-300 rounded-lg bg-white uppercase tracking-wider"
+                          >
+                            <option value="tone">Tone</option>
+                            <option value="messaging">Messaging</option>
+                            <option value="claim">Claim</option>
+                            <option value="accessibility">Accessibility</option>
+                            <option value="general">General</option>
+                          </select>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveParsedItem(idx)}
+                          title="Remove item"
+                          className="text-xs text-rose-600 hover:text-rose-800 p-1.5 rounded hover:bg-rose-50"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      <div>
+                        <textarea
+                          rows={3}
+                          value={item.body}
+                          onChange={(e) => handleUpdateParsedItem(idx, 'body', e.target.value)}
+                          aria-label={`Guideline ${idx + 1} body`}
+                          className="w-full px-2.5 py-1.5 text-xs text-slate-700 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+
+                      {item.clarification !== undefined && (
+                        <div>
+                          <input
+                            type="text"
+                            value={item.clarification}
+                            placeholder="Optional clarification / rationale"
+                            onChange={(e) =>
+                              handleUpdateParsedItem(idx, 'clarification', e.target.value)
+                            }
+                            aria-label={`Guideline ${idx + 1} clarification`}
+                            className="w-full px-2.5 py-1 text-xs text-slate-600 border border-slate-200 rounded-md bg-white placeholder-slate-400"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setImportStep('input')}
+                    disabled={isImporting}
+                    className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExecuteImport}
+                    disabled={isImporting || !parsedGuidelines.length}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 flex items-center gap-2"
+                  >
+                    {isImporting ? (
+                      <>
+                        <span className="animate-spin text-xs">⟳</span>
+                        <span>Importing {parsedGuidelines.length} Guidelines...</span>
+                      </>
+                    ) : (
+                      `Import ${parsedGuidelines.length} Guidelines`
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
