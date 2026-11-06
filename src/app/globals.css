@@ -1,26 +1,125 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+
+  /* Surfaces */
+  --bg-page: #0a0a10;
+  --bg-panel: #11111a;
+  --bg-raised: #171724;
+  --bg-overlay: #1d1d2e;
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  /* Typography */
+  --text-primary: #ececf6;
+  --text-secondary: #a3a3bb;
+  --text-muted: #7b7b94;
+
+  /* Accent */
+  --accent-indigo: #6366f1;
+  --accent-violet: #8b5cf6;
+  --accent-link: #a5b4fc;
+  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+
+  /* Severity & Status */
+  --sev-high: #ff7a8a;
+  --sev-high-bg: rgba(255, 122, 138, 0.10);
+  --sev-high-border: rgba(255, 122, 138, 0.30);
+
+  --sev-med: #f5b74f;
+  --sev-med-bg: rgba(245, 183, 79, 0.10);
+  --sev-med-border: rgba(245, 183, 79, 0.30);
+
+  --sev-low: #7fb4ff;
+  --sev-low-bg: rgba(127, 180, 255, 0.10);
+  --sev-low-border: rgba(127, 180, 255, 0.30);
+
+  --status-success: #5fd1a0;
+  --status-success-bg: rgba(95, 209, 160, 0.10);
+  --status-success-border: rgba(95, 209, 160, 0.30);
+
+  --status-neutral: #a3a3bb;
+  --status-neutral-bg: rgba(163, 163, 187, 0.10);
+  --status-neutral-border: rgba(163, 163, 187, 0.25);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-page: var(--bg-page);
+  --color-panel: var(--bg-panel);
+  --color-raised: var(--bg-raised);
+  --color-overlay: var(--bg-overlay);
+
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --color-accent-indigo: var(--accent-indigo);
+  --color-accent-violet: var(--accent-violet);
+  --color-accent-link: var(--accent-link);
+
+  --font-serif: var(--font-serif);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background-color: #0a0a10;
+  color: #ececf6;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #0a0a10;
+  color: #ececf6;
+  min-height: 100vh;
+  background-image: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.04) 0%, transparent 70%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+  background-attachment: fixed;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a10;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1d1d2e;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2b2b3f;
+}
+
+/* Accessible focus visible */
+*:focus-visible {
+  outline: 2px solid #a5b4fc;
+  outline-offset: 2px;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.25);
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
