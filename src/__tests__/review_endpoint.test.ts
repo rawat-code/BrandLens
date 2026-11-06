@@ -186,5 +186,79 @@ describe('POST /api/content/[id]/review endpoint', () => {
     expect(json.error).toContain('Creators can only run review on their own content');
     expect(runReview).not.toHaveBeenCalled();
   });
+
+  it('enforces rate limiting (max 10 requests/min per user) with 429 status', async () => {
+    const rateLimitUserId = 'user-rate-limited-' + Date.now();
+    const mockProfile = {
+      id: rateLimitUserId,
+      org_id: 'org-verdant-1',
+      role: 'creator',
+    };
+
+    (requireRole as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+      profile: mockProfile,
+    });
+
+    const mockContent = {
+      id: 'content-rate-test',
+      org_id: 'org-verdant-1',
+      created_by: rateLimitUserId,
+      current_version: 1,
+    };
+
+    const mockAdmin = {
+      from: vi.fn().mockImplementation((table: string) => {
+        if (table === 'contents') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: mockContent, error: null }),
+          };
+        }
+        if (table === 'content_versions') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockImplementation(() => ({
+              eq: vi.fn().mockImplementation(() => ({
+                single: vi.fn().mockResolvedValue({
+                  data: { body: 'Valid body for rate test.' },
+                  error: null,
+                }),
+              })),
+            })),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        };
+      }),
+    };
+
+    (getAdminClient as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockAdmin);
+    (runReview as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 'ai_reviewed',
+      findings: [],
+    });
+
+    // Fire 10 allowed requests
+    for (let i = 0; i < 10; i++) {
+      const req = new NextRequest('http://localhost:3000/api/content/content-rate-test/review', {
+        method: 'POST',
+      });
+      const res = await POST(req, { params: Promise.resolve({ id: 'content-rate-test' }) });
+      expect(res.status).toBe(200);
+    }
+
+    // 11th request must be rate-limited with 429
+    const req11 = new NextRequest('http://localhost:3000/api/content/content-rate-test/review', {
+      method: 'POST',
+    });
+    const res11 = await POST(req11, { params: Promise.resolve({ id: 'content-rate-test' }) });
+    expect(res11.status).toBe(429);
+    const json11 = await res11.json();
+    expect(json11.error).toContain('Rate limit exceeded');
+  });
 });
 

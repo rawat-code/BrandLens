@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { createClient } from '@supabase/supabase-js';
 import { loadEnvConfig } from '@next/env';
 import { runReview } from '../src/lib/review/pipeline';
