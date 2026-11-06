@@ -7,6 +7,7 @@ import { RoleBadge } from './RoleBadge';
 import { signOut } from '@/app/login/actions';
 import { Kbd } from './ui/Kbd';
 import { PageTransition } from './ui/Motion';
+import { CommandPalette } from './CommandPalette';
 import type { Profile, UserRole } from '@/lib/types';
 import type { User } from '@supabase/supabase-js';
 
@@ -92,6 +93,7 @@ export function AppShell({ user, profile, orgName, children }: AppShellProps) {
   const pathname = usePathname();
   const currentOrgName = orgName || profile.org_name || 'Workspace';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
   const allowedNav = NAV_ITEMS.filter((item) => item.roles.includes(profile.role));
 
@@ -228,10 +230,15 @@ export function AppShell({ user, profile, orgName, children }: AppShellProps) {
 
         {/* Global Keyboard Quick Hint */}
         <div className="px-4 py-2 border-t border-white/[0.04]">
-          <div className="flex items-center justify-between text-xs text-[#7b7b94] px-1 py-1">
-            <span>Palette</span>
+          <button
+            type="button"
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className="w-full flex items-center justify-between text-xs text-[#7b7b94] hover:text-[#ececf6] px-1 py-1 rounded transition-colors group cursor-pointer"
+            aria-label="Open command palette"
+          >
+            <span className="group-hover:text-[#ececf6] transition-colors">Command palette</span>
             <Kbd>⌘K</Kbd>
-          </div>
+          </button>
         </div>
 
         {/* User Profile & Sign-out */}
@@ -248,7 +255,7 @@ export function AppShell({ user, profile, orgName, children }: AppShellProps) {
             </p>
           </div>
 
-          <form action={signOut}>
+          <form id="shell-signout-form" action={signOut}>
             <button
               type="submit"
               className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium text-[#a3a3bb] hover:text-[#ececf6] bg-[#171724] hover:bg-[#1d1d2e] border border-white/10 rounded-lg transition-colors cursor-pointer"
@@ -268,6 +275,17 @@ export function AppShell({ user, profile, orgName, children }: AppShellProps) {
           {children}
         </PageTransition>
       </main>
+
+      {/* Command Palette Modal */}
+      <CommandPalette
+        open={isCommandPaletteOpen}
+        onOpenChange={setIsCommandPaletteOpen}
+        userRole={profile.role}
+        onSignOut={() => {
+          const form = document.getElementById('shell-signout-form') as HTMLFormElement;
+          if (form) form.requestSubmit();
+        }}
+      />
     </div>
   );
 }
