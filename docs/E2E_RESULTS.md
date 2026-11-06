@@ -36,3 +36,24 @@ All checks were executed against the live BrandLens service and verified via [`s
 - **Environment**: Local Next.js dev server (`http://localhost:3000`) + Supabase PostgreSQL
 - **Verification Method**: API calls, schema assertions, workflow transition simulation, database queries.
 
+
+
+---
+
+## Production Smoke Test (Live Deployment)
+- **Execution Date**: 2026-11-06
+- **Live URL**: `https://brandlens-zeta.vercel.app`
+- **Automation Runner**: `scripts/production-smoke-test.ts` via Chrome DevTools Protocol (CDP) + Supabase Client
+- **Status**: **7 / 7 Steps Passed (100% Pass Rate)** ✅
+
+| Step | Description | Live Deployment Result | Notes / Evidence |
+| :--: | :--- | :---: | :--- |
+| **1** | Creator Login & Draft Creation | **PASS** | Authenticated as `creator@verdant.demo`. Created `"SMOKE TEST - delete me"` draft via `#content-title`, `#content-body`. Content persisted in production database (`f1874d6c-a129-422f-b835-eeee7d4eb05a`). |
+| **2** | Run Review & Rule Catches | **PASS** | Triggered "Run Review". Completed in 13s. Caught 10 findings across banned terms (`term.banned`), absolute claims (`claim.absolute`), unsupported claims (`claim.unsupported`, `requires_reviewer: true`), accessibility rules (`a11y.allcaps`, `a11y.vague_link`), and AI tone. |
+| **3** | Accept Suggestion & Re-versioning | **PASS** | Creator clicked "Accept" on `term.banned` fix. Content draft updated from `v1` to `v2` in Supabase; status reset to `draft` with note `"Applied suggestion for term.banned"`. |
+| **4** | Submit for Approval & Self-Approval Prevention | **PASS** | Creator submitted content for approval. Content state transitioned to `in_review`. Creator UI has no active "Approve" button, enforcing separation of duties. |
+| **5** | Manager Approval Blocked on requires-reviewer | **PASS** | Logged in as `manager@verdant.demo`. Opened smoke test content. Active "Approve" button was disabled because high-severity finding `claim.unsupported` with `requires_reviewer = true` remained open. |
+| **6** | Tabs & AI Disclosure Verification | **PASS** | Clicked "Audit Activity Trail" and "AI Governance & Disclosure" tabs. Plain-language governance explanation, model disclosure, and audit trail rendered accurately. |
+| **7** | Role RBAC on /insights | **PASS** | Manager accessed `/insights` with full compliance trend charts and guideline health analytics. Creator navigating to `/insights` received polite "Role Restricted" access limitation explanation. |
+
+All test content created during the smoke test was cleaned up via `scripts/reset-demo.ts --confirm`.
