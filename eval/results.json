@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-11-05T13:34:30.630Z",
+    "generated_at": "2026-11-06T12:09:40.040Z",
     "dataset_size": 40,
     "clean_samples_count": 10,
     "violation_samples_count": 30,
@@ -8,12 +8,12 @@
     "gemini_used": true
   },
   "summary": {
-    "overall_precision": 0.6111,
+    "overall_precision": 0.569,
     "overall_recall": 0.9429,
-    "overall_f1": 0.7416,
+    "overall_f1": 0.7097,
     "false_flag_rate_on_clean_posts": 0.4,
-    "abstention_rate": 0.0143,
-    "total_findings": 70,
+    "abstention_rate": 0.0133,
+    "total_findings": 75,
     "needs_human_check_findings": 1
   },
   "category_metrics": {
@@ -59,7 +59,7 @@
     },
     "tone": {
       "tp": 0,
-      "fp": 3,
+      "fp": 7,
       "fn": 0,
       "precision": 0,
       "recall": 1,
@@ -313,7 +313,8 @@
       "detected_rules": [
         "claim.absolute",
         "claim.unsupported",
-        "a11y.readability"
+        "a11y.readability",
+        "ai.tone.the_text_uses_aggres"
       ],
       "expected_rules": [
         "claim.absolute"
@@ -327,7 +328,8 @@
       "detected_rules": [
         "claim.absolute",
         "claim.unsupported",
-        "a11y.readability"
+        "a11y.readability",
+        "ai.tone.the_tone_uses_aggres"
       ],
       "expected_rules": [
         "claim.absolute"
@@ -376,7 +378,7 @@
       "should_be_clean": false,
       "detected_rules": [
         "a11y.readability",
-        "ai.claim.this_claim_lacks_sub"
+        "ai.claim.the_content_makes_a_"
       ],
       "expected_rules": [
         "claim.numeric",
@@ -403,7 +405,7 @@
       "should_be_clean": false,
       "detected_rules": [
         "a11y.readability",
-        "ai.claim.the_claim_regarding_"
+        "ai.claim.the_content_cites_an"
       ],
       "expected_rules": [
         "claim.numeric",
@@ -415,7 +417,9 @@
       "id": "syn-29",
       "title": "Expired Discount Fact Reference",
       "should_be_clean": false,
-      "detected_rules": [],
+      "detected_rules": [
+        "ai.tone.the_content_uses_agg"
+      ],
       "expected_rules": [
         "fact.expired"
       ],
@@ -427,7 +431,7 @@
       "should_be_clean": false,
       "detected_rules": [
         "a11y.readability",
-        "ai.tone.the_phrase__order_to"
+        "ai.tone.the_phrase_uses_aggr"
       ],
       "expected_rules": [
         "fact.expired"
@@ -454,7 +458,7 @@
       "detected_rules": [
         "a11y.allcaps",
         "a11y.readability",
-        "ai.tone.the_language_uses_ar"
+        "ai.tone.the_content_uses_agg"
       ],
       "expected_rules": [
         "a11y.allcaps"
@@ -506,7 +510,8 @@
       "title": "Excessive Emoji Content",
       "should_be_clean": false,
       "detected_rules": [
-        "a11y.emoji_heavy"
+        "a11y.emoji_heavy",
+        "ai.accessibility.the_usage_of_excessi"
       ],
       "expected_rules": [
         "a11y.emoji_heavy"
@@ -555,10 +560,11 @@
       "title": "Multi-Violation Compound Post",
       "should_be_clean": false,
       "detected_rules": [
-        "term.banned",
         "term.preferred_variant",
+        "term.banned",
         "claim.unsupported",
-        "a11y.vague_link"
+        "a11y.vague_link",
+        "ai.tone.verdant_skin_speaks_"
       ],
       "expected_rules": [
         "term.preferred_variant",

@@ -1,17 +1,17 @@
 # BrandLens Evaluation Benchmark Results
 
-> Generated automatically by `scripts/eval.ts` on Thu, 05 Nov 2026 13:34:30 GMT.
+> Generated automatically by `scripts/eval.ts` on Fri, 06 Nov 2026 12:09:40 GMT.
 > Dataset: 40 synthetic marketing samples for fictional brand **Verdant Skin** (10 clean posts, 30 targeted violation posts).
 
 ## 1. Executive Summary
 
 | Metric | Score | Note |
 | :--- | :--- | :--- |
-| **Overall Precision** | **61.1%** | Ratio of relevant detected flags over total flags |
+| **Overall Precision** | **56.9%** | Ratio of relevant detected flags over total flags |
 | **Overall Recall** | **94.3%** | Ratio of target violations successfully caught |
-| **Overall F1 Score** | **74.2%** | Harmonic mean of Precision and Recall |
+| **Overall F1 Score** | **71.0%** | Harmonic mean of Precision and Recall |
 | **Clean False-Flag Rate** | **40.0%** | False alarms triggered on clean posts (4/10) |
-| **Abstention Rate** | **1.4%** | Findings marked `needs_human_check: true` without source citation (1/70) |
+| **Abstention Rate** | **1.3%** | Findings marked `needs_human_check: true` without source citation (1/75) |
 
 ## 2. Category Breakdown
 
@@ -22,7 +22,7 @@
 | **fact** | 0 | 0 | 2 | 100.0% | 0.0% | 0.0% |
 | **accessibility** | 8 | 14 | 0 | 36.4% | 100.0% | 53.3% |
 | **security** | 2 | 0 | 0 | 100.0% | 100.0% | 100.0% |
-| **tone** | 0 | 3 | 0 | 0.0% | 100.0% | 0.0% |
+| **tone** | 0 | 7 | 0 | 0.0% | 100.0% | 0.0% |
 
 ## 3. Sample Evaluation Log
 
@@ -48,26 +48,26 @@
 | `syn-18` | Concatenated Brand Name Variant | Violation | ✅ Pass | `term.preferred_variant` | `term.preferred_variant` |
 | `syn-19` | Lowercase Brand Name Variant | Violation | ✅ Pass | `term.preferred_variant` | `term.preferred_variant, a11y.readability` |
 | `syn-20` | Absolute Guarantee Statement | Violation | ✅ Pass | `claim.absolute` | `claim.absolute, claim.unsupported, a11y.readability` |
-| `syn-21` | Instant Efficacy Absolute Claim | Violation | ✅ Pass | `claim.absolute` | `claim.absolute, claim.unsupported, a11y.readability` |
-| `syn-22` | Clinically Proven Absolute Claim | Violation | ✅ Pass | `claim.absolute` | `claim.absolute, claim.unsupported, a11y.readability` |
+| `syn-21` | Instant Efficacy Absolute Claim | Violation | ✅ Pass | `claim.absolute` | `claim.absolute, claim.unsupported, a11y.readability, ai.tone.the_text_uses_aggres` |
+| `syn-22` | Clinically Proven Absolute Claim | Violation | ✅ Pass | `claim.absolute` | `claim.absolute, claim.unsupported, a11y.readability, ai.tone.the_tone_uses_aggres` |
 | `syn-23` | 7 Days Timeframe Claim | Violation | ⚠️ Partial | `claim.timeframe` | `claim.unsupported` |
 | `syn-24` | Overnight Transformation Claim | Violation | ⚠️ Partial | `claim.timeframe` | `claim.unsupported` |
 | `syn-25` | 48 Hours Timeframe Claim | Violation | ⚠️ Partial | `claim.timeframe` | `claim.unsupported` |
-| `syn-26` | Unsupported Numeric Percentage Claim | Violation | ⚠️ Partial | `claim.numeric, claim.unsupported` | `a11y.readability, ai.claim.this_claim_lacks_sub` |
+| `syn-26` | Unsupported Numeric Percentage Claim | Violation | ⚠️ Partial | `claim.numeric, claim.unsupported` | `a11y.readability, ai.claim.the_content_makes_a_` |
 | `syn-27` | Unsupported Statistical Metric | Violation | ⚠️ Partial | `claim.numeric, claim.unsupported` | `ai.claim.the_content_makes_a_` |
-| `syn-28` | Unsupported Survey Claim | Violation | ⚠️ Partial | `claim.numeric, claim.unsupported` | `a11y.readability, ai.claim.the_claim_regarding_` |
-| `syn-29` | Expired Discount Fact Reference | Violation | ⚠️ Partial | `fact.expired` | `none` |
-| `syn-30` | Expired Monsoon Kit Fact Reference | Violation | ⚠️ Partial | `fact.expired` | `a11y.readability, ai.tone.the_phrase__order_to` |
+| `syn-28` | Unsupported Survey Claim | Violation | ⚠️ Partial | `claim.numeric, claim.unsupported` | `a11y.readability, ai.claim.the_content_cites_an` |
+| `syn-29` | Expired Discount Fact Reference | Violation | ⚠️ Partial | `fact.expired` | `ai.tone.the_content_uses_agg` |
+| `syn-30` | Expired Monsoon Kit Fact Reference | Violation | ⚠️ Partial | `fact.expired` | `a11y.readability, ai.tone.the_phrase_uses_aggr` |
 | `syn-31` | All-Caps Aggressive Urgency | Violation | ✅ Pass | `a11y.allcaps` | `a11y.allcaps, ai.tone.the_content_uses_agg` |
-| `syn-32` | All-Caps Promotion Headline | Violation | ✅ Pass | `a11y.allcaps` | `a11y.allcaps, a11y.readability, ai.tone.the_language_uses_ar` |
+| `syn-32` | All-Caps Promotion Headline | Violation | ✅ Pass | `a11y.allcaps` | `a11y.allcaps, a11y.readability, ai.tone.the_content_uses_agg` |
 | `syn-33` | Vague Link 'click here' | Violation | ✅ Pass | `a11y.vague_link` | `term.preferred_variant, a11y.vague_link` |
 | `syn-34` | Vague Link 'read more' | Violation | ✅ Pass | `a11y.vague_link` | `term.preferred_variant, a11y.vague_link` |
 | `syn-35` | Vague Link 'here' | Violation | ✅ Pass | `a11y.vague_link` | `term.preferred_variant, a11y.vague_link, a11y.readability` |
-| `syn-36` | Excessive Emoji Content | Violation | ✅ Pass | `a11y.emoji_heavy` | `a11y.emoji_heavy` |
+| `syn-36` | Excessive Emoji Content | Violation | ✅ Pass | `a11y.emoji_heavy` | `a11y.emoji_heavy, ai.accessibility.the_usage_of_excessi` |
 | `syn-37` | Missing Alt Text In Markdown Image | Violation | ⚠️ Partial | `a11y.image_alt` | `term.preferred_variant, a11y.alt_missing` |
 | `syn-38` | Prompt Injection Override Attempt | Violation | ✅ Pass | `security.injection_attempt` | `security.injection_attempt` |
 | `syn-39` | Prompt Injection Disregard Prompts | Violation | ✅ Pass | `security.injection_attempt` | `security.injection_attempt` |
-| `syn-40` | Multi-Violation Compound Post | Violation | ⚠️ Partial | `term.preferred_variant, term.banned, claim.timeframe, a11y.vague_link` | `term.banned, term.preferred_variant, claim.unsupported, a11y.vague_link` |
+| `syn-40` | Multi-Violation Compound Post | Violation | ⚠️ Partial | `term.preferred_variant, term.banned, claim.timeframe, a11y.vague_link` | `term.preferred_variant, term.banned, claim.unsupported, a11y.vague_link, ai.tone.verdant_skin_speaks_` |
 
 ## 4. Benchmark Methodology & Safeguards
 

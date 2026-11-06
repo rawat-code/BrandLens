@@ -5,6 +5,6 @@
 - STAGE 2 - CLEAN DEMO DATA: DONE - Implemented scripts/reset-demo.ts, executed dry-run & confirmed cleanup of test junk, and created 5 idempotent showcase posts via real pipeline.
 - STAGE 3 - END-TO-END VERIFICATION: DONE - Executed full 15-check E2E suite with 100% pass rate (15/15) recorded in docs/E2E_RESULTS.md; fixed schema parameter types and added expired facts.
 - STAGE 4 - HARDENING: DONE - Audited route handlers, added rate-limiting test (429), added loading.tsx, verified zero client secret leaks, documented architectural boundaries in KNOWN_ISSUES.md.
-- STAGE 5 - EVALUATION: IN PROGRESS - Running eval pipeline on synthetic testset and recording metrics in RESULTS.md.
-- STAGE 6 - DOCUMENTATION: PENDING - Updating README, ARCHITECTURE, SERVICES, AI_DISCLOSURE, and team templates.
+- STAGE 5 - EVALUATION: DONE - Executed npm run eval across 40 synthetic samples; generated real metrics in eval/results.json and eval/RESULTS.md (94.3% Recall, 56.9% Precision, 1.3% Abstention).
+- STAGE 6 - DOCUMENTATION: IN PROGRESS - Updating README, ARCHITECTURE, SERVICES, AI_DISCLOSURE, and team templates.
 - STAGE 7 - FINAL CHECKS: PENDING - Verifying lint/test/build passes and writing FINAL_REPORT.md.
