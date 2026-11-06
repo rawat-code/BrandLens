@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { RoleBadge } from './RoleBadge';
 import { signOut } from '@/app/login/actions';
 import { Kbd } from './ui/Kbd';
+import { PageTransition } from './ui/Motion';
 import type { Profile, UserRole } from '@/lib/types';
 import type { User } from '@supabase/supabase-js';
 
@@ -263,7 +264,9 @@ export function AppShell({ user, profile, orgName, children }: AppShellProps) {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {children}
+        <PageTransition key={pathname} className="flex-1 flex flex-col min-w-0">
+          {children}
+        </PageTransition>
       </main>
     </div>
   );

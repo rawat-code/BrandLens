@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { StaggerContainer, StaggerItem } from '@/components/ui/Motion';
 import type { Finding } from '@/lib/types';
 
 interface FindingsGroupProps {
@@ -110,33 +111,34 @@ export function FindingsGroup({
                       {category}
                     </span>
 
-                    {categoryFindings.map((f) => {
-                      const isActive = f.id === activeFindingId;
+                    <StaggerContainer className="space-y-3">
+                      {categoryFindings.map((f) => {
+                        const isActive = f.id === activeFindingId;
 
-                      return (
-                        <div
-                          key={f.id}
-                          id={`card-${f.id}`}
-                          tabIndex={0}
-                          onClick={() => onSelectFinding(f.id)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              onSelectFinding(f.id);
-                            }
-                          }}
-                          className={`p-4 rounded-xl border border-white/[0.08] border-l-[3px] ${severityHeading.borderClass} bg-[#11111a] transition-all space-y-3 focus:outline-none ${
-                            isActive
-                              ? 'ring-1 ring-indigo-400 bg-[#171724]/90 shadow-xl shadow-indigo-950/40'
-                              : f.status === 'accepted'
-                              ? 'opacity-60 bg-[#11111a]/70'
-                              : f.status === 'disputed'
-                              ? 'opacity-70 bg-[#11111a]/80'
-                              : f.status === 'dismissed'
-                              ? 'opacity-40 bg-[#11111a]/50'
-                              : 'hover:bg-[#171724]/50'
-                          }`}
-                        >
+                        return (
+                          <StaggerItem key={f.id}>
+                            <div
+                              id={`card-${f.id}`}
+                              tabIndex={0}
+                              onClick={() => onSelectFinding(f.id)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  onSelectFinding(f.id);
+                                }
+                              }}
+                              className={`p-4 rounded-xl border border-white/[0.08] border-l-[3px] ${severityHeading.borderClass} bg-[#11111a] transition-all space-y-3 focus:outline-none ${
+                                isActive
+                                  ? 'ring-1 ring-indigo-400 bg-[#171724]/90 shadow-xl shadow-indigo-950/40'
+                                  : f.status === 'accepted'
+                                  ? 'opacity-60 bg-[#11111a]/70'
+                                  : f.status === 'disputed'
+                                  ? 'opacity-70 bg-[#11111a]/80'
+                                  : f.status === 'dismissed'
+                                  ? 'opacity-40 bg-[#11111a]/50'
+                                  : 'hover:bg-[#171724]/50'
+                              }`}
+                            >
                           {/* Card Header */}
                           <div className="flex items-center justify-between gap-2 flex-wrap">
                             <div className="flex items-center gap-1.5 flex-wrap">
@@ -359,8 +361,10 @@ export function FindingsGroup({
                             </div>
                           )}
                         </div>
-                      );
-                    })}
+                      </StaggerItem>
+                    );
+                  })}
+                </StaggerContainer>
                   </div>
                 );
               })}
