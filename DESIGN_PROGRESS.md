@@ -3,8 +3,8 @@
 - STAGE A - AUDIT: DONE - Captured 18 before screenshots to docs/design/before/ and documented generic tells in docs/design/AUDIT.md.
 - STAGE B - DESIGN TOKENS AND THEME: DONE - Configured dark luxury theme tokens, Instrument Serif + Geist font variables, dark scrollbars, noise texture, and reusable dark UI primitives (Button, Input, Badge, Card, Table, Tabs, PageHeader, Dialog, Kbd, Toast, Skeleton, EmptyState).
 - STAGE C - APP SHELL AND COPY: DONE - Redesigned sidebar with BL monogram, sticky glass header, sentence-case titles, subtle active indicators, ToastProvider, and clean SVG monogram favicon.
-- STAGE D - LOGIN: IN PROGRESS - Implementing split desktop layout with Instrument Serif brand panel and demo account selector, dark authentication form, and constellation background.
-- STAGE E - DASHBOARD AND REVIEW QUEUE: PENDING - Compact tabular metrics strip, sticky-header content table, status chips (text + dot/icon), sorted review queue with severity summaries, segmented filters.
+- STAGE D - LOGIN: DONE - Implemented split desktop layout with Instrument Serif brand headline, fictional workspace badge, fast-track demo persona selector, dark authentication form, and throttled constellation canvas.
+- STAGE E - DASHBOARD AND REVIEW QUEUE: IN PROGRESS - Redesigning dashboard metrics strip, content table, review queue with high-severity sorting, and filter chips.
 - STAGE F - CONTENT DETAIL AND FINDINGS: PENDING - Centrepiece two-column reading/findings layout, wavy/solid/dotted underlines with numbered markers, 3px left severity borders, Geist Mono source quotes, inline diffs with underline/strikethrough.
 - STAGE G - LIBRARY, INSIGHTS, SETTINGS, ABOUT: PENDING - Clean dark tables with inline actions, expired fact badges, inline SVG data charts for insights, definition lists, plain language about page.
 - STAGE H - MOTION AND MICRO-INTERACTIONS: PENDING - Restrained framer-motion page transitions (150ms fade + 6px slide), list entrance staggers, button press feedback, full prefers-reduced-motion gating.

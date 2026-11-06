@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import React, { useState, useTransition } from 'react';
 import { loginWithEmail, loginAsDemoRole } from './actions';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { ConstellationCanvas } from '@/components/ui/ConstellationCanvas';
 import type { UserRole } from '@/lib/types';
 
 const DEMO_ROLES: {
@@ -9,35 +12,35 @@ const DEMO_ROLES: {
   title: string;
   email: string;
   desc: string;
-  badgeClass: string;
+  color: string;
 }[] = [
   {
     role: 'creator',
     title: 'Creator',
     email: 'creator@verdant.demo',
     desc: 'Draft content, run reviews, accept fixes, publish approved work',
-    badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+    color: 'border-[#5fd1a0]/30 text-[#5fd1a0] hover:border-[#5fd1a0]/60',
   },
   {
     role: 'manager',
     title: 'Manager',
     email: 'manager@verdant.demo',
     desc: 'Review team content, request changes, approve clean drafts',
-    badgeClass: 'bg-blue-100 text-blue-800 border-blue-300',
+    color: 'border-indigo-400/30 text-[#a5b4fc] hover:border-indigo-400/60',
   },
   {
     role: 'reviewer',
     title: 'Reviewer',
     email: 'reviewer@verdant.demo',
     desc: 'Deep compliance reviews, resolve high-severity flags',
-    badgeClass: 'bg-purple-100 text-purple-800 border-purple-300',
+    color: 'border-violet-400/30 text-[#c084fc] hover:border-violet-400/60',
   },
   {
     role: 'admin',
     title: 'Admin',
     email: 'admin@verdant.demo',
     desc: 'Manage guidelines, approved facts, terminology library, audit logs',
-    badgeClass: 'bg-amber-100 text-amber-800 border-amber-300',
+    color: 'border-[#f5b74f]/30 text-[#f5b74f] hover:border-[#f5b74f]/60',
   },
 ];
 
@@ -71,106 +74,48 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-600 text-white font-bold text-2xl shadow-sm mb-4">
-          BL
+    <div className="min-h-screen bg-[#0a0a10] text-[#ececf6] grid grid-cols-1 lg:grid-cols-12 relative overflow-hidden">
+      {/* Constellation Canvas Drift Background */}
+      <ConstellationCanvas />
+
+      {/* Left Editorial Panel */}
+      <div className="lg:col-span-7 flex flex-col justify-between p-6 sm:p-10 lg:p-14 relative z-10 border-b lg:border-b-0 lg:border-r border-white/[0.08] backdrop-blur-[2px]">
+        {/* Brand Top Header */}
+        <div>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-serif font-bold flex items-center justify-center text-sm shadow-md shadow-indigo-950/60">
+              BL
+            </div>
+            <div>
+              <span className="font-serif text-xl font-normal text-[#ececf6] tracking-tight block leading-tight">
+                BrandLens
+              </span>
+              <span className="text-xs text-[#7b7b94]">Pre-publication brand governance</span>
+            </div>
+          </div>
         </div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-          BrandLens
-        </h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Pre-publication brand governance for your organisation
-        </p>
-        <div className="mt-2.5">
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
-            Demo workspace: Verdant Skin (fictional)
-          </span>
-        </div>
-      </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-        <div className="bg-white py-8 px-6 shadow-sm rounded-xl border border-slate-200 sm:px-10">
-          {errorMessage && (
-            <div
-              role="alert"
-              className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800"
-            >
-              <div className="flex">
-                <span className="font-medium mr-1">Error:</span>
-                <span>{errorMessage}</span>
-              </div>
-            </div>
-          )}
+        {/* Editorial Value Proposition */}
+        <div className="my-8 lg:my-0 max-w-xl">
+          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal tracking-tight text-[#ececf6] leading-[1.15]">
+            Every claim cited. Every fix reviewed. Human decided.
+          </h1>
+          <p className="mt-4 text-sm sm:text-base text-[#a3a3bb] leading-relaxed">
+            Content is verified against your approved guidelines, facts, and terminology before it reaches the public.
+            AI suggests fixes with exact library citations; your team makes every final decision.
+          </p>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-slate-700"
-              >
-                Email address
-              </label>
-              <div className="mt-1">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  aria-required="true"
-                  placeholder="user@example.com"
-                  disabled={isPending}
-                  className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm disabled:opacity-50 disabled:bg-slate-100"
-                />
-              </div>
-            </div>
+          <div className="mt-5 inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#171724] border border-white/[0.08] text-xs text-[#a3a3bb]">
+            <span className="w-2 h-2 rounded-full bg-[#5fd1a0] animate-pulse" />
+            <span>Demo workspace: <strong className="text-[#ececf6] font-medium">Verdant Skin (fictional)</strong></span>
+          </div>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-slate-700"
-              >
-                Password
-              </label>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  aria-required="true"
-                  disabled={isPending}
-                  className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm disabled:opacity-50 disabled:bg-slate-100"
-                />
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={isPending}
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-60 transition-colors"
-              >
-                {isPending && !activeDemo ? 'Signing in...' : 'Sign in'}
-              </button>
-            </div>
-          </form>
-
+          {/* Quick Demo Personas Selection */}
           <div className="mt-8">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-3 text-slate-500 font-semibold tracking-wider">
-                  Or try a demo role
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-1 gap-2.5">
+            <p className="text-xs font-medium text-[#7b7b94] uppercase tracking-wider mb-3">
+              Fast-track with a demo role:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {DEMO_ROLES.map((d) => {
                 const isCurrentPending = isPending && activeDemo === d.role;
                 return (
@@ -179,35 +124,114 @@ export default function LoginPage() {
                     type="button"
                     disabled={isPending}
                     onClick={() => handleDemoLogin(d.role)}
-                    className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-emerald-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 transition disabled:opacity-50 group flex items-start justify-between gap-3"
+                    className={`text-left p-3 rounded-lg bg-[#11111a] hover:bg-[#171724] border transition-all disabled:opacity-50 group flex flex-col justify-between cursor-pointer ${d.color}`}
                   >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-slate-800 text-sm group-hover:text-emerald-700">
-                          {d.title}
-                        </span>
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full border font-medium ${d.badgeClass}`}
-                        >
-                          {d.email}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500 mt-0.5">{d.desc}</p>
+                    <div className="flex items-center justify-between w-full mb-1">
+                      <span className="font-medium text-sm text-[#ececf6] group-hover:text-white">
+                        {d.title}
+                      </span>
+                      <span className="text-[11px] font-mono text-[#7b7b94]">
+                        {isCurrentPending ? 'Signing in...' : 'Enter →'}
+                      </span>
                     </div>
-                    <div className="shrink-0 text-slate-400 group-hover:text-emerald-600 self-center">
-                      {isCurrentPending ? (
-                        <span className="text-xs font-medium text-emerald-600">
-                          Loading...
-                        </span>
-                      ) : (
-                        <span className="text-sm font-bold" aria-hidden="true">
-                          &rarr;
-                        </span>
-                      )}
-                    </div>
+                    <p className="text-xs text-[#7b7b94] line-clamp-2">
+                      {d.desc}
+                    </p>
                   </button>
                 );
               })}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Guarantee */}
+        <div className="pt-4 border-t border-white/[0.06] flex items-center justify-between text-xs text-[#7b7b94]">
+          <span>AI never publishes, approves or rewrites on its own.</span>
+          <span className="font-mono text-[11px]">v1.0-release</span>
+        </div>
+      </div>
+
+      {/* Right Authentication Panel */}
+      <div className="lg:col-span-5 flex flex-col justify-center p-6 sm:p-10 lg:p-12 relative z-10 bg-[#0e0e17]/80">
+        <div className="max-w-md w-full mx-auto">
+          <div className="bg-[#11111a] p-6 sm:p-8 rounded-xl border border-white/[0.08] shadow-2xl shadow-black/80">
+            <div className="mb-6">
+              <h2 className="font-serif text-2xl font-normal text-[#ececf6] tracking-tight">
+                Sign in
+              </h2>
+              <p className="mt-1 text-xs text-[#a3a3bb]">
+                Enter your credentials or use a demo role on the left
+              </p>
+            </div>
+
+            {errorMessage && (
+              <div
+                role="alert"
+                className="mb-5 p-3.5 rounded-lg bg-rose-500/10 border border-rose-500/25 text-xs text-[#ff7a8a] flex items-center gap-2"
+              >
+                <svg className="w-4 h-4 shrink-0 text-[#ff7a8a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-xs font-medium text-[#a3a3bb] mb-1.5"
+                >
+                  Email address
+                </label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  aria-required="true"
+                  placeholder="name@company.com"
+                  disabled={isPending}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-xs font-medium text-[#a3a3bb] mb-1.5"
+                >
+                  Password
+                </label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  aria-required="true"
+                  disabled={isPending}
+                />
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  disabled={isPending}
+                  isLoading={isPending && !activeDemo}
+                  className="w-full"
+                >
+                  {isPending && !activeDemo ? 'Signing in...' : 'Sign in'}
+                </Button>
+              </div>
+            </form>
+
+            <div className="mt-6 pt-5 border-t border-white/[0.06] text-center">
+              <p className="text-xs text-[#7b7b94]">
+                Protected by role-based governance & audit logs
+              </p>
             </div>
           </div>
         </div>
@@ -215,4 +239,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
