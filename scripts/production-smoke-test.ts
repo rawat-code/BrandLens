@@ -126,11 +126,12 @@ async function main() {
 
   async function waitForButton(text: string, timeoutMs = 15000): Promise<boolean> {
     const start = Date.now();
+    const lower = text.toLowerCase();
     while (Date.now() - start < timeoutMs) {
       const found = await client.evaluate(`
         (() => {
           const btns = Array.from(document.querySelectorAll('button'));
-          return btns.some(b => (b.innerText || b.textContent || '').includes('${text}'));
+          return btns.some(b => (b.innerText || b.textContent || '').toLowerCase().includes('${lower}'));
         })()
       `);
       if (found) return true;
@@ -225,7 +226,7 @@ async function main() {
 
       // Click Create Draft button
       const submitBtn = Array.from(document.querySelectorAll('button')).find(b =>
-        (b.innerText || b.textContent || '').includes('Create Draft') || (b.innerText || b.textContent || '').includes('Save Draft')
+        (b.innerText || b.textContent || '').toLowerCase().includes('create draft') || (b.innerText || b.textContent || '').toLowerCase().includes('save draft')
       );
       if (submitBtn) submitBtn.click();
     })()
@@ -282,7 +283,7 @@ async function main() {
     await client.evaluate(`
       (() => {
         const btns = Array.from(document.querySelectorAll('button'));
-        const reviewBtn = btns.find(b => (b.innerText || b.textContent || '').includes('Run Review'));
+        const reviewBtn = btns.find(b => (b.innerText || b.textContent || '').toLowerCase().includes('run review'));
         if (reviewBtn) reviewBtn.click();
       })()
     `);
@@ -409,7 +410,7 @@ async function main() {
     await client.evaluate(`
       (() => {
         const btns = Array.from(document.querySelectorAll('button'));
-        const submitBtn = btns.find(b => (b.innerText || b.textContent || '').includes('Submit for Approval'));
+        const submitBtn = btns.find(b => (b.innerText || b.textContent || '').toLowerCase().includes('submit for approval'));
         if (submitBtn) submitBtn.click();
       })()
     `);
