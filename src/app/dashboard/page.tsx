@@ -87,7 +87,7 @@ export default async function DashboardPage() {
                 {isCreator ? 'My Creator Studio' : 'Compliance & Review Dashboard'}
               </h1>
               <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                Verdant Skin
+                {profile.org_name || 'Workspace'}
               </span>
             </div>
             <p className="text-sm text-slate-500 mt-1">

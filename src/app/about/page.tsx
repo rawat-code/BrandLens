@@ -12,7 +12,7 @@ export default async function AboutPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">About BrandLens</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Pre-publication brand-governance & compliance review platform for Verdant Skin.
+            Pre-publication brand-governance & compliance review platform for {profile.org_name || 'your organisation'}.
           </p>
         </div>
 

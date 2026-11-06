@@ -18,6 +18,7 @@ interface InsightsClientViewProps {
   guidelines: Guideline[];
   userRole: UserRole;
   isDemoHistoryActive: boolean;
+  orgName?: string;
 }
 
 export function InsightsClientView({
@@ -25,6 +26,7 @@ export function InsightsClientView({
   guidelines,
   userRole,
   isDemoHistoryActive: initialDemoActive,
+  orgName,
 }: InsightsClientViewProps) {
   const router = useRouter();
   const [insights] = useState<InsightsData>(initialInsights);
@@ -72,7 +74,7 @@ export function InsightsClientView({
           </div>
           <p className="text-sm text-slate-500 mt-1">
             Aggregated governance trends, reviewer overrides, and guideline ambiguity metrics for{' '}
-            <span className="font-semibold text-emerald-800">Verdant Skin</span>.
+            <span className="font-semibold text-emerald-800">{orgName || 'your organisation'}</span>.
           </p>
         </div>
 

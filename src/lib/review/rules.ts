@@ -575,7 +575,7 @@ export function runRuleChecks({
         end_idx: altm.index + altm[0].length,
         reason: 'Image is missing alt text. Screen readers require descriptive alt text.',
         guideline: a11yGuideline,
-        suggestion: `![Verdant Skin product formulation](${altm[1]})`,
+        suggestion: `![Descriptive image alt text](${altm[1]})`,
         requires_reviewer: false,
       })
     );

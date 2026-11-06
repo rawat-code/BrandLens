@@ -36,6 +36,7 @@ export interface Profile {
   role: UserRole;
   full_name: string | null;
   created_at?: string;
+  org_name?: string;
 }
 
 export interface Organization {

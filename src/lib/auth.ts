@@ -51,9 +51,24 @@ export async function getSessionProfile(): Promise<SessionProfile | null> {
       return null;
     }
 
+    let orgName: string | undefined;
+    if (profile.org_id) {
+      const { data: org } = await admin
+        .from('orgs')
+        .select('name')
+        .eq('id', profile.org_id)
+        .maybeSingle();
+      if (org?.name) {
+        orgName = org.name;
+      }
+    }
+
     return {
       user,
-      profile: profile as Profile,
+      profile: {
+        ...(profile as Profile),
+        org_name: orgName,
+      },
     };
   } catch (err) {
     console.error('Error fetching session profile:', err);

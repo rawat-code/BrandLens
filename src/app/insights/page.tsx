@@ -117,6 +117,7 @@ export default async function InsightsPage() {
         guidelines={guidelines}
         userRole={profile.role}
         isDemoHistoryActive={isDemoActive}
+        orgName={profile.org_name}
       />
     </AppShell>
   );

@@ -40,7 +40,7 @@ export async function generateGuidelineClarification({
     .slice(0, 10)
     .map((e) => redact(e).redactedText);
 
-  const systemInstruction = `You are a professional brand governance and compliance policy specialist for "Verdant Skin", an ethical, botanical skincare brand.
+  const systemInstruction = `You are a professional brand governance and compliance policy specialist.
 Your job is to analyze guidelines that creators have repeatedly disputed or found unclear, and propose concise, actionable clarifying wording with practical Do's and Don'ts examples.
 
 SECURITY RULE:

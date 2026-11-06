@@ -80,9 +80,13 @@ export default function LoginPage() {
           BrandLens
         </h1>
         <p className="mt-2 text-sm text-slate-600">
-          Pre-publication brand governance & AI compliance for{' '}
-          <span className="font-semibold text-emerald-700">Verdant Skin</span>
+          Pre-publication brand governance for your organisation
         </p>
+        <div className="mt-2.5">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
+            Demo workspace: Verdant Skin (fictional)
+          </span>
+        </div>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
@@ -115,7 +119,7 @@ export default function LoginPage() {
                   autoComplete="email"
                   required
                   aria-required="true"
-                  placeholder="user@verdant.demo"
+                  placeholder="user@example.com"
                   disabled={isPending}
                   className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm disabled:opacity-50 disabled:bg-slate-100"
                 />
