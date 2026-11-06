@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { loadEnvConfig } from '@next/env';
+import { runReview } from '../src/lib/review/pipeline';
 
 // Load environment variables from .env
 loadEnvConfig(process.cwd());
@@ -340,115 +341,140 @@ async function seed() {
   }
   console.log(`✓ Seeded ${terms.length} terms`);
 
-  // 6. Sample Contents (3 contents in different states)
-  const sampleContents = [
+  // 6. Clean Showcase Set (5 items covering all key compliance flows)
+  const showcaseContents = [
     {
-      title: 'Spring Botanical Dew Serum Launch Copy',
+      key: 'a',
+      title: 'Showcase A: Miracle Serum Campaign (Draft)',
       channel: 'instagram',
       audience: 'Sensitive skin skincare enthusiasts',
       confidential: false,
-      status: 'draft',
-      created_by: userMap.creator,
-      current_version: 1,
-      versions: [
-        {
-          version: 1,
-          body: 'Introducing our miracle Botanical Dew Serum! It offers guaranteed results and is 100% chemical-free. Formulated without parabens and synthetic fragrance. Free shipping on orders above 999 rupees.',
-          note: 'Initial campaign caption draft',
-        },
-      ],
+      final_status: 'draft',
+      body: 'Our miracle serum CURES acne in 7 days!! 100% guaranteed. Click here',
+      note: 'Initial campaign caption draft with problematic claims',
     },
     {
-      title: 'Sensitive Skin Barrier Routine Guide',
+      key: 'b',
+      title: 'Showcase B: Clinical Skin Barrier Spotlight (In Review)',
       channel: 'blog',
-      audience: 'General consumers seeking gentle routines',
+      audience: 'Dermatology & skincare community',
       confidential: false,
-      status: 'in_review',
-      created_by: userMap.creator,
-      current_version: 1,
-      versions: [
-        {
-          version: 1,
-          body: 'Gentle skincare begins with respect for the skin barrier. Verdant Skin crafts plant-based solutions designed to soothe everyday redness. In a 4-week user survey of 60 people, 78 percent reported smoother-feeling skin.',
-          note: 'Submitted for managerial and reviewer approval',
-        },
-      ],
+      final_status: 'in_review',
+      body: 'Our clinical formula reduces skin redness by 95% in 48 hours with guaranteed results.',
+      note: 'Submitted for manager and reviewer evaluation with unsupported high claim',
     },
     {
-      title: 'Q1 Brand Sustainability & Ingredient Disclosure',
+      key: 'c',
+      title: 'Showcase C: Verdant Skin Brand Transparency (Published)',
       channel: 'email',
       audience: 'Newsletter subscribers & eco-conscious buyers',
       confidential: false,
-      status: 'approved',
-      created_by: userMap.creator,
-      current_version: 2,
-      versions: [
-        {
-          version: 1,
-          body: 'Drafting initial sustainability message for Verdant Skin newsletter.',
-          note: 'Early draft',
-        },
-        {
-          version: 2,
-          body: 'At Verdant Skin, transparency is our promise. Formulated without parabens and synthetic fragrance, each bottle uses 100% recyclable post-consumer glass packaging across all serums.',
-          note: 'Revised with verified eco facts and approved by Marcus Manager',
-        },
-      ],
+      final_status: 'published',
+      body: 'At Verdant Skin, transparency is our promise. Formulated without parabens and synthetic fragrance, each bottle uses 100% recyclable post-consumer glass packaging across all serums.',
+      note: 'Fully approved and published compliant post',
+    },
+    {
+      key: 'd',
+      title: 'Showcase D: Monsoon Botanical Sample Kit (Needs Changes)',
+      channel: 'social',
+      audience: 'Seasonal shoppers',
+      confidential: false,
+      final_status: 'needs_changes',
+      body: 'Complimentary botanical sample kit with every monsoon order for a limited period.',
+      note: 'Promotional copy citing an expired promotion fact',
+    },
+    {
+      key: 'e',
+      title: 'Showcase E: Project Aurora Formulation Brief (Confidential)',
+      channel: 'internal',
+      audience: 'Product formulation team',
+      confidential: true,
+      final_status: 'draft',
+      body: 'Confidential internal formulation brief for Project Aurora barrier balm. Features cold-pressed rosehip seed oil harvested in Himachal Pradesh.',
+      note: 'Confidential product brief - AI review bypassed',
     },
   ];
 
-  for (const c of sampleContents) {
-    const { versions, ...contentData } = c;
-
+  for (const item of showcaseContents) {
     const { data: existingContent } = await supabase
       .from('contents')
       .select('id')
       .eq('org_id', orgId)
-      .eq('title', contentData.title)
+      .eq('title', item.title)
       .maybeSingle();
 
     let contentId: string;
     if (existingContent) {
       contentId = existingContent.id;
-      await supabase.from('contents').update(contentData).eq('id', contentId);
+      await supabase
+        .from('contents')
+        .update({
+          channel: item.channel,
+          audience: item.audience,
+          confidential: item.confidential,
+          status: 'draft',
+          current_version: 1,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', contentId);
     } else {
       contentId = crypto.randomUUID();
       await supabase.from('contents').insert({
         id: contentId,
         org_id: orgId,
-        ...contentData,
+        title: item.title,
+        channel: item.channel,
+        audience: item.audience,
+        confidential: item.confidential,
+        status: 'draft',
+        created_by: userMap.creator,
+        current_version: 1,
       });
     }
 
-    for (const v of versions) {
-      const { data: existingVersion } = await supabase
-        .from('content_versions')
-        .select('id')
-        .eq('content_id', contentId)
-        .eq('version', v.version)
-        .maybeSingle();
+    // Upsert version 1
+    const { data: existingVersion } = await supabase
+      .from('content_versions')
+      .select('id')
+      .eq('content_id', contentId)
+      .eq('version', 1)
+      .maybeSingle();
 
-      if (existingVersion) {
-        await supabase
-          .from('content_versions')
-          .update({
-            body: v.body,
-            note: v.note,
-          })
-          .eq('id', existingVersion.id);
-      } else {
-        await supabase.from('content_versions').insert({
-          id: crypto.randomUUID(),
-          content_id: contentId,
-          version: v.version,
-          body: v.body,
-          created_by: contentData.created_by,
-          note: v.note,
-        });
-      }
+    if (existingVersion) {
+      await supabase
+        .from('content_versions')
+        .update({
+          body: item.body,
+          note: item.note,
+        })
+        .eq('id', existingVersion.id);
+    } else {
+      await supabase.from('content_versions').insert({
+        id: crypto.randomUUID(),
+        content_id: contentId,
+        version: 1,
+        body: item.body,
+        created_by: userMap.creator,
+        note: item.note,
+      });
     }
+
+    // Run real review pipeline
+    console.log(`  Auditing showcase item: "${item.title}"...`);
+    try {
+      await runReview(contentId, userMap.creator);
+    } catch (reviewErr) {
+      console.warn(`  Warning reviewing ${item.title}:`, (reviewErr as Error).message);
+    }
+
+    // Apply desired target status
+    await supabase
+      .from('contents')
+      .update({ status: item.final_status })
+      .eq('id', contentId);
   }
-  console.log(`✓ Seeded ${sampleContents.length} sample contents with versions`);
+
+  console.log(`✓ Seeded & reviewed ${showcaseContents.length} clean showcase contents`);
 
   console.log('✅ Seed completed successfully!');
 }
