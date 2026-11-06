@@ -3,6 +3,12 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Dialog } from '@/components/ui/Dialog';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
+
 interface SettingsClientViewProps {
   initialOrg: {
     id: string;
@@ -104,7 +110,7 @@ export function SettingsClientView({
       setConfirmationInput('');
       setResetMessage({
         type: 'success',
-        text: 'All brand guidelines, facts, terms, and sample content have been cleared. Ready to load your brand!',
+        text: 'All brand guidelines, facts, terms, and content drafts have been cleared.',
       });
       router.refresh();
     } catch (err: unknown) {
@@ -117,50 +123,37 @@ export function SettingsClientView({
   const canConfirmReset = confirmationInput.trim().toLowerCase() === orgName.trim().toLowerCase();
 
   return (
-    <div className="p-6 md:p-8 max-w-4xl w-full mx-auto space-y-8">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              Organisation Settings
-            </h1>
-            <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-purple-50 text-purple-700 border border-purple-200">
-              Admin Only
-            </span>
-          </div>
-          <p className="text-sm text-slate-500 mt-1">
-            Manage your brand identity, workspace details, and governance data state.
-          </p>
-        </div>
-      </div>
+    <div className="p-6 sm:p-8 max-w-4xl w-full mx-auto space-y-6">
+      <PageHeader
+        title="Settings"
+        description="Workspace governance parameters, brand identity, and data lifecycle management."
+      />
 
-      {/* Global Success / Alert Banner */}
       {resetMessage && (
         <div
           role="alert"
-          className={`p-4 rounded-xl border text-sm flex items-start justify-between gap-4 ${
+          className={`p-4 rounded-xl text-xs flex items-center justify-between border ${
             resetMessage.type === 'success'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-              : 'bg-red-50 border-red-200 text-red-900'
+              ? 'bg-[#5fd1a0]/10 text-[#5fd1a0] border-[#5fd1a0]/30'
+              : 'bg-rose-500/10 text-[#ff7a8a] border-rose-500/30'
           }`}
         >
-          <div className="space-y-1">
-            <p className="font-semibold">{resetMessage.text}</p>
+          <div>
+            <span className="font-medium">{resetMessage.text}</span>
             {resetMessage.type === 'success' && (
-              <p className="text-xs text-emerald-700">
-                You can now head to the{' '}
-                <Link href="/library" className="underline font-bold hover:text-emerald-900">
-                  Brand Library
+              <p className="text-xs text-[#a3a3bb] mt-0.5">
+                Head to the{' '}
+                <Link href="/library" className="underline text-[#a5b4fc] hover:text-white">
+                  Brand library
                 </Link>{' '}
-                to import your brand&apos;s guidelines, facts, and terminology.
+                to load fresh brand guidelines.
               </p>
             )}
           </div>
           <button
+            type="button"
             onClick={() => setResetMessage(null)}
-            className="text-xs font-semibold px-2 py-1 rounded hover:bg-black/5"
-            aria-label="Dismiss alert"
+            className="text-xs font-mono underline hover:text-white"
           >
             Dismiss
           </button>
@@ -168,24 +161,24 @@ export function SettingsClientView({
       )}
 
       {/* Card 1: Organisation Details */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+      <Card variant="panel">
+        <CardHeader>
           <div>
-            <h2 className="text-base font-semibold text-slate-900">Organisation Details</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              The display name rendered throughout the dashboard, sidebar, and review reports.
-            </p>
+            <CardTitle>Organisation details</CardTitle>
+            <CardDescription>
+              The display name rendered throughout the workspace and review reports.
+            </CardDescription>
           </div>
-        </div>
+        </CardHeader>
 
-        <form onSubmit={handleSaveName} className="p-6 space-y-4">
+        <form onSubmit={handleSaveName} className="p-5 sm:p-6 space-y-4">
           {nameMessage && (
             <div
               role="alert"
-              className={`p-3 rounded-lg text-xs font-medium border ${
+              className={`p-3 rounded-lg text-xs font-mono border ${
                 nameMessage.type === 'success'
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                  : 'bg-red-50 text-red-800 border-red-200'
+                  ? 'bg-[#5fd1a0]/10 text-[#5fd1a0] border-[#5fd1a0]/30'
+                  : 'bg-rose-500/10 text-[#ff7a8a] border-rose-500/25'
               }`}
             >
               {nameMessage.text}
@@ -193,189 +186,175 @@ export function SettingsClientView({
           )}
 
           <div>
-            <label htmlFor="org-name" className="block text-sm font-medium text-slate-700">
-              Organisation / Brand Name
+            <label htmlFor="org-name" className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1.5">
+              Organisation / brand name
             </label>
-            <div className="mt-1 flex flex-col sm:flex-row gap-3">
-              <input
+            <div className="flex flex-col sm:flex-row gap-2.5">
+              <Input
                 id="org-name"
                 type="text"
                 value={editedName}
                 onChange={(e) => setEditedName(e.target.value)}
                 required
                 maxLength={100}
-                placeholder="e.g. Acme Corp, Verdant Skin"
+                placeholder="e.g. Verdant Skin"
                 disabled={isSavingName}
-                className="flex-1 block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:opacity-50"
               />
-              <button
+              <Button
                 type="submit"
+                variant="primary"
+                size="md"
                 disabled={isSavingName || !editedName.trim() || editedName.trim() === orgName}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                isLoading={isSavingName}
+                className="shrink-0"
               >
-                {isSavingName ? 'Saving...' : 'Save Name'}
-              </button>
+                {isSavingName ? 'Saving...' : 'Save name'}
+              </Button>
             </div>
           </div>
 
-          <div className="pt-2 border-t border-slate-100 flex flex-wrap gap-6 text-xs text-slate-500">
+          <div className="pt-3 border-t border-white/[0.06] flex flex-wrap gap-6 text-xs text-[#7b7b94]">
             <div>
-              <span className="font-medium text-slate-700">Organisation ID:</span>{' '}
-              <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[11px] font-mono select-all">
+              <span className="text-[#a3a3bb]">Organisation ID:</span>{' '}
+              <code className="bg-[#171724] px-1.5 py-0.5 rounded text-[11px] font-mono text-[#ececf6] select-all border border-white/[0.06]">
                 {initialOrg.id}
               </code>
             </div>
             {initialOrg.created_at && (
               <div>
-                <span className="font-medium text-slate-700">Created:</span>{' '}
-                {new Date(initialOrg.created_at).toLocaleDateString()}
+                <span className="text-[#a3a3bb]">Created:</span>{' '}
+                <span className="font-mono text-[#ececf6]">{new Date(initialOrg.created_at).toLocaleDateString()}</span>
               </div>
             )}
           </div>
         </form>
-      </div>
+      </Card>
 
       {/* Card 2: Workspace Data Summary */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
-        <h2 className="text-base font-semibold text-slate-900">Current Workspace Data</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="p-4 rounded-lg bg-slate-50 border border-slate-100 text-center">
-            <span className="text-2xl font-bold text-slate-900 block">{counts.guidelines}</span>
-            <span className="text-xs text-slate-500 font-medium">Guidelines</span>
+      <Card variant="panel" className="p-5 sm:p-6 space-y-4">
+        <div>
+          <CardTitle>Current workspace data</CardTitle>
+          <CardDescription>
+            Inventory of registered guidelines, facts, terms, and submissions.
+          </CardDescription>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="p-4 rounded-xl bg-[#171724] border border-white/[0.06] text-center">
+            <span className="text-2xl font-mono text-[#ececf6] block">{counts.guidelines}</span>
+            <span className="text-xs text-[#a3a3bb] mt-0.5 block">Guidelines</span>
           </div>
-          <div className="p-4 rounded-lg bg-slate-50 border border-slate-100 text-center">
-            <span className="text-2xl font-bold text-slate-900 block">{counts.facts}</span>
-            <span className="text-xs text-slate-500 font-medium">Clinical Facts</span>
+          <div className="p-4 rounded-xl bg-[#171724] border border-white/[0.06] text-center">
+            <span className="text-2xl font-mono text-[#ececf6] block">{counts.facts}</span>
+            <span className="text-xs text-[#a3a3bb] mt-0.5 block">Clinical facts</span>
           </div>
-          <div className="p-4 rounded-lg bg-slate-50 border border-slate-100 text-center">
-            <span className="text-2xl font-bold text-slate-900 block">{counts.terms}</span>
-            <span className="text-xs text-slate-500 font-medium">Terminology Terms</span>
+          <div className="p-4 rounded-xl bg-[#171724] border border-white/[0.06] text-center">
+            <span className="text-2xl font-mono text-[#ececf6] block">{counts.terms}</span>
+            <span className="text-xs text-[#a3a3bb] mt-0.5 block">Terminology</span>
           </div>
-          <div className="p-4 rounded-lg bg-slate-50 border border-slate-100 text-center">
-            <span className="text-2xl font-bold text-slate-900 block">{counts.contents}</span>
-            <span className="text-xs text-slate-500 font-medium">Content Drafts</span>
+          <div className="p-4 rounded-xl bg-[#171724] border border-white/[0.06] text-center">
+            <span className="text-2xl font-mono text-[#ececf6] block">{counts.contents}</span>
+            <span className="text-xs text-[#a3a3bb] mt-0.5 block">Submissions</span>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Card 3: Danger Zone (Start Fresh) */}
-      <div className="bg-red-50/40 rounded-xl border border-red-200 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 bg-red-100/50 border-b border-red-200 flex items-center justify-between">
+      <Card variant="panel" className="border-rose-500/25 overflow-hidden">
+        <CardHeader className="bg-rose-500/[0.04] border-b border-rose-500/20">
           <div className="flex items-center gap-2">
-            <span className="text-red-700 text-base" aria-hidden="true">⚠️</span>
-            <h2 className="text-base font-semibold text-red-950">Danger Zone: Start Fresh</h2>
+            <span className="w-2 h-2 rounded-full bg-[#ff7a8a]" />
+            <CardTitle className="text-[#ff7a8a]">Danger zone: Start fresh</CardTitle>
           </div>
-          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-red-200/80 text-red-900">
+          <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-rose-500/15 text-[#ff7a8a] border border-rose-500/30">
             Irreversible
           </span>
-        </div>
+        </CardHeader>
 
-        <div className="p-6 space-y-4 text-sm text-slate-700 leading-relaxed">
+        <div className="p-5 sm:p-6 space-y-4 text-xs sm:text-sm text-[#a3a3bb] leading-relaxed">
           <p>
-            The <strong>Start fresh</strong> action permanently deletes all guidelines, clinical facts,
+            The <strong className="text-[#ececf6]">Start fresh</strong> action permanently clears all guidelines, clinical facts,
             terminology dictionaries, content submissions, and review findings for this organisation.
           </p>
-          <div className="p-3 bg-white/80 rounded-lg border border-red-200/60 text-xs text-slate-600 space-y-1">
-            <div className="font-semibold text-slate-900">What will happen:</div>
+
+          <div className="p-3 bg-[#171724] rounded-lg border border-white/[0.06] text-xs text-[#a3a3bb] space-y-1">
+            <div className="font-medium text-[#ececf6]">What will happen:</div>
             <ul className="list-disc list-inside space-y-0.5 pl-1">
               <li>All {counts.guidelines} guidelines, {counts.facts} facts, and {counts.terms} terms will be erased.</li>
               <li>All {counts.contents} content drafts, review histories, and comments will be deleted.</li>
-              <li><strong>User accounts and append-only audit logs are safely preserved.</strong></li>
-              <li>You can immediately load your real brand materials from the Library page.</li>
+              <li><strong className="text-[#5fd1a0]">User accounts and append-only audit logs are safely preserved.</strong></li>
             </ul>
           </div>
 
           <div className="pt-2 flex justify-end">
-            <button
+            <Button
               type="button"
+              variant="danger"
+              size="sm"
               onClick={() => {
                 setConfirmationInput('');
                 setIsModalOpen(true);
               }}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
               Start fresh...
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
+      </Card>
 
-      {/* Confirmation Modal */}
-      {isModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs"
-        >
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in-95">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0 text-xl">
-                ⚠️
-              </div>
-              <div className="space-y-1">
-                <h3 id="modal-title" className="text-lg font-bold text-slate-900">
-                  Reset Brand Data: Start Fresh
-                </h3>
-                <p className="text-xs text-slate-500">
-                  This action is permanent and cannot be undone.
-                </p>
-              </div>
+      {/* Confirmation Dialog */}
+      <Dialog
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Reset brand data: Start fresh"
+        description="This action is permanent and cannot be undone."
+      >
+        <div className="space-y-4 text-xs sm:text-sm text-[#a3a3bb]">
+          <p>
+            To prevent accidental deletion, please type the exact organisation name{' '}
+            <strong className="text-[#ececf6] font-mono bg-[#11111a] px-1.5 py-0.5 rounded border border-white/10">
+              {orgName}
+            </strong>{' '}
+            below to confirm:
+          </p>
+
+          <form onSubmit={handleStartFresh} className="space-y-4">
+            <div>
+              <Input
+                id="confirm-org-name"
+                type="text"
+                value={confirmationInput}
+                onChange={(e) => setConfirmationInput(e.target.value)}
+                placeholder={`Type "${orgName}" to confirm`}
+                autoFocus
+                disabled={isResetting}
+                className="font-mono"
+              />
             </div>
 
-            <p className="text-sm text-slate-600 leading-relaxed">
-              To prevent accidental deletion, please type the exact organisation name{' '}
-              <strong className="text-slate-900 font-mono bg-slate-100 px-1.5 py-0.5 rounded">
-                {orgName}
-              </strong>{' '}
-              below to confirm:
-            </p>
-
-            <form onSubmit={handleStartFresh} className="space-y-4">
-              <div>
-                <label htmlFor="confirm-org-name" className="sr-only">
-                  Confirm organisation name
-                </label>
-                <input
-                  id="confirm-org-name"
-                  type="text"
-                  value={confirmationInput}
-                  onChange={(e) => setConfirmationInput(e.target.value)}
-                  placeholder={`Type "${orgName}" to confirm`}
-                  autoFocus
-                  disabled={isResetting}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  disabled={isResetting}
-                  className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={!canConfirmReset || isResetting}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {isResetting ? (
-                    <>
-                      <span className="animate-spin text-xs">⟳</span>
-                      <span>Clearing Data...</span>
-                    </>
-                  ) : (
-                    'I understand, delete brand data'
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsModalOpen(false)}
+                disabled={isResetting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="danger"
+                size="sm"
+                disabled={!canConfirmReset || isResetting}
+                isLoading={isResetting}
+              >
+                {isResetting ? 'Clearing data...' : 'I understand, delete brand data'}
+              </Button>
+            </div>
+          </form>
         </div>
-      )}
+      </Dialog>
     </div>
   );
 }

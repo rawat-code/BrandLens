@@ -1,19 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import type { GuidelineProposal, Guideline } from '@/lib/types';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import type { GuidelineProposal, Guideline, UserRole } from '@/lib/types';
 
 interface ProposalsPanelProps {
-  proposals: GuidelineProposal[];
+  proposals?: GuidelineProposal[];
   guidelines: Guideline[];
+  userRole?: UserRole;
   onProposalDecided?: () => void;
 }
 
 export function ProposalsPanel({
-  proposals,
+  proposals = [],
   guidelines,
+  userRole,
   onProposalDecided,
 }: ProposalsPanelProps) {
+  const isAdminOrManager = userRole === 'admin' || userRole === 'manager';
   const [actingId, setActingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -51,29 +56,30 @@ export function ProposalsPanel({
   const pending = proposals.filter((p) => p.status === 'pending');
 
   return (
-    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+    <div className="bg-[#11111a] p-5 rounded-xl border border-white/[0.08] space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <span>Guideline Clarification Proposals</span>
+          <h3 className="text-sm font-medium text-[#ececf6] flex items-center gap-2">
+            <span>Guideline clarification proposals</span>
             {pending.length > 0 && (
-              <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200">
+              <Badge variant="indigo">
                 {pending.length} pending
-              </span>
+              </Badge>
             )}
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-[#a3a3bb] mt-0.5">
             AI-suggested wording improvements based on dispute reasons. Approving updates the guideline clarification and increments its version.
           </p>
         </div>
       </div>
 
       {errorMsg && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-800 flex items-center justify-between">
+        <div className="p-3 bg-rose-500/10 border border-rose-500/25 rounded-lg text-xs text-[#ff7a8a] flex items-center justify-between">
           <span>{errorMsg}</span>
           <button
+            type="button"
             onClick={() => setErrorMsg(null)}
-            className="text-red-500 hover:text-red-800 font-bold ml-2"
+            className="text-[#ff7a8a] hover:text-white font-mono ml-2"
           >
             ✕
           </button>
@@ -81,11 +87,11 @@ export function ProposalsPanel({
       )}
 
       {pending.length === 0 ? (
-        <div className="py-8 text-center text-xs text-slate-400 italic bg-slate-50 rounded-lg border border-dashed border-slate-200">
-          No pending clarification proposals. Click &quot;Suggest clearer wording&quot; in the Guideline Health table above to generate AI proposals.
+        <div className="py-8 text-center text-xs text-[#7b7b94] italic bg-[#171724] rounded-lg border border-dashed border-white/[0.06]">
+          No pending clarification proposals. Click &quot;Clarify wording&quot; in the Guideline Health table above to generate AI proposals.
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3.5">
           {pending.map((prop) => {
             const guideline = prop.guideline_id ? guidelineMap.get(prop.guideline_id) : undefined;
             const isSubmitting = actingId === prop.id;
@@ -93,67 +99,60 @@ export function ProposalsPanel({
             return (
               <div
                 key={prop.id}
-                className="p-4 rounded-xl border border-purple-200 bg-purple-50/20 space-y-3"
+                className="p-4 rounded-xl border border-indigo-400/20 bg-indigo-500/[0.04] space-y-3"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-100 pb-2.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/[0.06] pb-2.5">
                   <div>
-                    <span className="text-[11px] font-semibold text-purple-700 uppercase tracking-wider block">
-                      Target Guideline Policy
+                    <span className="text-[10px] font-mono text-[#a5b4fc] uppercase tracking-wider block">
+                      Target guideline policy
                     </span>
-                    <h4 className="text-sm font-bold text-slate-900">
+                    <h4 className="text-sm font-medium text-[#ececf6]">
                       {guideline ? guideline.title : 'General Brand Standard'}
                     </h4>
                   </div>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-300 self-start sm:self-auto">
-                    <span>✨</span>
-                    <span>Pending Human Approval</span>
-                  </span>
+                  <Badge variant="ai">
+                    Pending human approval
+                  </Badge>
                 </div>
 
                 {prop.reason && (
-                  <div className="text-xs text-slate-600 bg-white/70 p-2.5 rounded-lg border border-purple-100">
-                    <span className="font-semibold text-slate-700">Rationale: </span>
+                  <div className="text-xs text-[#a3a3bb] bg-[#171724] p-2.5 rounded-lg border border-white/[0.04]">
+                    <span className="font-medium text-[#ececf6]">Rationale: </span>
                     {prop.reason}
                   </div>
                 )}
 
                 <div>
-                  <span className="text-[11px] font-semibold text-slate-700 block mb-1">
-                    Proposed Clarification Wording:
+                  <span className="text-[11px] font-mono uppercase text-[#7b7b94] block mb-1">
+                    Proposed clarification wording:
                   </span>
-                  <div className="p-3 bg-white rounded-lg border border-slate-200 text-xs text-slate-800 whitespace-pre-wrap font-sans leading-relaxed">
+                  <div className="p-3 bg-[#0a0a10] rounded-lg border border-white/[0.06] text-xs text-[#ececf6] whitespace-pre-wrap font-mono leading-relaxed">
                     {prop.proposed_text}
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-purple-100">
-                  <span className="text-[11px] text-slate-500 italic">
+                <div className="flex items-center justify-between pt-2 border-t border-white/[0.06]">
+                  <span className="text-[11px] text-[#7b7b94] italic">
                     AI suggests, humans decide. Never applied automatically.
                   </span>
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      disabled={isSubmitting}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={isSubmitting || !isAdminOrManager}
                       onClick={() => handleDecision(prop.id, 'reject')}
-                      className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-50 transition-colors"
                     >
                       Reject
-                    </button>
-                    <button
-                      type="button"
-                      disabled={isSubmitting}
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      disabled={isSubmitting || !isAdminOrManager}
+                      isLoading={isSubmitting}
                       onClick={() => handleDecision(prop.id, 'approve')}
-                      className="px-3.5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50 transition-colors flex items-center gap-1.5"
                     >
-                      {isSubmitting ? (
-                        <span>Applying...</span>
-                      ) : (
-                        <>
-                          <span>✓</span>
-                          <span>Approve &amp; Bump Version</span>
-                        </>
-                      )}
-                    </button>
+                      Approve &amp; bump version
+                    </Button>
                   </div>
                 </div>
               </div>

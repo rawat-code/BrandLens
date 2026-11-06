@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import type { GuidelineHealthStat } from '@/lib/types';
 
 interface GuidelineHealthTableProps {
@@ -45,24 +47,25 @@ export function GuidelineHealthTable({
   };
 
   return (
-    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+    <div className="bg-[#11111a] p-5 rounded-xl border border-white/[0.08] space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h3 className="text-sm font-bold text-slate-900 tracking-tight">
-            Guideline Health &amp; Ambiguity Index
+          <h3 className="text-sm font-medium text-[#ececf6]">
+            Guideline health &amp; ambiguity index
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-[#a3a3bb] mt-0.5">
             Tracks review disputes, dismissals, and AI proposal clarifications. Guidelines with $\ge 3$ findings and $\ge 33\%$ overrides are marked &quot;Possibly unclear&quot;.
           </p>
         </div>
       </div>
 
       {errorMsg && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-800 flex items-center justify-between">
+        <div className="p-3 bg-rose-500/10 border border-rose-500/25 rounded-lg text-xs text-[#ff7a8a] flex items-center justify-between">
           <span>{errorMsg}</span>
           <button
+            type="button"
             onClick={() => setErrorMsg(null)}
-            className="text-red-500 hover:text-red-800 font-bold ml-2"
+            className="text-[#ff7a8a] hover:text-white font-mono ml-2"
           >
             ✕
           </button>
@@ -70,35 +73,35 @@ export function GuidelineHealthTable({
       )}
 
       {healthStats.length === 0 ? (
-        <div className="py-8 text-center text-xs text-slate-400 italic bg-slate-50 rounded-lg border border-dashed border-slate-200">
+        <div className="py-8 text-center text-xs text-[#7b7b94] italic bg-[#171724] rounded-lg border border-dashed border-white/[0.06]">
           No guidelines registered in the library yet.
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-xs divide-y divide-slate-200">
-            <thead className="bg-slate-50">
+        <div className="overflow-x-auto rounded-lg border border-white/[0.06]">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-[#171724] text-[#a3a3bb] font-mono uppercase text-[10px] border-b border-white/[0.06]">
               <tr>
-                <th scope="col" className="px-3 py-2.5 font-semibold text-slate-700">
-                  Guideline Policy
+                <th scope="col" className="px-3.5 py-2.5 font-medium">
+                  Guideline policy
                 </th>
-                <th scope="col" className="px-3 py-2.5 font-semibold text-slate-700 text-center">
+                <th scope="col" className="px-3.5 py-2.5 font-medium text-center">
                   Findings
                 </th>
-                <th scope="col" className="px-3 py-2.5 font-semibold text-slate-700 text-center">
+                <th scope="col" className="px-3.5 py-2.5 font-medium text-center">
                   Overrides
                 </th>
-                <th scope="col" className="px-3 py-2.5 font-semibold text-slate-700 text-center">
-                  Unclear Score
+                <th scope="col" className="px-3.5 py-2.5 font-medium text-center">
+                  Unclear score
                 </th>
-                <th scope="col" className="px-3 py-2.5 font-semibold text-slate-700">
-                  Clarity Status
+                <th scope="col" className="px-3.5 py-2.5 font-medium">
+                  Clarity status
                 </th>
-                <th scope="col" className="px-3 py-2.5 font-semibold text-slate-700 text-right">
-                  AI Action
+                <th scope="col" className="px-3.5 py-2.5 font-medium text-right">
+                  AI action
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
+            <tbody className="divide-y divide-white/[0.04] text-[#ececf6]">
               {healthStats.map((row) => {
                 const isGenerating = generatingId === row.guideline_id;
                 const isSuccess = successId === row.guideline_id;
@@ -106,99 +109,83 @@ export function GuidelineHealthTable({
                 return (
                   <tr
                     key={row.guideline_id}
-                    className={`hover:bg-slate-50/75 transition-colors ${
-                      row.is_possibly_unclear ? 'bg-amber-50/20' : ''
-                    }`}
+                    className="hover:bg-[#171724]/60 transition-colors"
                   >
-                    <td className="px-3 py-3 font-medium text-slate-900 max-w-xs">
+                    <td className="px-3.5 py-3 font-medium max-w-xs">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-slate-800 truncate" title={row.title}>
+                        <span className="text-[#ececf6] truncate" title={row.title}>
                           {row.title}
                         </span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 uppercase font-mono font-bold">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#171724] text-[#a3a3bb] uppercase font-mono border border-white/[0.06]">
                           {row.category}
                         </span>
                       </div>
                       {row.conflict_note && (
-                        <p className="text-[11px] text-amber-700 mt-0.5 flex items-center gap-1">
+                        <p className="text-[11px] text-[#f5b74f] mt-0.5 flex items-center gap-1 font-mono">
                           <span>⚡</span>
                           <span>{row.conflict_note}</span>
                         </p>
                       )}
                     </td>
 
-                    <td className="px-3 py-3 text-center text-slate-700 font-semibold">
+                    <td className="px-3.5 py-3 text-center text-[#ececf6] font-mono">
                       {row.total_findings}
                     </td>
 
-                    <td className="px-3 py-3 text-center text-slate-600">
-                      <span className="text-amber-700 font-medium">
+                    <td className="px-3.5 py-3 text-center font-mono">
+                      <span className="text-[#f5b74f]">
                         {row.disputed_count + row.dismissed_count}
                       </span>
-                      <span className="text-[10px] text-slate-400 block">
+                      <span className="text-[10px] text-[#7b7b94] block">
                         ({row.disputed_count} disp / {row.dismissed_count} dism)
                       </span>
                     </td>
 
-                    <td className="px-3 py-3 text-center">
+                    <td className="px-3.5 py-3 text-center font-mono">
                       {row.unclear_score !== null ? (
                         <span
-                          className={`font-mono font-bold ${
-                            row.unclear_score >= 0.33 ? 'text-amber-700' : 'text-slate-700'
-                          }`}
+                          className={
+                            row.unclear_score >= 0.33 ? 'text-[#f5b74f] font-medium' : 'text-[#ececf6]'
+                          }
                         >
                           {Math.round(row.unclear_score * 100)}%
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-[11px] italic">
+                        <span className="text-[#7b7b94] text-[11px] italic">
                           N/A (&lt;3 items)
                         </span>
                       )}
                     </td>
 
-                    <td className="px-3 py-3">
+                    <td className="px-3.5 py-3">
                       {row.is_possibly_unclear ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-                          <span aria-hidden="true">⚠️</span>
-                          <span>Possibly unclear</span>
-                        </span>
+                        <Badge variant="medium">
+                          Possibly unclear
+                        </Badge>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <span aria-hidden="true">✓</span>
-                          <span>Healthy</span>
-                        </span>
+                        <Badge variant="success">
+                          Healthy
+                        </Badge>
                       )}
                     </td>
 
-                    <td className="px-3 py-3 text-right">
+                    <td className="px-3.5 py-3 text-right">
                       {isSuccess ? (
-                        <span className="text-xs font-semibold text-emerald-600 inline-flex items-center gap-1">
+                        <span className="text-xs font-mono text-[#5fd1a0] inline-flex items-center gap-1">
                           <span>✓</span>
-                          <span>Proposal Created!</span>
+                          <span>Proposal created!</span>
                         </span>
                       ) : (
-                        <button
+                        <Button
                           type="button"
+                          variant="secondary"
+                          size="sm"
                           disabled={isGenerating}
+                          isLoading={isGenerating}
                           onClick={() => handleGenerateProposal(row.guideline_id)}
-                          className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors border shadow-sm ${
-                            row.is_possibly_unclear
-                              ? 'bg-amber-600 hover:bg-amber-700 text-white border-transparent focus:ring-2 focus:ring-amber-500'
-                              : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300 focus:ring-2 focus:ring-emerald-500'
-                          } disabled:opacity-50`}
                         >
-                          {isGenerating ? (
-                            <span className="flex items-center gap-1">
-                              <span className="animate-spin text-[10px]">⟳</span>
-                              <span>Drafting...</span>
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1">
-                              <span>✨</span>
-                              <span>Suggest clearer wording</span>
-                            </span>
-                          )}
-                        </button>
+                          {isGenerating ? 'Drafting...' : '✨ Clarify wording'}
+                        </Button>
                       )}
                     </td>
                   </tr>

@@ -50,3 +50,4 @@ This audit documents the visual and architectural tells in the initial interface
 | **Diffs** | Text replacement blocks | Inline semantic diffs: green additions underlined, red deletions struck through |
 | **Microcopy** | "My Creator Studio", "Open workbench →" | "Content", "Review queue", direct verbs ("Run review", "Approve") |
 | **Motion & Shortcuts** | None or ad-hoc CSS | 150ms framer-motion transitions + `⌘K` glass command palette (`cmdk`) |
+
