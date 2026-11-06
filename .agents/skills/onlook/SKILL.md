@@ -114,3 +114,4 @@ Detailed documentation and guides are preserved in the `references/` directory:
 - [Getting Started](./references/getting-started/): Onlook user and project guides.
 - [Developer Architecture](./references/developers/architecture.mdx): Complete system architecture and edit-loop explanation.
 - [Self-Hosting Guide](./references/self-hosting/): Single-machine and Docker deployment manuals.
+
