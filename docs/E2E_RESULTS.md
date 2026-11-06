@@ -35,3 +35,4 @@ All checks were executed against the live BrandLens service and verified via [`s
 - **Execution Command**: `npx tsx scripts/e2e-test-suite.ts`
 - **Environment**: Local Next.js dev server (`http://localhost:3000`) + Supabase PostgreSQL
 - **Verification Method**: API calls, schema assertions, workflow transition simulation, database queries.
+

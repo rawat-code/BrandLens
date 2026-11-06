@@ -25,3 +25,4 @@ This document records architectural boundaries and known limitations of the curr
 - **Current Behavior**: Library guideline import supports `.md` and `.txt` files or direct copy-paste.
 - **Impact**: Proprietary document formats (`.docx`, `.pdf`) must be converted or pasted as text prior to ingestion.
 - **Recommended Fix**: Introduce a server-side document parsing library (`pdf-parse`, `mammoth`) with client-side drag-and-drop support.
+

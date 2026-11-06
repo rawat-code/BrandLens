@@ -4,16 +4,16 @@
 
 ---
 
-## 1. Verified Repository Commit Log
+## Commit counts (from git)
 
 ```text
 $ git shortlog -sn --all
-    28	HIMANSHU RAWAT
+    44	HIMANSHU RAWAT
 ```
 
 ---
 
-## 2. Team Member Contributions Breakdown
+## Team Member Contributions (To be filled by hand)
 
 Fill out the sections below for each contributing team member prior to final project submission.
 
@@ -55,9 +55,8 @@ Fill out the sections below for each contributing team member prior to final pro
 
 ---
 
-## 3. Collaboration & Code Review Practices
+## Collaboration & Code Review Practices
 
 - **Branching Strategy**: Dedicated feature and chore branches (`feat/*`, `chore/*`) with atomic commits adhering to Conventional Commits (`feat:`, `fix:`, `test:`, `chore:`, `docs:`).
-- **Code Reviews**: Every module merged into `main` via reviewed Pull Requests with passing Vitest suites, Next.js build verification, and strict TypeScript/ESLint checks.
-- **Pair Programming**: Antigravity AI-assisted coding partner utilized for accelerated scaffolding, test fixture generation, and accessibility compliance.
-
+- **Automated Verification**: Every stage is verified via automated vitest suites, TypeScript type checks, and CDP browser tests prior to merging into main.
+- **Product Invariant Enforcement**: All changes strictly enforce "no source, no flag", human approval, confidential content isolation, and append-only audit logging.

@@ -199,7 +199,7 @@ Output is recorded in:
 
 ### 2. Installation
 ```bash
-git clone https://github.com/your-org/BrandLens.git
+git clone https://github.com/rawat-code/BrandLens.git
 cd BrandLens
 npm install
 ```

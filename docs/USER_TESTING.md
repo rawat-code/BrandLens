@@ -1,91 +1,46 @@
-# User Testing Report Template (BrandLens)
+# User Testing Report (Template)
 
-> **Documentation Integrity Notice**: Per workspace policy (`AGENTS.md`), user testing feedback, participant records, and evaluation findings must never be fabricated. This document is provided as a clean, standardized evaluation template to be populated solely through live observational testing sessions with real human participants.
-
----
-
-## 1. Study Overview
-
-- **Test Cohort**: [Target number of participants, e.g., 4 creators, 2 reviewers/managers]
-- **Environment**: Staging / Production deployment (`https://brandlens.vercel.app` or local instance)
-- **Facilitator**: [Facilitator Name / Role]
-- **Date Range**: [Testing Dates]
-- **Evaluation Objectives**:
-  1. Measure usability of the brand-governance review workflow from draft submission to review.
-  2. Evaluate clarity and utility of the "No Source, No Flag" citations and suggestion diffs.
-  3. Validate human decision-making ergonomics (Accept, Edit then accept, Dispute, Dismiss).
-  4. Test manager/reviewer approval controls and prevention of self-approval.
+> **Documentation Integrity Notice**: Per workspace policy (`AGENTS.md`), user testing feedback, participant records, and evaluation findings must never be fabricated. This document is provided as a clean, standardized evaluation template to be populated solely through live observational testing sessions with real human participants (3 to 5 people).
 
 ---
 
-## 2. Participant Profiles
+## 1. Facilitator Script for Real Testers
 
-| Participant ID | Role / Background | Content Channels | Skincare Domain Knowledge |
-| :--- | :--- | :--- | :--- |
-| **P-01** | [Creator / Social Copywriter] | Instagram, Threads | [Novice / Intermediate / Advanced] |
-| **P-02** | [Creator / Long-form Writer] | Blog, Email Newsletters | [Novice / Intermediate / Advanced] |
-| **P-03** | [Brand Reviewer / Legal Specialist] | All Channels | [Expert] |
-| **P-04** | [Marketing Manager / Admin] | Omnichannel Strategy | [Expert] |
+Read the following instructions and questions directly to each participant during the test session:
 
----
+### Pre-Test Briefing
+*"Thank you for participating. Today you will test BrandLens, a brand-governance review platform. In BrandLens, AI suggests revisions but human editors always make the decisions. Please think out loud as you navigate."*
 
-## 3. Test Scenarios & Task Protocols
+### 4 Test Tasks
+1. **Task 1: Create & Draft**: Sign in as `creator@verdant.demo` and write a new social media post containing a bold claim (e.g. *"Our miracle serum cures acne in 3 days!"*). Save the draft.
+2. **Task 2: Run Governance Review**: Click **Run Review** to audit your text against the brand's library. Read the flagged findings, review reasons, and inspect the cited sources.
+3. **Task 3: Apply or Dispute Suggestions**: Review the suggested revision and its Intent badge (*"Meaning preserved"* vs *"Meaning may have changed"*). Click **Accept** on one suggestion, or click **Dispute** and enter a reason.
+4. **Task 4: Submit for Approval**: Click **Submit for Review**. Verify that as a creator, you cannot approve your own post.
 
-### Scenario A: Creator Draft Submission & Review
-- **Task 1**: Sign in as `creator@verdant.demo`.
-- **Task 2**: Create a new draft containing an unsupported clinical claim (e.g. "99% cure in 3 days").
-- **Task 3**: Run the governance review engine.
-- **Task 4**: Inspect flagged findings and review the cited library sources.
-- **Task 5**: Accept or dispute a suggestion and observe version creation.
-- **Task 6**: Submit content for approval.
-
-### Scenario B: Reviewer Triage & Approval Gate
-- **Task 1**: Sign in as `reviewer@verdant.demo` or `manager@verdant.demo`.
-- **Task 2**: Locate submitted content with open findings.
-- **Task 3**: Attempt to approve content with open high-severity findings (verify blocking gate).
-- **Task 4**: Review creator dispute reasons and provide reviewer comments.
-- **Task 5**: Request changes or grant final approval.
-
-### Scenario C: Admin Library & Insights Governance
-- **Task 1**: Sign in as `admin@verdant.demo`.
-- **Task 2**: Navigate to `/insights` and inspect the Guideline Health rankings.
-- **Task 3**: Generate an AI clarification proposal for a frequently disputed guideline.
-- **Task 4**: Review the proposal and accept/reject it.
+### 3 Debrief Questions
+1. *Did the cited guidelines, facts, or terms make it clear why each issue was flagged?*
+2. *How easy was it to understand whether the AI's suggested fix preserved your original intent?*
+3. *What was the most confusing, frustrating, or unexpected part of the workflow?*
 
 ---
 
-## 4. Observational Results & Metrics
+## 2. Real Tester Results Log
 
-| Participant | Task Completion Rate | Time on Task (min) | Ease of Use (1-5) | Notes / Friction Points |
-| :--- | :--- | :--- | :--- | :--- |
-| **P-01** | [To be filled] | [To be filled] | [ ] | [Observational notes] |
-| **P-02** | [To be filled] | [To be filled] | [ ] | [Observational notes] |
-| **P-03** | [To be filled] | [To be filled] | [ ] | [Observational notes] |
-| **P-04** | [To be filled] | [To be filled] | [ ] | [Observational notes] |
+*(To be filled by hand by the team following live sessions with 3 to 5 testers. Rows are left empty per workspace policy.)*
 
----
-
-## 5. Qualitative Feedback & Key Insights
-
-### Clarity of Citations ("No Source, No Flag")
-- *Observed Strengths*: [To be filled during live sessions]
-- *Observed Weaknesses / Ambiguities*: [To be filled during live sessions]
-
-### Suggestion Block Usability (Side-by-side Diffs & Intent Badges)
-- *Observed Strengths*: [To be filled during live sessions]
-- *Observed Weaknesses / Ambiguities*: [To be filled during live sessions]
-
-### Governance Guardrails & Permission Controls
-- *Observed Strengths*: [To be filled during live sessions]
-- *Observed Weaknesses / Ambiguities*: [To be filled during live sessions]
+| Tester Role | Tasks | What Worked | What Confused Them | Changes Made | Date |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| | | | | | |
+| | | | | | |
+| | | | | | |
+| | | | | | |
+| | | | | | |
 
 ---
 
-## 6. Actionable Iterations & Recommendations
+## 3. Summary of Feedback & Next Steps
 
-| Priority | Issue / Finding | Recommended Adjustment | Status |
-| :--- | :--- | :--- | :--- |
-| **High** | [Issue description] | [Proposed UI/Logic change] | Pending |
-| **Medium** | [Issue description] | [Proposed UI/Logic change] | Pending |
-| **Low** | [Issue description] | [Proposed UI/Logic change] | Pending |
-
+*(To be synthesized by the team after testing sessions)*
+- **Common strengths identified by users**:
+- **Common friction points identified by users**:
+- **Prioritized post-hackathon roadmap adjustments**:
