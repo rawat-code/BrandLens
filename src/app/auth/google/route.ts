@@ -9,10 +9,6 @@ export async function GET(request: Request) {
     provider: 'google',
     options: {
       redirectTo: `${origin}/auth/callback`,
-      queryParams: {
-        access_type: 'offline',
-        prompt: 'consent',
-      },
     },
   });
 
@@ -31,3 +27,4 @@ export async function GET(request: Request) {
 
   return NextResponse.redirect(`${origin}/login`);
 }
+

@@ -85,3 +85,4 @@ export async function GET(request: Request) {
     `${origin}/login?error=${encodeURIComponent('No authorization code was received.')}`
   );
 }
+

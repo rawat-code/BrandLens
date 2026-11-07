@@ -66,10 +66,6 @@ export function AuthCard({ initialMode = 'signin', initialError = null }: AuthCa
         provider: 'google',
         options: {
           redirectTo,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
         },
       });
 
