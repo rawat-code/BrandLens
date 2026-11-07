@@ -45,9 +45,13 @@ export default async function DashboardPage() {
     .map((c) => {
       const cFindings = findingsList.filter((f) => f.content_id === c.id);
       const highSevCount = cFindings.filter((f) => f.severity === 'high').length;
+      const medSevCount = cFindings.filter((f) => f.severity === 'medium').length;
+      const lowSevCount = cFindings.filter((f) => f.severity === 'low').length;
       return {
         ...c,
         highSevCount,
+        medSevCount,
+        lowSevCount,
         totalFindings: cFindings.length,
       };
     })
@@ -55,6 +59,9 @@ export default async function DashboardPage() {
       // Sort by highest open severity first, then age
       if (b.highSevCount !== a.highSevCount) {
         return b.highSevCount - a.highSevCount;
+      }
+      if (b.medSevCount !== a.medSevCount) {
+        return b.medSevCount - a.medSevCount;
       }
       return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
     });

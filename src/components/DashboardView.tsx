@@ -6,11 +6,13 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
-import type { Content, ContentStatus, Profile } from '@/lib/types';
+import { formatTimestamp } from '@/lib/time';
+import type { Content, Profile } from '@/lib/types';
 
 interface ReviewQueueItem extends Content {
   highSevCount: number;
+  medSevCount?: number;
+  lowSevCount?: number;
   totalFindings: number;
 }
 
@@ -22,19 +24,6 @@ interface DashboardViewProps {
   isCreator: boolean;
   isApprover: boolean;
 }
-
-const STATUS_CONFIG: Record<
-  ContentStatus,
-  { label: string; variant: 'neutral' | 'indigo' | 'medium' | 'low' | 'success' | 'high' }
-> = {
-  draft: { label: 'Draft', variant: 'neutral' },
-  ai_reviewed: { label: 'AI reviewed', variant: 'indigo' },
-  needs_changes: { label: 'Needs changes', variant: 'medium' },
-  in_review: { label: 'In review', variant: 'low' },
-  approved: { label: 'Approved', variant: 'success' },
-  rejected: { label: 'Rejected', variant: 'high' },
-  published: { label: 'Published', variant: 'success' },
-};
 
 export function DashboardView({
   initialContents,
@@ -48,12 +37,15 @@ export function DashboardView({
   const [search, setSearch] = useState<string>('');
 
   const counts = useMemo(() => {
+    const drafts = initialContents.filter((c) => c.status === 'draft' || c.status === 'ai_reviewed').length;
+    const inReview = initialContents.filter((c) => c.status === 'in_review').length;
+    const approved = initialContents.filter((c) => c.status === 'approved' || c.status === 'published').length;
+
     return {
+      drafts,
+      inReview,
+      approved,
       total: initialContents.length,
-      drafts: initialContents.filter((c) => c.status === 'draft' || c.status === 'ai_reviewed').length,
-      inReview: initialContents.filter((c) => c.status === 'in_review').length,
-      needsChanges: initialContents.filter((c) => c.status === 'needs_changes').length,
-      approved: initialContents.filter((c) => c.status === 'approved' || c.status === 'published').length,
     };
   }, [initialContents]);
 
@@ -78,29 +70,19 @@ export function DashboardView({
     });
   }, [initialContents, filter, search]);
 
-  const pageTitle = isCreator ? 'Content submissions' : 'Review queue and content';
-  const pageDescription = isCreator
-    ? 'Draft, audit against brand rules, and route content for role-based approval'
-    : 'Monitor incoming submissions, evaluate cited evidence, and issue decisions';
+  const pageTitle = isCreator ? 'Content' : 'Review queue';
+  const metaCounts = `${counts.drafts} drafts, ${counts.inReview} awaiting review, ${counts.approved} approved`;
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6">
-      {/* Header */}
+    <div className="space-y-8">
+      {/* Page Header (Newsreader title + meta line of counts, no stat cards) */}
       <PageHeader
         title={pageTitle}
-        description={`${pageDescription} · ${profile.org_name || 'Verdant Skin'}`}
+        description={metaCounts}
         actions={
           canCreate ? (
             <Link href="/content/new">
-              <Button
-                variant="primary"
-                size="md"
-                icon={
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
-                  </svg>
-                }
-              >
+              <Button variant="primary" size="md">
                 New content
               </Button>
             </Link>
@@ -108,103 +90,111 @@ export function DashboardView({
         }
       />
 
-      {/* Compact Metrics Strip (Single Row) */}
-      <div className="flex flex-wrap items-center gap-2 sm:gap-4 px-4 py-3 rounded-xl bg-[#11111a] border border-white/[0.08] text-xs text-[#a3a3bb]">
-        <div className="flex items-center gap-1.5 font-mono">
-          <span className="text-[#ececf6] font-medium text-sm">{counts.total}</span>
-          <span>total</span>
-        </div>
-        <span className="text-white/20">·</span>
-        <div className="flex items-center gap-1.5 font-mono">
-          <span className="text-[#ececf6] font-medium text-sm">{counts.drafts}</span>
-          <span>drafts</span>
-        </div>
-        <span className="text-white/20">·</span>
-        <div className="flex items-center gap-1.5 font-mono">
-          <span className="text-[#7fb4ff] font-medium text-sm">{counts.inReview}</span>
-          <span>in review</span>
-        </div>
-        <span className="text-white/20">·</span>
-        <div className="flex items-center gap-1.5 font-mono">
-          <span className="text-[#f5b74f] font-medium text-sm">{counts.needsChanges}</span>
-          <span>needs changes</span>
-        </div>
-        <span className="text-white/20">·</span>
-        <div className="flex items-center gap-1.5 font-mono">
-          <span className="text-[#5fd1a0] font-medium text-sm">{counts.approved}</span>
-          <span>approved</span>
-        </div>
-      </div>
-
       {/* Review Queue (For Managers & Reviewers) */}
       {isApprover && reviewQueue.length > 0 && (
-        <Card variant="panel" className="border-indigo-500/25 overflow-hidden">
-          <CardHeader className="bg-indigo-500/[0.04]">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-                <CardTitle className="text-sm font-medium">
-                  Review queue ({reviewQueue.length})
-                </CardTitle>
-              </div>
-              <CardDescription>
-                Submissions awaiting human review — sorted by highest open severity first
-              </CardDescription>
-            </div>
-          </CardHeader>
-          <div className="divide-y divide-white/[0.04]">
-            {reviewQueue.map((item) => (
-              <div
-                key={item.id}
-                className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#171724]/50 transition-colors"
-              >
-                <div className="space-y-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-sm text-[#ececf6] truncate">
-                      {item.title}
-                    </span>
-                    <span className="text-xs font-mono text-[#7b7b94]">
-                      v{item.current_version}
-                    </span>
-                    <span className="text-xs px-2 py-0.5 rounded bg-[#171724] text-[#a3a3bb] border border-white/[0.06] capitalize">
-                      {item.channel}
-                    </span>
-                    {item.confidential && (
-                      <span className="text-xs px-2 py-0.5 rounded bg-[#f5b74f]/10 text-[#f5b74f] border border-[#f5b74f]/30 font-medium">
-                        Confidential
-                      </span>
-                    )}
-                  </div>
-                  {item.highSevCount > 0 ? (
-                    <p className="text-xs text-[#ff7a8a] flex items-center gap-1.5 font-medium">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#ff7a8a]" />
-                      {item.highSevCount} high-severity issue(s) cited &mdash; Reviewer approval required
-                    </p>
-                  ) : (
-                    <p className="text-xs text-[#5fd1a0] flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#5fd1a0]" />
-                      No high-severity blocking issues
-                    </p>
-                  )}
-                </div>
-
-                <Link href={`/content/${item.id}`} className="shrink-0 self-start sm:self-auto">
-                  <Button variant="secondary" size="sm">
-                    Open review &rarr;
-                  </Button>
-                </Link>
-              </div>
-            ))}
+        <section aria-labelledby="review-queue-heading" className="space-y-3">
+          <div className="flex items-baseline justify-between border-b border-[#ddd5c4] pb-2">
+            <h2 id="review-queue-heading" className="font-serif text-[22px] font-medium text-[#1f1c18]">
+              Awaiting review
+            </h2>
+            <span className="font-mono text-[11px] uppercase tracking-[0.04em] text-[#5e574c]">
+              {reviewQueue.length} {reviewQueue.length === 1 ? 'item' : 'items'}
+            </span>
           </div>
-        </Card>
+
+          <div className="border border-[#ddd5c4] bg-[#fffdf8] overflow-hidden">
+            <table className="w-full text-left text-sm border-collapse">
+              <thead className="bg-[#fffdf8] border-b border-[#ddd5c4] font-mono text-[11px] uppercase tracking-[0.04em] text-[#5e574c] sticky top-14 z-10">
+                <tr>
+                  <th scope="col" className="px-5 py-3 font-medium">Title and channel</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Open findings</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Version</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Confidential</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Updated</th>
+                  <th scope="col" className="px-5 py-3 font-medium text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#ddd5c4]">
+                {reviewQueue.map((item) => {
+                  const updatedTs = formatTimestamp(item.updated_at || item.created_at);
+
+                  // Format severity summary (e.g., "1 high, 2 medium")
+                  const severityParts: string[] = [];
+                  if (item.highSevCount > 0) severityParts.push(`${item.highSevCount} high`);
+                  if (item.medSevCount && item.medSevCount > 0) severityParts.push(`${item.medSevCount} medium`);
+                  if (item.lowSevCount && item.lowSevCount > 0) severityParts.push(`${item.lowSevCount} low`);
+                  const severitySummary = severityParts.length > 0 ? severityParts.join(', ') : 'No open issues';
+
+                  return (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-[#f5f1e8] transition-colors duration-120"
+                    >
+                      <td className="px-5 py-3.5">
+                        <Link
+                          href={`/content/${item.id}`}
+                          className="font-medium text-[#1f1c18] hover:underline line-clamp-1"
+                        >
+                          {item.title}
+                        </Link>
+                        <div className="text-xs text-[#5e574c] mt-0.5">
+                          <span className="capitalize">{item.channel}</span>
+                          {item.audience && <span> · {item.audience}</span>}
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span
+                          className={`font-mono text-[12px] ${
+                            item.highSevCount > 0
+                              ? 'text-[#b3261e] font-medium'
+                              : item.medSevCount && item.medSevCount > 0
+                              ? 'text-[#8a5a00]'
+                              : 'text-[#5e574c]'
+                          }`}
+                        >
+                          {severitySummary}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 font-mono text-[12px] text-[#5e574c]">
+                        v{item.current_version}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        {item.confidential ? (
+                          <span className="font-mono text-[11px] uppercase tracking-[0.04em] px-1.5 py-0.5 bg-[#f5f1e8] border border-[#ddd5c4] text-[#8a5a00]">
+                            Confidential
+                          </span>
+                        ) : (
+                          <span className="text-xs text-[#5e574c]">—</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5 text-xs text-[#5e574c]">
+                        <time dateTime={item.updated_at || item.created_at || ''} title={updatedTs.exact}>
+                          {updatedTs.relative}
+                        </time>
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <Link
+                          href={`/content/${item.id}`}
+                          className="text-sm font-medium text-[#1f1c18] underline underline-offset-4 hover:text-[#5e574c]"
+                        >
+                          Open
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
 
-      {/* Main Content Table with Filters */}
-      <Card variant="panel" className="overflow-hidden">
-        {/* Table Top Controls: Filters & Search */}
-        <div className="p-4 border-b border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Segmented Filter Buttons */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+      {/* Content Ledger Section */}
+      <section aria-labelledby="content-ledger-heading" className="space-y-4">
+        {/* Top Controls: Segmented Filter and Search Input */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Plain Segmented Control on Paper */}
+          <div className="inline-flex items-center border border-[#ddd5c4] bg-[#fffdf8] rounded-none p-0 overflow-x-auto">
             {[
               { id: 'all', label: 'All' },
               { id: 'drafts', label: 'Drafts' },
@@ -216,10 +206,10 @@ export function DashboardView({
                 key={tab.id}
                 type="button"
                 onClick={() => setFilter(tab.id)}
-                className={`px-3 py-1 text-xs rounded-md transition-colors cursor-pointer select-none ${
+                className={`px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.04em] transition-colors cursor-pointer border-r last:border-r-0 border-[#ddd5c4] ${
                   filter === tab.id
-                    ? 'bg-[#171724] text-[#ececf6] font-medium border border-white/10'
-                    : 'text-[#a3a3bb] hover:text-[#ececf6]'
+                    ? 'bg-[#1f1c18] text-[#f5f1e8]'
+                    : 'bg-[#fffdf8] text-[#5e574c] hover:bg-[#f5f1e8] hover:text-[#1f1c18]'
                 }`}
               >
                 {tab.label}
@@ -227,20 +217,22 @@ export function DashboardView({
             ))}
           </div>
 
-          {/* Quick Search Input */}
+          {/* Quick Search */}
           <div className="relative w-full sm:w-64">
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search content..."
-              className="w-full bg-[#171724] text-[#ececf6] placeholder-[#7b7b94] border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-indigo-400"
+              aria-label="Search content"
+              className="w-full bg-[#fffdf8] text-[#1f1c18] placeholder-[#5e574c] border border-[#ddd5c4] rounded-none px-3 py-1.5 text-xs focus:border-[#1f1c18] focus:outline-none"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#7b7b94] hover:text-[#ececf6]"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#5e574c] hover:text-[#1f1c18]"
+                aria-label="Clear search"
               >
                 ✕
               </button>
@@ -248,14 +240,14 @@ export function DashboardView({
           </div>
         </div>
 
-        {/* Contents Table */}
+        {/* Ledger-style Table on Paper */}
         {filteredContents.length === 0 ? (
           <EmptyState
             title="No content found"
             description={
               search
-                ? `No items match "${search}". Try adjusting your query.`
-                : 'Get started by creating your first content draft.'
+                ? `No submissions match "${search}". Try adjusting your query.`
+                : 'No content in this view. Create a new draft to begin.'
             }
             action={
               canCreate && !search ? (
@@ -268,68 +260,67 @@ export function DashboardView({
             }
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-[#ececf6]">
-              <thead className="bg-[#171724] text-[11px] uppercase tracking-wider text-[#a3a3bb] border-b border-white/[0.08]">
+          <div className="border border-[#ddd5c4] bg-[#fffdf8] overflow-x-auto">
+            <table className="w-full text-left text-sm border-collapse">
+              <thead className="bg-[#fffdf8] border-b border-[#ddd5c4] font-mono text-[11px] uppercase tracking-[0.04em] text-[#5e574c] sticky top-14 z-10">
                 <tr>
-                  <th scope="col" className="px-5 py-3 font-medium">Title &amp; Channel</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Title and channel</th>
                   <th scope="col" className="px-5 py-3 font-medium">Status</th>
                   <th scope="col" className="px-5 py-3 font-medium">Version</th>
                   <th scope="col" className="px-5 py-3 font-medium">Confidential</th>
-                  <th scope="col" className="px-5 py-3 font-medium">Created</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Updated</th>
                   <th scope="col" className="px-5 py-3 font-medium text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.04]">
+              <tbody className="divide-y divide-[#ddd5c4]">
                 {filteredContents.map((c) => {
-                  const statusConf = STATUS_CONFIG[c.status] || {
-                    label: c.status,
-                    variant: 'neutral' as const,
-                  };
+                  const updatedTs = formatTimestamp(c.updated_at || c.created_at);
 
                   return (
                     <tr
                       key={c.id}
-                      className="hover:bg-[#171724]/50 transition-colors group"
+                      className="hover:bg-[#f5f1e8] transition-colors duration-120"
                     >
                       <td className="px-5 py-3.5">
                         <Link
                           href={`/content/${c.id}`}
-                          className="font-medium text-[#ececf6] hover:text-[#a5b4fc] transition-colors line-clamp-1"
+                          className="font-medium text-[#1f1c18] hover:underline line-clamp-1"
                         >
                           {c.title}
                         </Link>
-                        <div className="text-xs text-[#7b7b94] mt-0.5 flex items-center gap-2">
+                        <div className="text-xs text-[#5e574c] mt-0.5">
                           <span className="capitalize">{c.channel}</span>
-                          {c.audience && <span>&bull; {c.audience}</span>}
+                          {c.audience && <span> · {c.audience}</span>}
                         </div>
                       </td>
                       <td className="px-5 py-3.5">
-                        <Badge variant={statusConf.variant}>
-                          {statusConf.label}
+                        <Badge variant={c.status as any}>
+                          {c.status.replace('_', ' ')}
                         </Badge>
                       </td>
-                      <td className="px-5 py-3.5 font-mono text-xs text-[#a3a3bb]">
+                      <td className="px-5 py-3.5 font-mono text-[12px] text-[#5e574c]">
                         v{c.current_version}
                       </td>
                       <td className="px-5 py-3.5">
                         {c.confidential ? (
-                          <span className="inline-flex items-center gap-1 text-xs text-[#f5b74f] font-medium bg-[#f5b74f]/10 px-2 py-0.5 rounded border border-[#f5b74f]/25">
+                          <span className="font-mono text-[11px] uppercase tracking-[0.04em] px-1.5 py-0.5 bg-[#f5f1e8] border border-[#ddd5c4] text-[#8a5a00]">
                             Confidential
                           </span>
                         ) : (
-                          <span className="text-xs text-[#7b7b94]">Standard</span>
+                          <span className="text-xs text-[#5e574c]">—</span>
                         )}
                       </td>
-                      <td className="px-5 py-3.5 text-xs text-[#a3a3bb] font-mono">
-                        {c.created_at ? new Date(c.created_at).toLocaleDateString() : '—'}
+                      <td className="px-5 py-3.5 text-xs text-[#5e574c]">
+                        <time dateTime={c.updated_at || c.created_at || ''} title={updatedTs.exact}>
+                          {updatedTs.relative}
+                        </time>
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         <Link
                           href={`/content/${c.id}`}
-                          className="text-xs text-[#a5b4fc] hover:underline font-medium"
+                          className="text-sm font-medium text-[#1f1c18] underline underline-offset-4 hover:text-[#5e574c]"
                         >
-                          Open &rarr;
+                          Open
                         </Link>
                       </td>
                     </tr>
@@ -339,7 +330,7 @@ export function DashboardView({
             </table>
           </div>
         )}
-      </Card>
+      </section>
     </div>
   );
 }
