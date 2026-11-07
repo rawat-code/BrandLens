@@ -1,42 +1,76 @@
-# AI Disclosure
+# AI Disclosure & Transparency Statement
 
-BrandLens is a pre-publication brand-governance review platform built for the Inkloom AI hackathon (Round 2 build). This document discloses how and where artificial intelligence is utilized within the platform and throughout its engineering process.
+Last verified against code: 2026-11-07
+
+This document discloses how and where artificial intelligence is utilized within the **BrandLens** platform, throughout its engineering and build process, in its planning documentation, and regarding reused external materials.
 
 ---
 
-## 1. AI Usage Within the Product
+## Part A: AI Inside the Product
 
-BrandLens uses Google Gemini strictly to augment human decision-makers. In accordance with the non-negotiable product rules, **AI never approves, publishes, or rewrites content autonomously**. Human editors and compliance officers retain sole authority over all content modifications and approvals.
+### 1. Foundation Models Used
+- **Primary Review Engine**: `gemini-3.5-flash-lite` (via `@google/genai` SDK, configurable via `GEMINI_MODEL`).
+- **Failover / Fallback Engine**: `gemini-3.1-flash-lite` (via `@google/genai` SDK, configurable via `GEMINI_FALLBACK_MODEL`).
 
-AI is utilized in the following specific product capabilities:
-
+### 2. Capabilities Powered by AI
 1. **Review Judgement (`src/lib/review/judge.ts`)**:
-   - Compares redacted content submissions against the organisation's approved guidelines, facts, and terminology dictionary.
-   - Evaluates whether nuanced copy complies with brand tone, messaging pillars, and claims policies.
-   - Generates confidence scores and requires explicit citation of library source rules.
+   - Compares content copy against candidate guidelines and verified facts.
+   - Evaluates subjective brand nuances: tone compliance (e.g. aggressive urgency, medical claims), messaging alignment, and subtle regulatory assertions.
+   - Enforces structured JSON output validated against strict Zod schemas (`src/lib/validation.ts`).
+2. **Suggestions & Intent Preservation (`src/lib/review/suggest.ts`)**:
+   - Generates minimal, non-destructive replacement copy for flagged spans.
+   - Conducts a secondary evaluation pass checking whether suggested edits preserve author voice and communicative intent (`intent_check: 'preserved' | 'changed'`).
+3. **Guideline Clarification Synthesis (`src/app/api/insights/proposals/generate/route.ts`)**:
+   - Synthesizes repeated creator dispute reasons to propose clearer policy phrasing for administrator and manager review in `/insights`.
 
-2. **Fix Suggestions (`src/lib/review/suggest.ts`)**:
-   - Generates non-destructive revision suggestions for identified issues while preserving the creator's voice and intent.
-   - Requires individual, manual human acceptance to apply any suggested modification.
+### 3. What Text Leaves the Server & Redaction Controls
+- **Strict In-Flight Redaction**: Before any text is transmitted to Google Gemini, `src/lib/review/redact.ts` strips email addresses, phone numbers, and API tokens.
+- **Data Delimiters**: Submissions are treated strictly as DATA, wrapped in `<content>...</content>` delimiters with prompt instructions to ignore instructions inside.
+- **Confidential Exemption**: Content marked `confidential: true` strictly bypasses all external AI calls. Only local deterministic rules execute.
 
-3. **Intent Verification Check (`intent_check`)**:
-   - Verifies whether suggested edits alter the core commercial or communicative message intended by the creator.
+### 4. What AI Can Never Do in BrandLens
+- **AI Never Approves**: The model cannot transition content status to `approved`.
+- **AI Never Publishes**: The model has no access to publishing actions.
+- **AI Never Auto-Rewrites**: Suggestions are applied only when a human user clicks **Accept**, creating an immutable version snapshot `v(N+1)`.
+- **AI Never Authoritatively Flags Without Grounding**: Potential findings lacking source citations in the library are automatically downgraded to `needs_human_check = true` ("Needs human check").
 
-4. **Guideline Clarification Proposals (`guideline_proposals`)**:
-   - Synthesizes recurring findings to propose guideline clarifications or amendments for human administrators to review.
-
-### Guardrails & Safety Constraints:
-- **Data vs. Instructions**: Content under review is treated strictly as DATA, wrapped in strict delimiters in prompts to prevent prompt injection.
-- **Data Privacy & Redaction**: PII (emails, phone numbers) and API keys/secrets are stripped prior to AI ingestion.
-- **Confidentiality Gate**: Any content flagged as confidential completely bypasses the external AI service, running only local deterministic rule checks.
-- **Graceful Degradation**: If AI calls fail or timeout, the platform falls back to deterministic rule-based checks with an explicit user alert banner.
+### 5. User-Facing Transparency Telemetry
+- Every reviewed draft features an **AI Disclosure** tab (`src/components/AiDisclosureTab.tsx`) rendering:
+  - Exact model identifier used (`gemini-3.5-flash-lite` or fallback).
+  - PII redaction count.
+  - Count breakdown of deterministic rule findings vs AI findings.
+  - Verbatim preview of redacted data transmitted to the model.
+  - Policy skip reasons when AI was bypassed (confidential content, missing keys, or timeouts).
 
 ---
 
-## 2. AI-Assisted Development Disclosure
+## Part B: AI Used to Build the Product
 
-BrandLens was developed using **Google Antigravity**, an agentic AI coding assistant.
+BrandLens was developed with the assistance of **Google Antigravity**, an agentic AI coding assistant.
 
-- **Development Assistant**: Google Antigravity
-- **Model(s) Used Inside Antigravity**: ____________________ *(To be filled in by the development team. Do not guess.)*
+- **Coding Assistant Tool**: Google Antigravity
+- **Exact Model(s) Used Inside Antigravity**: `[FILL IN: exact model(s) from the model picker]`
+- **Components Generated or Assisted by AI**:
+  1. *Application Code*: Assisted in scaffolding Next.js 15 App Router route handlers, server actions, client view components, and pure review engine modules (`rules.ts`, `judge.ts`, `suggest.ts`, `redact.ts`, `retrieve.ts`, `pipeline.ts`).
+  2. *Automated Test Suites*: Generated initial unit and integration tests across 21 test files (115 tests in Vitest).
+  3. *Evaluation Benchmark*: Assisted in authoring synthetic test samples (`eval/data/samples.json`) and evaluation harness (`scripts/eval.ts`).
+  4. *Documentation*: Drafted baseline technical documentation, API specifications, and architectural diagrams.
+- **Human Oversight & Review Process**:
+  - Every line of code, database query, and security policy was reviewed, refined, and validated by the team lead (Himanshu Rawat).
+  - Architectural decisions, workflow state machine guards, RLS boundaries, and evaluation metrics were tested and confirmed locally and on the live Vercel deployment.
 
+---
+
+## Part C: AI Used for Planning Documents
+
+- The Round 1 proposal document was drafted with the assistance of AI foundation models and subsequently reviewed, refined, and edited by the team lead prior to hackathon submission.
+- All commitments and architectural goals in Round 1 served as the baseline for this Round 2 build audit.
+
+---
+
+## Part D: Reused Material, Templates & Boilerplate
+
+A comprehensive catalog of third-party templates and libraries is provided in [`docs/SERVICES.md`](file:///home/kira/Downloads/BrandLens/docs/SERVICES.md):
+- **Scaffolding Template**: Official `create-next-app` starter template (Next.js 15 App Router with TypeScript and Tailwind CSS; initial commit `5ab6adc` on 2026-11-04).
+- **Component Libraries**: **Zero** third-party component libraries (e.g. shadcn, MUI, Chakra) were used. All UI components, buttons, dialogs, badges, and redline diff viewers were built custom for BrandLens.
+- **External Services**: Supabase (PostgreSQL + Auth) and Google Gemini API (`@google/genai`).
