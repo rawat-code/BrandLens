@@ -336,5 +336,5 @@ Comprehensive documentation audited and verified against code for Inkloom AI Hac
 | [`docs/E2E_RESULTS.md`](docs/E2E_RESULTS.md) | **End-to-End Test Suite**: 15/15 passing checks across auth, review pipeline, RBAC enforcement, and audit logging. |
 | [`AI_DISCLOSURE.md`](AI_DISCLOSURE.md) | **AI Usage Disclosure**: Full disclosure of in-product AI usage and AI coding assistants used during development. |
 | [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md) | **Known Issues & Limitations**: 8 documented issues with root causes, judge impact ratings, and production fixes. |
-| [`SUBMIT_CHECKLIST.md`](SUBMIT_CHECKLIST.md) | **Submission Checklist**: Pre-submission verification steps and human-only action items with exact file/line references. |
-| [`FINAL_REPORT.md`](FINAL_REPORT.md) | **Final Verification & Hand-Off Report**: Complete summary of all 8 verification stages and team hand-off steps. |
+| [`SUBMIT_CHECKLIST.md`](docs/process/SUBMIT_CHECKLIST.md) | **Submission Checklist**: Pre-submission verification steps and human-only action items with exact file/line references. |
+| [`FINAL_REPORT.md`](docs/process/FINAL_REPORT.md) | **Final Verification & Hand-Off Report**: Complete summary of all 8 verification stages and team hand-off steps. |
