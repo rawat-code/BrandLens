@@ -1,5 +1,7 @@
 # BrandLens Release Progress
 
+> Note (2026-11-07): Historical build progress log for Round 2. See [`docs/PLAN_VS_BUILT.md`](docs/PLAN_VS_BUILT.md) and [`docs/SUBMISSION_SUMMARY.md`](docs/SUBMISSION_SUMMARY.md) for final audited deliverables.
+
 - STAGE R0 - READ AND VERIFY: DONE - Verified audit artifacts; npm install, npm run lint (0 errors), npm test (111 passed), and npm run build (12/12 routes) all exited cleanly.
 - STAGE R1 - SAFE MERGE AND PUSH: DONE - Verified secrets audit (zero leaks), fast-forward merged chore/final-polish into main, and pushed commit 6ab1ab7 to origin/main.
 - STAGE R2 - DEPLOYMENT CHECK: DONE - Verified live deployment on https://brandlens-zeta.vercel.app with neutral tagline, demo badge, live settings, and captured screenshots.

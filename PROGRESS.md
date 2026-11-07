@@ -1,5 +1,7 @@
 # BrandLens Final Polish Progress
 
+> Note (2026-11-07): Historical build progress log for Round 2. See [`docs/PLAN_VS_BUILT.md`](docs/PLAN_VS_BUILT.md) and [`docs/SUBMISSION_SUMMARY.md`](docs/SUBMISSION_SUMMARY.md) for final audited deliverables.
+
 - STAGE 0 - AUDIT: DONE - Audited features against AGENTS.md in docs/PLAN_VS_BUILT.md; fixed lint error in scripts/browser-verify.ts; verified npm install (411 pkgs), npm run lint (0 errors), npm test (110 passed), and npm run build (12/12 pages).
 - STAGE 1 - BRANDING AND SETTINGS: DONE - Verified brand neutrality across src/, Admin-only /settings with org rename and safe 'Start fresh', and Library markdown guideline import.
 - STAGE 2 - CLEAN DEMO DATA: DONE - Implemented scripts/reset-demo.ts, executed dry-run & confirmed cleanup of test junk, and created 5 idempotent showcase posts via real pipeline.
