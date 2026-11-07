@@ -1,5 +1,6 @@
 import { createClient as createServerSupabase } from '@/lib/supabase/server';
 import { getAdminClient } from '@/lib/supabase/admin';
+import { redirect } from 'next/navigation';
 import type { UserRole, Profile } from '@/lib/types';
 import type { User } from '@supabase/supabase-js';
 
@@ -143,6 +144,30 @@ export async function requireRole(allowedRoles: UserRole[]): Promise<SessionProf
     throw new ForbiddenError(
       `Access forbidden for role: ${session.profile.role}. Required: ${allowedRoles.join(', ')}`
     );
+  }
+
+  return session;
+}
+
+/**
+ * Enforces role-based access control specifically for Server Component Pages.
+ * Cleanly redirects to /login if unauthenticated instead of throwing a 500 error.
+ */
+export async function requirePageRole(allowedRoles: UserRole[]): Promise<SessionProfile> {
+  let session: SessionProfile | null = null;
+  try {
+    session = await getSessionProfile();
+  } catch (err) {
+    console.error('Error in requirePageRole:', err);
+    redirect('/login');
+  }
+
+  if (!session) {
+    redirect('/login');
+  }
+
+  if (!allowedRoles.includes(session.profile.role)) {
+    redirect('/dashboard');
   }
 
   return session;

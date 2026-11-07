@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { requireRole } from '@/lib/auth';
+import { requirePageRole } from '@/lib/auth';
 import { getAdminClient } from '@/lib/supabase/admin';
 import { AppShell } from '@/components/AppShell';
 import { DashboardView } from '@/components/DashboardView';
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const { user, profile } = await requireRole(['creator', 'manager', 'reviewer', 'admin']);
+  const { user, profile } = await requirePageRole(['creator', 'manager', 'reviewer', 'admin']);
 
   const admin = getAdminClient();
 

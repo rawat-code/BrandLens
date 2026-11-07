@@ -1,5 +1,6 @@
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@supabase/ssr';
 import { getAdminClient } from '@/lib/supabase/admin';
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -8,6 +9,7 @@ export async function GET(request: Request) {
   const error = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
   const next = searchParams.get('next') ?? '/dashboard';
+  const targetUrl = new URL(next.startsWith('/') ? next : `/${next}`, origin).toString();
 
   if (error || errorDescription) {
     const message = errorDescription || error || 'Google authentication failed';
@@ -15,10 +17,36 @@ export async function GET(request: Request) {
   }
 
   if (code) {
-    const supabase = await createClient();
+    const cookieStore = await cookies();
+    const redirectResponse = NextResponse.redirect(targetUrl);
+
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!url || !anonKey) {
+      return NextResponse.redirect(
+        `${origin}/login?error=${encodeURIComponent('Missing Supabase configuration')}`
+      );
+    }
+
+    const supabase = createServerClient(url, anonKey, {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+            redirectResponse.cookies.set(name, value, options);
+          });
+        },
+      },
+    });
+
     const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
     if (exchangeError) {
+      console.error('exchangeCodeForSession error in auth callback:', exchangeError);
       return NextResponse.redirect(
         `${origin}/login?error=${encodeURIComponent(exchangeError.message)}`
       );
@@ -69,15 +97,7 @@ export async function GET(request: Request) {
         console.error('Error auto-provisioning profile in auth callback:', profileErr);
       }
 
-      const forwardedHost = request.headers.get('x-forwarded-host');
-      const isLocalEnv = process.env.NODE_ENV === 'development';
-      if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`);
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`);
-      } else {
-        return NextResponse.redirect(`${origin}${next}`);
-      }
+      return redirectResponse;
     }
   }
 

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { requireRole } from '@/lib/auth';
+import { requirePageRole } from '@/lib/auth';
 import { AppShell } from '@/components/AppShell';
 import { ContentForm } from '@/components/ContentForm';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function NewContentPage() {
-  const { user, profile } = await requireRole(['creator', 'manager', 'admin']);
+  const { user, profile } = await requirePageRole(['creator', 'manager', 'admin']);
 
   return (
     <AppShell user={user} profile={profile}>

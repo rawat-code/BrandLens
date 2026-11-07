@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { requireRole } from '@/lib/auth';
+import { requirePageRole } from '@/lib/auth';
 import { getAdminClient } from '@/lib/supabase/admin';
 import { AppShell } from '@/components/AppShell';
 import { ContentDetailView, type CommentWithProfile } from '@/components/ContentDetailView';
@@ -19,7 +19,7 @@ export default async function ContentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { user, profile } = await requireRole(['creator', 'manager', 'reviewer', 'admin']);
+  const { user, profile } = await requirePageRole(['creator', 'manager', 'reviewer', 'admin']);
   const admin = getAdminClient();
 
   // 1. Fetch content

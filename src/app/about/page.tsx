@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { requireRole } from '@/lib/auth';
+import { requirePageRole } from '@/lib/auth';
 import { AppShell } from '@/components/AppShell';
 import { PageHeader } from '@/components/ui/PageHeader';
 
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
-  const { user, profile } = await requireRole(['creator', 'manager', 'reviewer', 'admin']);
+  const { user, profile } = await requirePageRole(['creator', 'manager', 'reviewer', 'admin']);
 
   return (
     <AppShell user={user} profile={profile}>
