@@ -13,7 +13,7 @@ interface HighlightedTextProps {
 interface TextSegment {
   text: string;
   finding?: Finding;
-  indexInFindings?: number;
+  noteNumber?: number;
   isActive?: boolean;
 }
 
@@ -29,14 +29,21 @@ export function HighlightedText({
       return [{ text }];
     }
 
+    // Map each finding to a 1-based note number
+    const noteMap = new Map<string, number>();
+    findings.forEach((f, idx) => {
+      noteMap.set(f.id, idx + 1);
+    });
+
     const validSpans: {
       start: number;
       end: number;
       finding: Finding;
-      findingIndex: number;
+      noteNumber: number;
     }[] = [];
 
-    findings.forEach((f, idx) => {
+    findings.forEach((f) => {
+      const noteNum = noteMap.get(f.id) || 1;
       if (
         typeof f.start_idx === 'number' &&
         typeof f.end_idx === 'number' &&
@@ -48,7 +55,7 @@ export function HighlightedText({
           start: f.start_idx,
           end: f.end_idx,
           finding: f,
-          findingIndex: idx + 1,
+          noteNumber: noteNum,
         });
       } else if (f.excerpt && text.includes(f.excerpt)) {
         let searchIndex = 0;
@@ -58,7 +65,7 @@ export function HighlightedText({
             start: foundIdx,
             end: foundIdx + f.excerpt.length,
             finding: f,
-            findingIndex: idx + 1,
+            noteNumber: noteNum,
           });
           searchIndex = foundIdx + f.excerpt.length;
           break; // First occurrence
@@ -82,7 +89,7 @@ export function HighlightedText({
 
     for (const span of validSpans) {
       if (span.start < currentIdx) {
-        // Skip overlapping spans
+        // Skip overlapping span
         continue;
       }
 
@@ -93,7 +100,7 @@ export function HighlightedText({
       result.push({
         text: text.slice(span.start, span.end),
         finding: span.finding,
-        indexInFindings: span.findingIndex,
+        noteNumber: span.noteNumber,
         isActive: span.finding.id === activeFindingId,
       });
 
@@ -109,9 +116,9 @@ export function HighlightedText({
 
   return (
     <div
-      className="p-6 font-sans text-[15px] sm:text-base leading-7 tracking-normal whitespace-pre-wrap select-text text-[#ececf6] bg-[#0c0c14] rounded-lg border border-white/[0.06] min-h-[380px] shadow-inner focus:outline-none focus:ring-1 focus:ring-indigo-400/40"
+      className="p-[34px] sm:px-[38px] sm:py-[34px] font-serif text-[24px] leading-[2.1] whitespace-pre-wrap select-text text-[#1f1c18] bg-[#fffdf8] border border-[#ddd5c4] rounded-none min-h-[420px] focus:outline-2 focus:outline-[#1f1c18] focus:outline-offset-2"
       tabIndex={0}
-      aria-label="Highlighted content text viewer"
+      aria-label="Reading text with proofreader margin notes"
     >
       {segments.map((seg, idx) => {
         if (!seg.finding) {
@@ -121,59 +128,58 @@ export function HighlightedText({
         const f = seg.finding;
         const isActive = seg.isActive;
 
-        // Distinct styling per severity:
-        // High: wavy underline in #ff7a8a, tint bg
-        // Medium: solid underline in #f5b74f, tint bg
-        // Low: dotted underline in #7fb4ff, tint bg
-        let styleClass = '';
-        let patternLabel = '';
+        // Redline styling:
+        // high: 2px solid red underline (#b3261e)
+        // medium: highlighter background #f6e3b4
+        // low: 2px dotted blue underline (#1d4f9c)
+        let underlineClass = '';
+        if (f.severity === 'high') {
+          underlineClass = 'underline decoration-[#b3261e] decoration-2 underline-offset-4';
+        } else if (f.severity === 'medium') {
+          underlineClass = 'bg-[#f6e3b4] text-[#8a5a00] px-1';
+        } else {
+          underlineClass = 'underline decoration-[#1d4f9c] decoration-2 decoration-dotted underline-offset-4';
+        }
 
         if (isActive) {
-          styleClass =
-            'ring-2 ring-indigo-400 bg-indigo-500/25 text-white font-medium rounded px-1.5 py-0.5';
-          patternLabel = 'Active highlight: ';
-        } else if (f.severity === 'high') {
-          styleClass =
-            'bg-[#ff7a8a]/15 text-[#ffd0d6] font-medium underline decoration-wavy decoration-[#ff7a8a] underline-offset-[5px] px-1 py-0.5 rounded hover:bg-[#ff7a8a]/25 transition-colors';
-          patternLabel = 'High severity issue (wavy underline): ';
-        } else if (f.severity === 'medium') {
-          styleClass =
-            'bg-[#f5b74f]/15 text-[#fde68a] font-medium underline decoration-solid decoration-[#f5b74f] underline-offset-[5px] px-1 py-0.5 rounded hover:bg-[#f5b74f]/25 transition-colors';
-          patternLabel = 'Medium severity issue (solid underline): ';
-        } else {
-          styleClass =
-            'bg-[#7fb4ff]/10 text-[#bfdbfe] underline decoration-dotted decoration-[#7fb4ff] underline-offset-[5px] px-1 py-0.5 rounded hover:bg-[#7fb4ff]/20 transition-colors';
-          patternLabel = 'Low severity issue (dotted underline): ';
+          underlineClass += ' ring-2 ring-[#1f1c18] ring-offset-2';
         }
 
         if (f.status === 'accepted') {
-          styleClass += ' line-through opacity-50';
+          underlineClass += ' line-through opacity-50';
         }
 
         return (
-          <mark
-            key={idx}
-            id={`excerpt-${f.id}`}
-            role="button"
-            tabIndex={0}
-            onClick={() => onSelectFinding(f.id)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onSelectFinding(f.id);
-              }
-            }}
-            title={`${f.severity.toUpperCase()} (${f.category}): ${f.reason}`}
-            aria-label={`${patternLabel}${f.excerpt}. ${f.reason}`}
-            className={`cursor-pointer inline relative transition-all ${styleClass}`}
-          >
-            {seg.text}
-            {seg.indexInFindings && (
-              <span className="inline-flex items-center justify-center ml-1 px-1 py-0.5 text-[10px] font-mono font-semibold bg-white/10 rounded text-inherit select-none align-baseline leading-none -translate-y-0.5">
-                [{seg.indexInFindings}]
-              </span>
+          <span key={idx} className="inline">
+            <mark
+              id={`excerpt-${f.id}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => onSelectFinding(f.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelectFinding(f.id);
+                }
+              }}
+              title={`${f.severity.toUpperCase()} (${f.category}): ${f.reason}`}
+              className={`cursor-pointer inline bg-transparent transition-opacity duration-120 ${underlineClass}`}
+            >
+              {seg.text}
+            </mark>
+            {seg.noteNumber !== undefined && (
+              <sup className="align-super ml-0.5">
+                <button
+                  type="button"
+                  onClick={() => onSelectFinding(f.id)}
+                  aria-label={`Jump to note ${seg.noteNumber}`}
+                  className="font-mono text-[11px] font-semibold text-[#1f1c18] hover:underline cursor-pointer select-none inline-block px-0.5"
+                >
+                  {seg.noteNumber}
+                </button>
+              </sup>
             )}
-          </mark>
+          </span>
         );
       })}
     </div>

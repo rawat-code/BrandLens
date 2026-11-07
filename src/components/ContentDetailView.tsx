@@ -9,11 +9,10 @@ import { FindingsGroup } from '@/components/FindingsGroup';
 import { AiDisclosureTab } from '@/components/AiDisclosureTab';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Dialog } from '@/components/ui/Dialog';
 import { Textarea } from '@/components/ui/Input';
-import { Kbd } from '@/components/ui/Kbd';
+import { formatTimestamp } from '@/lib/time';
 import type { Content, ContentVersion, Finding, Profile, UserRole, AiRun } from '@/lib/types';
 import type { User } from '@supabase/supabase-js';
 
@@ -72,7 +71,7 @@ export function ContentDetailView({
   const [versionNote, setVersionNote] = useState('');
   const [isSavingVersion, setIsSavingVersion] = useState(false);
 
-  // Editor mode toggle: 'readonly' (highlighted) vs 'edit' (textarea)
+  // Editor mode toggle: 'readonly' (highlighted text) vs 'edit' (textarea)
   const [editorMode, setEditorMode] = useState<EditorMode>('readonly');
 
   // Currently focused/active finding
@@ -85,7 +84,7 @@ export function ContentDetailView({
   const [isReviewing, setIsReviewing] = useState(false);
   const [aiUnavailable, setAiUnavailable] = useState<boolean>(Boolean(initialAiRun?.error));
 
-  // Re-run review prompt banner after accepting a fix
+  // Post-fix prompt message
   const [reRunPromptMessage, setReRunPromptMessage] = useState<string | null>(null);
 
   // Workflow transition state
@@ -96,14 +95,6 @@ export function ContentDetailView({
   // Comment input state
   const [newCommentText, setNewCommentText] = useState('');
   const [isPostingComment, setIsPostingComment] = useState(false);
-
-  // Dispute modal state
-  const [disputingFinding, setDisputingFinding] = useState<Finding | null>(null);
-  const [disputeReasonText, setDisputeReasonText] = useState('');
-
-  // Dismiss modal state (requires reason per spec)
-  const [dismissingFindingId, setDismissingFindingId] = useState<string | null>(null);
-  const [dismissReasonText, setDismissReasonText] = useState('');
 
   // Edit-then-accept modal state
   const [editThenAcceptFinding, setEditThenAcceptFinding] = useState<Finding | null>(null);
@@ -128,30 +119,31 @@ export function ContentDetailView({
     (f) => f.severity === 'high' && f.requires_reviewer && f.status === 'open'
   );
 
-  // Summary counts of open findings by severity
-  const openHighCount = findings.filter((f) => f.status === 'open' && f.severity === 'high').length;
-  const openMediumCount = findings.filter((f) => f.status === 'open' && f.severity === 'medium').length;
-  const openLowCount = findings.filter((f) => f.status === 'open' && f.severity === 'low').length;
-  const totalOpenCount = openHighCount + openMediumCount + openLowCount;
+  // Approval blocking rules
+  let approvalBlockReason: string | null = null;
+  if (content.status === 'in_review') {
+    if (isCreator) {
+      approvalBlockReason = 'Creators cannot approve content';
+    } else if (isOwnContent) {
+      approvalBlockReason = 'Creators cannot approve own content';
+    } else if (isManager && openHighSevRequiringReviewer) {
+      approvalBlockReason = 'Open high-severity findings require Reviewer role';
+    }
+  }
 
-  // Ordered list of open findings for keyboard navigation
-  const openFindingsList = useMemo(() => {
-    return findings.filter((f) => f.status === 'open');
-  }, [findings]);
-
-  // Two-way selection handler
+  // Two-way selection handler: scroll to and focus the note
   const handleSelectFinding = useCallback((findingId: string) => {
     setActiveFindingId(findingId);
-    const cardEl = document.getElementById(`card-${findingId}`);
-    if (cardEl) {
-      cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    const noteEl = document.getElementById(`note-${findingId}`);
+    if (noteEl) {
+      noteEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      noteEl.focus();
     }
   }, []);
 
   // Keyboard navigation: J (next), K (previous), Enter (focus)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept when user is typing in form controls
       const target = e.target as HTMLElement | null;
       if (
         target &&
@@ -162,29 +154,29 @@ export function ContentDetailView({
         return;
       }
 
-      if (!openFindingsList.length) return;
+      if (!findings.length) return;
 
       if (e.key === 'j' || e.key === 'J') {
         e.preventDefault();
-        const currentIndex = openFindingsList.findIndex((f) => f.id === activeFindingId);
-        const nextIndex = currentIndex < openFindingsList.length - 1 ? currentIndex + 1 : 0;
-        handleSelectFinding(openFindingsList[nextIndex].id);
+        const currentIndex = findings.findIndex((f) => f.id === activeFindingId);
+        const nextIndex = currentIndex < findings.length - 1 ? currentIndex + 1 : 0;
+        handleSelectFinding(findings[nextIndex].id);
       } else if (e.key === 'k' || e.key === 'K') {
         e.preventDefault();
-        const currentIndex = openFindingsList.findIndex((f) => f.id === activeFindingId);
-        const prevIndex = currentIndex > 0 ? currentIndex - 1 : openFindingsList.length - 1;
-        handleSelectFinding(openFindingsList[prevIndex].id);
+        const currentIndex = findings.findIndex((f) => f.id === activeFindingId);
+        const prevIndex = currentIndex > 0 ? currentIndex - 1 : findings.length - 1;
+        handleSelectFinding(findings[prevIndex].id);
       } else if (e.key === 'Enter' && activeFindingId) {
-        const cardEl = document.getElementById(`card-${activeFindingId}`);
-        if (cardEl) {
-          cardEl.focus();
+        const noteEl = document.getElementById(`note-${activeFindingId}`);
+        if (noteEl) {
+          noteEl.focus();
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [openFindingsList, activeFindingId, handleSelectFinding]);
+  }, [findings, activeFindingId, handleSelectFinding]);
 
   // Load activity logs when activity tab is clicked
   const handleTabChange = async (tab: BottomTab) => {
@@ -214,7 +206,7 @@ export function ContentDetailView({
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to execute review');
+        throw new Error(data.error || 'Review execution failed');
       }
 
       setFindings(data.findings || []);
@@ -227,7 +219,7 @@ export function ContentDetailView({
       setAiUnavailable(Boolean(data.aiUnavailable || data.aiRun?.error));
 
       setBannerMessage({
-        text: `Review completed. Found ${data.findings.length} issue(s) cited against governance rules.`,
+        text: `Review completed with ${data.findings.length} findings cited against organization rules.`,
         type: 'success',
       });
     } catch (err) {
@@ -238,7 +230,7 @@ export function ContentDetailView({
     }
   };
 
-  // Save as new version
+  // Save new version
   const handleSaveVersion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editorBody.trim()) return;
@@ -267,8 +259,8 @@ export function ContentDetailView({
       setSelectedVersionNum(updatedVer.version);
       setVersionNote('');
       setEditorMode('readonly');
-      setReRunPromptMessage(`Draft saved as Version ${updatedVer.version}. Please re-run review to audit changes.`);
-      setBannerMessage({ text: `Saved as Version ${updatedVer.version}!`, type: 'success' });
+      setReRunPromptMessage(`Draft saved as Version ${updatedVer.version}. Select "Run review" to audit changes.`);
+      setBannerMessage({ text: `Saved Version ${updatedVer.version}`, type: 'success' });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save version';
       setBannerMessage({ text: msg, type: 'error' });
@@ -301,9 +293,9 @@ export function ContentDetailView({
       }
 
       setReRunPromptMessage(
-        `Applied fix for "${finding.category}". New Version ${data.new_version?.version || 'created'}. Re-run review to verify.`
+        `Applied fix for ${finding.category}. Version ${data.new_version?.version || 'created'}. Re-run review to audit.`
       );
-      setBannerMessage({ text: 'Suggestion accepted and new draft version created!', type: 'success' });
+      setBannerMessage({ text: 'Suggestion accepted and draft version updated.', type: 'success' });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to accept finding';
       setBannerMessage({ text: msg, type: 'error' });
@@ -348,9 +340,9 @@ export function ContentDetailView({
       setEditThenAcceptFinding(null);
       setCustomSuggestionText('');
       setReRunPromptMessage(
-        `Custom edit applied to Version ${data.new_version?.version || 'created'}. Re-run review to confirm.`
+        `Custom edit saved to Version ${data.new_version?.version || 'created'}. Re-run review to audit.`
       );
-      setBannerMessage({ text: 'Custom fix applied and saved as new version!', type: 'success' });
+      setBannerMessage({ text: 'Custom modification applied.', type: 'success' });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error applying edit';
       setBannerMessage({ text: msg, type: 'error' });
@@ -359,34 +351,25 @@ export function ContentDetailView({
     }
   };
 
-  // Open Dismiss Modal
-  const handleOpenDismissModal = (findingId: string) => {
-    setDismissingFindingId(findingId);
-    setDismissReasonText('');
-  };
-
-  // Submit Dismiss
-  const handleSubmitDismiss = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!dismissingFindingId || !dismissReasonText.trim()) return;
+  // Dismiss Finding with reason
+  const handleDismissFinding = async (findingId: string, reason?: string) => {
+    if (!reason || !reason.trim()) return;
 
     setIsProcessingAction(true);
     try {
-      const res = await fetch(`/api/findings/${dismissingFindingId}/dismiss`, {
+      const res = await fetch(`/api/findings/${findingId}/dismiss`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: dismissReasonText.trim() }),
+        body: JSON.stringify({ reason: reason.trim() }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to dismiss finding');
 
       setFindings((prev) =>
-        prev.map((f) => (f.id === dismissingFindingId ? { ...f, status: 'dismissed' as const } : f))
+        prev.map((f) => (f.id === findingId ? { ...f, status: 'dismissed' as const } : f))
       );
-      setDismissingFindingId(null);
-      setDismissReasonText('');
-      setBannerMessage({ text: 'Finding dismissed with documented reason.', type: 'success' });
+      setBannerMessage({ text: 'Finding dismissed and documented in audit log.', type: 'success' });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to dismiss finding';
       setBannerMessage({ text: msg, type: 'error' });
@@ -395,17 +378,16 @@ export function ContentDetailView({
     }
   };
 
-  // Submit Dispute
-  const handleSubmitDispute = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!disputingFinding || !disputeReasonText.trim()) return;
+  // Dispute Finding with reason
+  const handleDisputeFinding = async (finding: Finding, reason?: string) => {
+    if (!reason || !reason.trim()) return;
 
     setIsProcessingAction(true);
     try {
-      const res = await fetch(`/api/findings/${disputingFinding.id}/dispute`, {
+      const res = await fetch(`/api/findings/${finding.id}/dispute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: disputeReasonText.trim() }),
+        body: JSON.stringify({ reason: reason.trim() }),
       });
 
       const data = await res.json();
@@ -413,14 +395,12 @@ export function ContentDetailView({
 
       setFindings((prev) =>
         prev.map((f) =>
-          f.id === disputingFinding.id
-            ? { ...f, status: 'disputed' as const, dispute_reason: disputeReasonText.trim() }
+          f.id === finding.id
+            ? { ...f, status: 'disputed' as const, dispute_reason: reason.trim() }
             : f
         )
       );
-      setDisputingFinding(null);
-      setDisputeReasonText('');
-      setBannerMessage({ text: 'Finding disputed. Reviewers will examine your justification.', type: 'success' });
+      setBannerMessage({ text: 'Finding disputed. Reviewers will evaluate your justification.', type: 'success' });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error submitting dispute';
       setBannerMessage({ text: msg, type: 'error' });
@@ -446,7 +426,7 @@ export function ContentDetailView({
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'State transition rejected');
+        throw new Error(data.error || 'Workflow transition blocked');
       }
 
       setContent(data.content);
@@ -460,7 +440,7 @@ export function ContentDetailView({
       }
 
       setBannerMessage({
-        text: `Content successfully transitioned to "${toStatus.replace('_', ' ')}"!`,
+        text: `Content marked as "${toStatus.replace('_', ' ')}".`,
         type: 'success',
       });
     } catch (err) {
@@ -503,41 +483,42 @@ export function ContentDetailView({
       ? computeWordDiff(compareVersionObj.body, currentVersion.body)
       : [];
 
+  const statusLabel = content.status.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+  const channelLabel = content.channel ? content.channel.charAt(0).toUpperCase() + content.channel.slice(1) : 'General';
+  const metaLine = `${statusLabel} · Version ${content.current_version} · ${channelLabel} · Submitted by ${profile.full_name || 'Creator'}`;
+
   return (
-    <div className="p-4 md:p-8 max-w-7xl w-full mx-auto space-y-6">
-      {/* Top Banner Feedback */}
+    <div className="space-y-8">
+      {/* Feedback banner */}
       {bannerMessage && (
         <div
           role="alert"
-          className={`p-3.5 rounded-xl text-xs flex items-center justify-between border ${
+          className={`p-3.5 border rounded-none text-xs flex items-center justify-between ${
             bannerMessage.type === 'success'
-              ? 'bg-[#5fd1a0]/10 text-[#5fd1a0] border-[#5fd1a0]/30'
-              : 'bg-[#ff7a8a]/10 text-[#ff7a8a] border-[#ff7a8a]/30'
+              ? 'bg-[#fffdf8] border-[#1f6b3a] text-[#1f6b3a]'
+              : 'bg-[#fffdf8] border-[#b3261e] text-[#b3261e]'
           }`}
         >
           <span>{bannerMessage.text}</span>
           <button
             type="button"
             onClick={() => setBannerMessage(null)}
-            className="text-xs font-mono underline hover:opacity-75 cursor-pointer"
+            className="text-xs underline hover:opacity-75 cursor-pointer ml-3"
           >
             Dismiss
           </button>
         </div>
       )}
 
-      {/* Post-Accept / Edit Re-Run Review Prompt */}
+      {/* Post-Accept / Edit re-run review prompt banner */}
       {reRunPromptMessage && (
         <div
           role="status"
-          className="p-4 rounded-xl text-xs bg-[#5fd1a0]/10 border border-[#5fd1a0]/30 text-[#ececf6] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg shadow-black/40"
+          className="p-3.5 border border-[#ddd5c4] bg-[#fffdf8] text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
         >
-          <div className="flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-[#5fd1a0] animate-pulse" />
-            <div>
-              <strong className="font-medium text-[#ececf6] block">Action applied successfully</strong>
-              <span className="text-[#a3a3bb]">{reRunPromptMessage}</span>
-            </div>
+          <div>
+            <strong className="font-medium text-[#1f1c18] block">Draft modified</strong>
+            <span className="text-[#5e574c]">{reRunPromptMessage}</span>
           </div>
 
           <Button
@@ -546,159 +527,111 @@ export function ContentDetailView({
             onClick={handleRunReview}
             disabled={isReviewing}
           >
-            {isReviewing ? 'Auditing...' : 'Re-run review now'}
+            {isReviewing ? 'Auditing...' : 'Run review'}
           </Button>
         </div>
       )}
 
-      {/* Header bar: Summary Header with Severity Breakdown and Status Chip */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
-        <div>
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <Link
-              href="/dashboard"
-              className="text-xs text-[#a3a3bb] hover:text-[#ececf6] font-medium mr-2 transition-colors"
-            >
-              ← Content
-            </Link>
-
-            {/* Clear Status Chip */}
-            <Badge
-              variant={
-                content.status === 'approved' || content.status === 'published'
-                  ? 'success'
-                  : content.status === 'needs_changes'
-                  ? 'medium'
-                  : content.status === 'rejected'
-                  ? 'high'
-                  : content.status === 'in_review'
-                  ? 'low'
-                  : 'neutral'
-              }
-            >
-              {content.status.replace('_', ' ')}
-            </Badge>
-
-            <span className="text-xs px-2 py-0.5 rounded bg-[#171724] text-[#a3a3bb] font-mono border border-white/[0.06]">
-              v{content.current_version}
-            </span>
-
-            <span className="text-xs px-2 py-0.5 rounded bg-[#171724] text-[#a3a3bb] capitalize border border-white/[0.06]">
-              {content.channel}
-            </span>
-
-            {content.confidential && (
-              <span className="text-xs px-2 py-0.5 rounded bg-[#f5b74f]/10 text-[#f5b74f] font-medium border border-[#f5b74f]/30">
-                Confidential
-              </span>
-            )}
-          </div>
-
-          <h1 className="font-serif text-2xl sm:text-3xl font-normal text-[#ececf6] tracking-normal leading-snug">
-            {content.title}
-          </h1>
-
-          {/* Open Findings Summary Badges by Severity */}
-          <div className="flex items-center gap-2 mt-2.5 flex-wrap">
-            <span className="text-xs text-[#7b7b94]">Open findings:</span>
-
-            <Badge variant="high">
-              {openHighCount} high
-            </Badge>
-
-            <Badge variant="medium">
-              {openMediumCount} medium
-            </Badge>
-
-            <Badge variant="low">
-              {openLowCount} low
-            </Badge>
-
-            <span className="text-xs text-[#7b7b94] font-mono">
-              ({totalOpenCount} unresolved)
-            </span>
-          </div>
+      {/* Confidential content banner */}
+      {content.confidential && (
+        <div className="p-3.5 bg-[#fffdf8] border border-[#ddd5c4] text-xs">
+          <strong className="font-mono text-[11px] uppercase tracking-[0.04em] text-[#8a5a00] block">
+            Confidential content
+          </strong>
+          <p className="text-xs text-[#5e574c] mt-0.5 leading-relaxed">
+            This content is marked confidential. It is audited solely against deterministic organization library rules and is never sent to external AI services.
+          </p>
         </div>
+      )}
 
-        {/* Workflow Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Creator submit */}
-          {isCreator && isOwnContent && (content.status === 'ai_reviewed' || content.status === 'draft') && (
-            <Button
-              variant="primary"
-              size="md"
-              onClick={() => handleTransition('in_review')}
-              disabled={isTransitioning}
-            >
-              Submit for approval
-            </Button>
-          )}
+      {/* Header (Newsreader 38px, meta line, workflow buttons, 1px rule) */}
+      <header className="space-y-3 pb-5 border-b border-[#ddd5c4]">
+        <div className="flex flex-col lg:flex-row lg:items-baseline justify-between gap-4">
+          <div className="space-y-1 min-w-0">
+            <h1 className="font-serif text-[38px] font-medium text-[#1f1c18] leading-[1.1] tracking-normal break-words">
+              {content.title}
+            </h1>
+            <p className="text-[13px] text-[#5e574c]">
+              {metaLine}
+            </p>
+          </div>
 
-          {/* Creator publish */}
-          {isCreator && isOwnContent && content.status === 'approved' && (
-            <Button
-              variant="primary"
-              size="md"
-              onClick={() => handleTransition('published')}
-              disabled={isTransitioning}
-            >
-              Mark as published
-            </Button>
-          )}
-
-          {/* Manager / Reviewer actions when in_review */}
-          {(isManager || isReviewer || isAdmin) && content.status === 'in_review' && (
-            <>
+          {/* Workflow Action Buttons */}
+          <div className="flex items-center gap-3 shrink-0 flex-wrap">
+            {/* Creator actions */}
+            {isCreator && isOwnContent && (content.status === 'ai_reviewed' || content.status === 'draft') && (
               <Button
                 variant="primary"
                 size="md"
-                onClick={() => handleTransition('approved')}
-                disabled={
-                  isTransitioning ||
-                  (isManager && isOwnContent) ||
-                  (isManager && openHighSevRequiringReviewer) ||
-                  (isReviewer && isOwnContent)
-                }
-                title={
-                  isManager && isOwnContent
-                    ? 'Cannot approve own content'
-                    : isManager && openHighSevRequiringReviewer
-                    ? 'Open high-severity findings require Reviewer role'
-                    : 'Approve content draft'
-                }
-              >
-                Approve
-              </Button>
-
-              <Button
-                variant="secondary"
-                size="md"
-                onClick={() => setTransitionCommentModal('needs_changes')}
+                onClick={() => handleTransition('in_review')}
                 disabled={isTransitioning}
               >
-                Request changes
+                Submit for approval
               </Button>
+            )}
 
+            {isCreator && isOwnContent && content.status === 'approved' && (
               <Button
-                variant="danger"
+                variant="primary"
                 size="md"
-                onClick={() => setTransitionCommentModal('rejected')}
+                onClick={() => handleTransition('published')}
                 disabled={isTransitioning}
               >
-                Reject
+                Mark as published
               </Button>
-            </>
-          )}
+            )}
+
+            {/* Manager / Reviewer actions when in_review */}
+            {(isManager || isReviewer || isAdmin) && content.status === 'in_review' && (
+              <>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => setTransitionCommentModal('needs_changes')}
+                  disabled={isTransitioning}
+                >
+                  Request changes
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="primary"
+                    size="md"
+                    onClick={() => handleTransition('approved')}
+                    disabled={isTransitioning || Boolean(approvalBlockReason)}
+                  >
+                    Approve
+                  </Button>
+
+                  {approvalBlockReason && (
+                    <span className="text-[12px] text-[#5e574c] max-w-[190px] leading-tight">
+                      {approvalBlockReason}
+                    </span>
+                  )}
+                </div>
+
+                <Button
+                  variant="danger"
+                  size="md"
+                  onClick={() => setTransitionCommentModal('rejected')}
+                  disabled={isTransitioning}
+                >
+                  Reject
+                </Button>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Main Dual-Pane Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Pane: Editor & Highlighted Text Viewer (7 cols) */}
-        <div className="lg:col-span-7 bg-[#11111a] rounded-xl border border-white/[0.08] p-5 sm:p-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/[0.06] pb-3 gap-3">
-            <div className="flex items-center gap-2.5">
-              <label htmlFor="version-picker" className="text-xs font-mono uppercase text-[#7b7b94]">
+      {/* Two columns: Reading pane (1fr) and Margin notes (440px), gap 40px */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-10 items-start">
+        {/* Left Column: Reading Pane */}
+        <div className="space-y-4 min-w-0">
+          {/* Top Controls: Version picker & Edit toggle & Run review */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#ddd5c4] pb-3 gap-3">
+            <div className="flex items-center gap-3">
+              <label htmlFor="version-picker" className="font-mono text-[11px] uppercase tracking-[0.04em] text-[#5e574c]">
                 Version:
               </label>
               <select
@@ -710,7 +643,7 @@ export function ContentDetailView({
                   const v = versions.find((ver) => ver.version === num);
                   if (v) setEditorBody(v.body);
                 }}
-                className="text-xs font-mono bg-[#171724] text-[#ececf6] border border-white/10 rounded-lg px-2.5 py-1 focus:outline-none focus:border-indigo-400"
+                className="font-mono text-[11px] bg-[#fffdf8] text-[#1f1c18] border border-[#ddd5c4] rounded-none px-2.5 py-1 focus:outline-2 focus:outline-[#1f1c18]"
               >
                 {versions.map((ver) => (
                   <option key={ver.id} value={ver.version}>
@@ -720,73 +653,58 @@ export function ContentDetailView({
               </select>
             </div>
 
-            {/* Mode Switcher Toggle: Read-only Highlighted vs Edit Text */}
-            <div className="flex items-center gap-1 bg-[#171724] p-1 rounded-lg border border-white/[0.06]">
-              <button
-                type="button"
+            <div className="flex items-center gap-2">
+              <Button
+                variant={editorMode === 'readonly' ? 'secondary' : 'ghost'}
+                size="sm"
                 onClick={() => setEditorMode('readonly')}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
-                  editorMode === 'readonly'
-                    ? 'bg-[#11111a] text-[#ececf6] shadow-sm shadow-black/40 border border-white/10'
-                    : 'text-[#a3a3bb] hover:text-[#ececf6]'
-                }`}
               >
-                Highlights view
-              </button>
-              <button
-                type="button"
+                Reading text
+              </Button>
+              <Button
+                variant={editorMode === 'edit' ? 'secondary' : 'ghost'}
+                size="sm"
                 onClick={() => setEditorMode('edit')}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
-                  editorMode === 'edit'
-                    ? 'bg-[#11111a] text-[#ececf6] shadow-sm shadow-black/40 border border-white/10'
-                    : 'text-[#a3a3bb] hover:text-[#ececf6]'
-                }`}
               >
                 Edit draft
-              </button>
+              </Button>
             </div>
           </div>
 
-          {/* Mode 1: Highlighting View */}
+          {/* Reading view or edit textarea */}
           {editorMode === 'readonly' ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-[#7b7b94]">
-                <span>Click any highlighted segment to jump to the cited finding.</span>
-                <span className="font-mono">{editorBody.length.toLocaleString()} / 10,000 characters</span>
-              </div>
-
+            <div className="space-y-2">
               <HighlightedText
                 text={editorBody}
                 findings={findings}
                 activeFindingId={activeFindingId}
                 onSelectFinding={handleSelectFinding}
               />
+              <div className="flex items-center justify-between text-[12px] text-[#5e574c] pt-1">
+                <span>Select any numbered note or highlighted span to focus its margin note.</span>
+                <span className="font-mono">{editorBody.length.toLocaleString()} / 10,000 characters</span>
+              </div>
             </div>
           ) : (
-            /* Mode 2: Edit Textarea */
             <form onSubmit={handleSaveVersion} className="space-y-4">
-              <div>
-                <label htmlFor="content-editor-textarea" className="sr-only">
-                  Edit content draft
-                </label>
-                <textarea
-                  id="content-editor-textarea"
-                  rows={14}
-                  maxLength={10000}
-                  value={editorBody}
-                  onChange={(e) => setEditorBody(e.target.value)}
-                  placeholder="Draft body content..."
-                  className="w-full p-4 text-sm font-sans bg-[#171724] text-[#ececf6] border border-white/10 rounded-xl focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/40 leading-relaxed font-normal"
-                />
-              </div>
+              <textarea
+                rows={16}
+                maxLength={10000}
+                value={editorBody}
+                onChange={(e) => setEditorBody(e.target.value)}
+                placeholder="Draft body content..."
+                aria-label="Edit content draft"
+                className="w-full p-[34px] font-serif text-[20px] leading-[1.8] bg-[#fffdf8] text-[#1f1c18] border border-[#ddd5c4] rounded-none focus:outline-2 focus:outline-[#1f1c18] resize-y"
+              />
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
                 <input
                   type="text"
                   value={versionNote}
                   onChange={(e) => setVersionNote(e.target.value)}
-                  placeholder="Revision note (e.g. Fixed claims from feedback)..."
-                  className="text-xs px-3 py-2 bg-[#171724] text-[#ececf6] placeholder-[#7b7b94] border border-white/10 rounded-lg w-full sm:w-72 focus:outline-none focus:border-indigo-400"
+                  placeholder="Revision note (e.g., Updated SPF claims)..."
+                  aria-label="Revision note"
+                  className="text-xs px-3 py-2 bg-[#fffdf8] text-[#1f1c18] placeholder-[#5e574c] border border-[#ddd5c4] rounded-none w-full sm:w-80 focus:outline-2 focus:outline-[#1f1c18]"
                 />
 
                 <Button
@@ -802,20 +720,19 @@ export function ContentDetailView({
           )}
         </div>
 
-        {/* Right Pane: Review Findings Workbench Centrepiece (5 cols) */}
-        <div className="lg:col-span-5 lg:sticky lg:top-6 self-start bg-[#11111a] rounded-xl border border-white/[0.08] p-5 sm:p-6 space-y-4 max-h-[calc(100vh-3rem)] overflow-y-auto">
-          <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+        {/* Right Column: Margin Notes on Paper (440px) */}
+        <aside
+          aria-label="Margin review findings"
+          className="space-y-4 lg:sticky lg:top-20 self-start w-full"
+        >
+          <div className="flex items-baseline justify-between border-b border-[#ddd5c4] pb-2">
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-medium text-[#ececf6]">
-                  Governance findings ({findings.length})
-                </h2>
-                <div className="hidden sm:flex items-center gap-1 text-[11px] text-[#7b7b94]">
-                  <Kbd>J</Kbd>
-                  <Kbd>K</Kbd>
-                </div>
-              </div>
-              <p className="text-xs text-[#a3a3bb] mt-0.5">Citations against approved guidelines & facts</p>
+              <h2 className="font-serif text-[20px] font-medium text-[#1f1c18]">
+                Margin notes ({findings.length})
+              </h2>
+              <p className="text-[12px] text-[#5e574c] mt-0.5">
+                Proofreader citations against library
+              </p>
             </div>
 
             <Button
@@ -824,78 +741,68 @@ export function ContentDetailView({
               onClick={handleRunReview}
               disabled={isReviewing}
               isLoading={isReviewing}
-              icon={
-                <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M8 0L9.5 5.5L15 7L9.5 8.5L8 14L6.5 8.5L1 7L6.5 5.5L8 0Z" />
-                </svg>
-              }
             >
               {isReviewing ? 'Auditing...' : 'Run review'}
             </Button>
           </div>
 
-          {/* AI Review Unavailable Banner (Rule 8 Graceful Degradation) */}
+          {/* AI Review Unavailable Banner if degraded */}
           {aiUnavailable && (
             <div
-              className="p-3.5 rounded-lg border border-[#f5b74f]/30 bg-[#f5b74f]/10 text-xs flex items-start gap-2.5"
+              className="p-3 border border-[#ddd5c4] bg-[#fffdf8] text-xs"
               role="alert"
             >
-              <span className="w-2 h-2 rounded-full bg-[#f5b74f] shrink-0 mt-1" />
-              <div className="space-y-0.5">
-                <strong className="font-medium text-[#fde68a] block">AI review unavailable</strong>
-                <p className="text-[#a3a3bb] leading-relaxed">
-                  The AI service encountered a temporary error ({aiRun?.error || 'external service unreachable'}). Deterministic rule-based findings remain active.
-                </p>
-              </div>
+              <strong className="font-mono text-[11px] uppercase tracking-[0.04em] text-[#8a5a00] block">
+                AI review unavailable
+              </strong>
+              <p className="text-xs text-[#5e574c] mt-0.5 leading-relaxed">
+                The AI service could not be reached. Deterministic rule-based findings remain active.
+              </p>
             </div>
           )}
 
-          {/* Shimmer skeleton loader when isReviewing is active */}
+          {/* While a review runs, show skeleton notes (static grey blocks, no shimmer) */}
           {isReviewing ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {[1, 2, 3].map((n) => (
-                <div key={n} className="p-4 rounded-xl bg-[#171724] border border-white/[0.04] space-y-3">
+                <div key={n} className="p-4 bg-[#fffdf8] border border-[#ddd5c4] border-t-4 border-t-[#ddd5c4] space-y-3">
                   <div className="flex items-center justify-between">
-                    <Skeleton className="h-4 w-28" />
-                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-3 w-28" />
+                    <Skeleton className="h-3 w-16" />
                   </div>
-                  <Skeleton className="h-3 w-4/5" />
-                  <Skeleton className="h-14 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                  <Skeleton className="h-16 w-full" />
                 </div>
               ))}
             </div>
           ) : (
-            /* Grouped Findings Cards */
-            <div className="max-h-[720px] overflow-y-auto pr-1">
+            <div className="max-h-[calc(100vh-140px)] overflow-y-auto pr-1">
               <FindingsGroup
                 findings={findings}
                 activeFindingId={activeFindingId}
                 onSelectFinding={handleSelectFinding}
                 onAcceptFinding={handleAcceptFinding}
                 onEditThenAccept={handleOpenEditThenAccept}
-                onDisputeFinding={(f) => {
-                  setDisputingFinding(f);
-                  setDisputeReasonText('');
-                }}
-                onDismissFinding={handleOpenDismissModal}
+                onDisputeFinding={handleDisputeFinding}
+                onDismissFinding={handleDismissFinding}
                 isProcessingAction={isProcessingAction}
               />
             </div>
           )}
-        </div>
+        </aside>
       </div>
 
-      {/* Bottom Tabs Section: Comments, History, Activity, AI Disclosure */}
-      <Card variant="panel" className="p-5 sm:p-6 space-y-6">
-        <nav className="flex space-x-1 border-b border-white/[0.08] pb-3 flex-wrap gap-y-2" role="tablist">
+      {/* Tabs below: Comments, History, Activity, AI disclosure */}
+      <section aria-label="Review details and audit tabs" className="border-t border-[#ddd5c4] pt-8 space-y-6">
+        <nav className="flex space-x-6 border-b border-[#ddd5c4] pb-0 flex-wrap" role="tablist">
           <button
             role="tab"
             aria-selected={activeTab === 'comments'}
             onClick={() => handleTabChange('comments')}
-            className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
+            className={`pb-3 text-sm font-medium transition-colors cursor-pointer ${
               activeTab === 'comments'
-                ? 'bg-[#171724] text-[#ececf6] border border-white/10'
-                : 'text-[#a3a3bb] hover:text-[#ececf6]'
+                ? 'text-[#1f1c18] border-b-2 border-[#1f1c18]'
+                : 'text-[#5e574c] hover:text-[#1f1c18]'
             }`}
           >
             Comments ({comments.length})
@@ -905,23 +812,23 @@ export function ContentDetailView({
             role="tab"
             aria-selected={activeTab === 'history'}
             onClick={() => handleTabChange('history')}
-            className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
+            className={`pb-3 text-sm font-medium transition-colors cursor-pointer ${
               activeTab === 'history'
-                ? 'bg-[#171724] text-[#ececf6] border border-white/10'
-                : 'text-[#a3a3bb] hover:text-[#ececf6]'
+                ? 'text-[#1f1c18] border-b-2 border-[#1f1c18]'
+                : 'text-[#5e574c] hover:text-[#1f1c18]'
             }`}
           >
-            Version history &amp; diff ({versions.length})
+            History &amp; diff ({versions.length})
           </button>
 
           <button
             role="tab"
             aria-selected={activeTab === 'activity'}
             onClick={() => handleTabChange('activity')}
-            className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
+            className={`pb-3 text-sm font-medium transition-colors cursor-pointer ${
               activeTab === 'activity'
-                ? 'bg-[#171724] text-[#ececf6] border border-white/10'
-                : 'text-[#a3a3bb] hover:text-[#ececf6]'
+                ? 'text-[#1f1c18] border-b-2 border-[#1f1c18]'
+                : 'text-[#5e574c] hover:text-[#1f1c18]'
             }`}
           >
             Activity trail
@@ -931,42 +838,44 @@ export function ContentDetailView({
             role="tab"
             aria-selected={activeTab === 'disclosure'}
             onClick={() => handleTabChange('disclosure')}
-            className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 ${
+            className={`pb-3 text-sm font-medium transition-colors cursor-pointer ${
               activeTab === 'disclosure'
-                ? 'bg-indigo-500/15 text-[#a5b4fc] border border-indigo-500/30'
-                : 'text-[#a3a3bb] hover:text-[#ececf6]'
+                ? 'text-[#1f1c18] border-b-2 border-[#1f1c18]'
+                : 'text-[#5e574c] hover:text-[#1f1c18]'
             }`}
           >
-            <span>✨</span>
-            <span>AI governance &amp; disclosure</span>
+            AI disclosure
           </button>
         </nav>
 
         {/* Tab 1: Comments */}
         {activeTab === 'comments' && (
-          <div className="space-y-4">
-            <div className="space-y-3 max-h-72 overflow-y-auto">
+          <div className="space-y-4 max-w-2xl">
+            <div className="space-y-3 max-h-80 overflow-y-auto">
               {comments.length === 0 ? (
-                <p className="text-xs text-[#7b7b94] italic">No review feedback comments yet.</p>
+                <p className="text-xs text-[#5e574c] italic">No review comments yet.</p>
               ) : (
-                comments.map((cm) => (
-                  <div key={cm.id} className="p-3.5 rounded-lg border border-white/[0.06] bg-[#171724] space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-[#ececf6]">
-                          {cm.profiles?.full_name || 'Team Member'}
-                        </span>
-                        {cm.profiles?.role && (
-                          <RoleBadge role={cm.profiles.role as UserRole} />
-                        )}
+                comments.map((cm) => {
+                  const ts = formatTimestamp(cm.created_at);
+                  return (
+                    <div key={cm.id} className="p-3.5 border border-[#ddd5c4] bg-[#fffdf8] space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-[#1f1c18]">
+                            {cm.profiles?.full_name || 'Team member'}
+                          </span>
+                          {cm.profiles?.role && (
+                            <RoleBadge role={cm.profiles.role as UserRole} />
+                          )}
+                        </div>
+                        <time dateTime={cm.created_at} title={ts.exact} className="text-[#5e574c] font-mono text-[11px]">
+                          {ts.relative}
+                        </time>
                       </div>
-                      <span className="text-[#7b7b94] font-mono">
-                        {new Date(cm.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
+                      <p className="text-xs text-[#1f1c18] leading-relaxed pt-1">{cm.body}</p>
                     </div>
-                    <p className="text-xs text-[#a3a3bb] leading-relaxed">{cm.body}</p>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
@@ -978,7 +887,8 @@ export function ContentDetailView({
                 value={newCommentText}
                 onChange={(e) => setNewCommentText(e.target.value)}
                 placeholder="Write an internal review comment..."
-                className="flex-1 px-3.5 py-2 text-xs bg-[#171724] text-[#ececf6] placeholder-[#7b7b94] border border-white/10 rounded-lg focus:outline-none focus:border-indigo-400"
+                aria-label="Comment text"
+                className="flex-1 px-3.5 py-2 text-xs bg-[#fffdf8] text-[#1f1c18] placeholder-[#5e574c] border border-[#ddd5c4] rounded-none focus:outline-2 focus:outline-[#1f1c18]"
               />
               <Button
                 type="submit"
@@ -986,22 +896,23 @@ export function ContentDetailView({
                 size="sm"
                 disabled={isPostingComment || !newCommentText.trim()}
               >
-                {isPostingComment ? 'Posting...' : 'Comment'}
+                {isPostingComment ? 'Posting...' : 'Post comment'}
               </Button>
             </form>
           </div>
         )}
 
-        {/* Tab 2: History & Word-level Diff */}
+        {/* Tab 2: History & Diff */}
         {activeTab === 'history' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-2 text-xs">
-                <span className="text-[#a3a3bb]">Compare current (v{selectedVersionNum}) against:</span>
+                <span className="text-[#5e574c]">Compare Version {selectedVersionNum} against:</span>
                 <select
                   value={diffCompareVersion}
                   onChange={(e) => setDiffCompareVersion(parseInt(e.target.value, 10))}
-                  className="bg-[#171724] text-[#ececf6] border border-white/10 rounded px-2.5 py-1 text-xs"
+                  aria-label="Compare version select"
+                  className="bg-[#fffdf8] text-[#1f1c18] border border-[#ddd5c4] rounded-none px-2.5 py-1 text-xs"
                 >
                   {versions.map((ver) => (
                     <option key={ver.id} value={ver.version}>
@@ -1011,60 +922,80 @@ export function ContentDetailView({
                 </select>
               </div>
 
-              <span className="text-xs text-[#7b7b94]">
-                Word diff: <span className="text-[#5fd1a0] font-mono">+Add</span> · <span className="text-[#ff7a8a] line-through font-mono">-Del</span>
+              <span className="font-mono text-[11px] text-[#5e574c]">
+                Word diff: <span className="text-[#1f6b3a] underline">+Add</span> · <span className="text-[#b3261e] line-through">-Delete</span>
               </span>
             </div>
 
-            {/* Diff View Box */}
-            <div className="p-4 sm:p-5 rounded-xl border border-white/[0.08] bg-[#0a0a10] font-mono text-xs leading-relaxed max-h-72 overflow-y-auto">
+            {/* Side-by-side or inline Diff block */}
+            <div className="p-4 bg-[#fffdf8] border border-[#ddd5c4] font-mono text-xs leading-relaxed max-h-80 overflow-y-auto">
               {diffTokens.map((token, idx) => {
                 if (token.type === 'insert') {
                   return (
-                    <span key={idx} className="bg-emerald-500/15 text-[#5fd1a0] font-medium underline px-0.5 rounded">
+                    <span key={idx} className="text-[#1f6b3a] underline underline-offset-2 font-medium">
                       {token.value}
                     </span>
                   );
                 }
                 if (token.type === 'delete') {
                   return (
-                    <span key={idx} className="bg-rose-500/15 text-[#ff7a8a] line-through px-0.5 rounded opacity-75">
+                    <span key={idx} className="text-[#b3261e] line-through opacity-75">
                       {token.value}
                     </span>
                   );
                 }
-                return <span key={idx} className="text-[#ececf6]">{token.value}</span>;
+                return <span key={idx} className="text-[#1f1c18]">{token.value}</span>;
               })}
             </div>
           </div>
         )}
 
-        {/* Tab 3: Activity Audit Log */}
+        {/* Tab 3: Activity trail */}
         {activeTab === 'activity' && (
-          <div className="space-y-2.5 max-h-72 overflow-y-auto">
+          <div className="space-y-2 max-h-80 overflow-y-auto max-w-3xl">
             {activityLogs.length === 0 ? (
-              <p className="text-xs text-[#7b7b94] italic">No activity recorded yet.</p>
+              <p className="text-xs text-[#5e574c] italic">No activity recorded yet.</p>
             ) : (
-              activityLogs.map((log) => (
-                <div key={log.id} className="p-3 rounded-lg border border-white/[0.06] bg-[#171724] text-xs flex items-center justify-between">
-                  <div>
-                    <span className="font-mono font-medium text-[#ececf6] uppercase tracking-wider">{log.action}</span>
-                    <span className="text-[#7b7b94] ml-2 font-mono text-[11px]">{JSON.stringify(log.detail)}</span>
-                  </div>
-                  <span className="text-[#7b7b94] font-mono">
-                    {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-              ))
+              <div className="border border-[#ddd5c4] bg-[#fffdf8]">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-[#fffdf8] border-b border-[#ddd5c4] font-mono text-[11px] uppercase tracking-[0.04em] text-[#5e574c]">
+                    <tr>
+                      <th className="px-4 py-2 font-medium">Action</th>
+                      <th className="px-4 py-2 font-medium">Details</th>
+                      <th className="px-4 py-2 font-medium text-right">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#ddd5c4]">
+                    {activityLogs.map((log) => {
+                      const ts = formatTimestamp(log.created_at);
+                      return (
+                        <tr key={log.id} className="hover:bg-[#f5f1e8]">
+                          <td className="px-4 py-2.5 font-mono text-[11px] uppercase text-[#1f1c18]">
+                            {log.action}
+                          </td>
+                          <td className="px-4 py-2.5 text-[#5e574c] font-mono text-[11px]">
+                            {JSON.stringify(log.detail)}
+                          </td>
+                          <td className="px-4 py-2.5 text-right font-mono text-[11px] text-[#5e574c]">
+                            <time dateTime={log.created_at} title={ts.exact}>
+                              {ts.relative}
+                            </time>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         )}
 
-        {/* Tab 4: AI Governance & Disclosure */}
+        {/* Tab 4: AI disclosure */}
         {activeTab === 'disclosure' && (
           <AiDisclosureTab aiRun={aiRun} confidential={content.confidential} />
         )}
-      </Card>
+      </section>
 
       {/* EDIT-THEN-ACCEPT DIALOG */}
       <Dialog
@@ -1075,13 +1006,13 @@ export function ContentDetailView({
       >
         {editThenAcceptFinding && (
           <form onSubmit={handleSubmitEditThenAccept} className="space-y-4">
-            <div className="p-3 bg-[#11111a] rounded-lg border border-white/[0.06] text-xs space-y-1">
-              <span className="text-[10px] uppercase font-mono text-[#7b7b94] block">Original excerpt:</span>
-              <p className="font-mono text-[#ff7a8a] line-through">&ldquo;{editThenAcceptFinding.excerpt}&rdquo;</p>
+            <div className="p-3 bg-[#f5f1e8] border border-[#ddd5c4] text-xs space-y-1">
+              <span className="font-mono text-[10px] uppercase text-[#5e574c] block">Original excerpt:</span>
+              <p className="font-mono text-[#b3261e] line-through">&ldquo;{editThenAcceptFinding.excerpt}&rdquo;</p>
             </div>
 
             <div>
-              <label htmlFor="custom-suggestion-input" className="block text-xs font-medium text-[#ececf6] mb-1.5">
+              <label htmlFor="custom-suggestion-input" className="block text-xs font-medium text-[#1f1c18] mb-1.5">
                 Replacement text:
               </label>
               <Textarea
@@ -1090,7 +1021,7 @@ export function ContentDetailView({
                 rows={3}
                 value={customSuggestionText}
                 onChange={(e) => setCustomSuggestionText(e.target.value)}
-                className="font-mono"
+                className="font-mono text-xs"
               />
             </div>
 
@@ -1110,89 +1041,11 @@ export function ContentDetailView({
                 size="sm"
                 disabled={isProcessingAction || !customSuggestionText.trim()}
               >
-                {isProcessingAction ? 'Applying...' : 'Apply & create version'}
+                {isProcessingAction ? 'Applying...' : 'Apply and create version'}
               </Button>
             </div>
           </form>
         )}
-      </Dialog>
-
-      {/* DISMISS DIALOG (Reason Required) */}
-      <Dialog
-        isOpen={Boolean(dismissingFindingId)}
-        onClose={() => {
-          setDismissingFindingId(null);
-          setDismissReasonText('');
-        }}
-        title="Dismiss governance finding"
-        description="A reason is required to document why this finding is being dismissed in the audit trail:"
-      >
-        <form onSubmit={handleSubmitDismiss} className="space-y-4">
-          <Textarea
-            required
-            rows={3}
-            value={dismissReasonText}
-            onChange={(e) => setDismissReasonText(e.target.value)}
-            placeholder="Document reason for dismissing this check..."
-          />
-          <div className="flex items-center justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setDismissingFindingId(null);
-                setDismissReasonText('');
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="secondary"
-              size="sm"
-              disabled={isProcessingAction || !dismissReasonText.trim()}
-            >
-              Confirm dismissal
-            </Button>
-          </div>
-        </form>
-      </Dialog>
-
-      {/* DISPUTE DIALOG (Reason Required) */}
-      <Dialog
-        isOpen={Boolean(disputingFinding)}
-        onClose={() => setDisputingFinding(null)}
-        title="Dispute governance finding"
-        description="Explain why this finding does not apply to this specific copy context:"
-      >
-        <form onSubmit={handleSubmitDispute} className="space-y-4">
-          <Textarea
-            required
-            rows={3}
-            value={disputeReasonText}
-            onChange={(e) => setDisputeReasonText(e.target.value)}
-            placeholder="Provide justification for dispute..."
-          />
-          <div className="flex items-center justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setDisputingFinding(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              size="sm"
-              disabled={isProcessingAction || !disputeReasonText.trim()}
-            >
-              Submit dispute
-            </Button>
-          </div>
-        </form>
       </Dialog>
 
       {/* TRANSITION COMMENT DIALOG (Required for Request Changes and Reject) */}
@@ -1220,6 +1073,7 @@ export function ContentDetailView({
             value={transitionCommentText}
             onChange={(e) => setTransitionCommentText(e.target.value)}
             placeholder="Specify feedback for the author..."
+            aria-label="Transition comment"
           />
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button
