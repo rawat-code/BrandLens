@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Badge } from '@/components/ui/Badge';
+import { Badge, type BadgeVariant } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -28,7 +28,7 @@ interface DashboardViewProps {
 export function DashboardView({
   initialContents,
   reviewQueue,
-  profile,
+  profile: _profile,
   canCreate,
   isCreator,
   isApprover,
@@ -294,7 +294,7 @@ export function DashboardView({
                         </div>
                       </td>
                       <td className="px-5 py-3.5">
-                        <Badge variant={c.status as any}>
+                        <Badge variant={c.status as BadgeVariant}>
                           {c.status.replace('_', ' ')}
                         </Badge>
                       </td>

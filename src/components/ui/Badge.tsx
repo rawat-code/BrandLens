@@ -9,6 +9,13 @@ export type StatusState =
   | "rejected"
   | "published";
 
+export type FindingStatusState =
+  | "open"
+  | "accepted"
+  | "disputed"
+  | "dismissed"
+  | "resolved";
+
 export type BadgeVariant =
   | "high"
   | "medium"
@@ -16,7 +23,8 @@ export type BadgeVariant =
   | "success"
   | "neutral"
   | "ai"
-  | StatusState;
+  | StatusState
+  | FindingStatusState;
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
@@ -47,6 +55,13 @@ export function Badge({
     approved: "bg-[#fffdf8] text-[#1f6b3a] border-[#1f6b3a]",
     rejected: "bg-[#fffdf8] text-[#b3261e] border-[#b3261e]",
     published: "bg-[#1f1c18] text-[#f5f1e8] border-[#1f1c18]",
+
+    // Finding statuses
+    open: "bg-[#fffdf8] text-[#1f1c18] border-[#1f1c18]",
+    accepted: "bg-[#fffdf8] text-[#1f6b3a] border-[#1f6b3a]",
+    disputed: "bg-[#f6e3b4] text-[#8a5a00] border-[#8a5a00]",
+    dismissed: "bg-[#fffdf8] text-[#5e574c] border-[#ddd5c4]",
+    resolved: "bg-[#fffdf8] text-[#1f6b3a] border-[#1f6b3a]",
   };
 
   const defaultIcons: Record<BadgeVariant, React.ReactNode> = {
@@ -91,6 +106,33 @@ export function Badge({
     published: (
       <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
         <rect x="1.5" y="1.5" width="7" height="7" />
+      </svg>
+    ),
+
+    // Finding statuses
+    open: (
+      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+        <circle cx="5" cy="5" r="3.75" />
+      </svg>
+    ),
+    accepted: (
+      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
+        <path d="M1.5 5.2L3.8 7.5L8.5 2.5" />
+      </svg>
+    ),
+    disputed: (
+      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
+        <path d="M5 1.5L9 8.5H1L5 1.5Z" />
+      </svg>
+    ),
+    dismissed: (
+      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+        <line x1="2" y1="5" x2="8" y2="5" />
+      </svg>
+    ),
+    resolved: (
+      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
+        <path d="M1.5 5.2L3.8 7.5L8.5 2.5" />
       </svg>
     ),
 

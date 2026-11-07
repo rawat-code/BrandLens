@@ -66,20 +66,17 @@ export function LibraryManager({
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Form fields
-  // Guideline
   const [gTitle, setGTitle] = useState('');
   const [gCategory, setGCategory] = useState('tone');
   const [gBody, setGBody] = useState('');
   const [gClarification, setGClarification] = useState('');
 
-  // Fact
   const [fStatement, setFStatement] = useState('');
   const [fSourceNote, setFSourceNote] = useState('');
   const [fOwner, setFOwner] = useState('');
   const [fExpiresAt, setFExpiresAt] = useState('');
   const [fStatus, setFStatus] = useState<'approved' | 'retired' | 'expired'>('approved');
 
-  // Term
   const [tTerm, setTTerm] = useState('');
   const [tKind, setTKind] = useState<'banned' | 'caution' | 'preferred'>('banned');
   const [tReplacement, setTReplacement] = useState('');
@@ -101,7 +98,7 @@ export function LibraryManager({
       setFOwner('');
       setFExpiresAt('');
       setFStatus('approved');
-    } else {
+    } else if (activeTab === 'terms') {
       setTTerm('');
       setTKind('banned');
       setTReplacement('');
@@ -129,7 +126,7 @@ export function LibraryManager({
       setFOwner(f.owner || '');
       setFExpiresAt(f.expires_at ? f.expires_at.split('T')[0] : '');
       setFStatus(f.status);
-    } else {
+    } else if (activeTab === 'terms') {
       const t = item as Term;
       setTTerm(t.term);
       setTKind(t.kind);
@@ -146,23 +143,123 @@ export function LibraryManager({
     setFormError(null);
   };
 
+  const handleRetireFact = async (factId: string) => {
+    try {
+      const res = await fetch(`/api/library/facts/${factId}/retire`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to retire fact');
+
+      setFacts((prev) =>
+        prev.map((f) => (f.id === factId ? { ...f, status: 'retired' as const } : f))
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Error retiring fact';
+      alert(message);
+    }
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setFormError(null);
+
+    try {
+      let url = '';
+      let method = 'POST';
+      let payload: Record<string, unknown> = {};
+
+      if (activeTab === 'guidelines') {
+        url = editingItem ? `/api/library/guidelines/${editingItem.id}` : '/api/library/guidelines';
+        method = editingItem ? 'PUT' : 'POST';
+        payload = {
+          title: gTitle.trim(),
+          category: gCategory,
+          body: gBody.trim(),
+          clarification: gClarification.trim() || null,
+        };
+      } else if (activeTab === 'facts') {
+        url = editingItem ? `/api/library/facts/${editingItem.id}` : '/api/library/facts';
+        method = editingItem ? 'PUT' : 'POST';
+        payload = {
+          statement: fStatement.trim(),
+          source_note: fSourceNote.trim() || null,
+          owner: fOwner.trim() || null,
+          expires_at: fExpiresAt ? new Date(fExpiresAt).toISOString() : null,
+          status: fStatus,
+        };
+      } else if (activeTab === 'terms') {
+        url = editingItem ? `/api/library/terms/${editingItem.id}` : '/api/library/terms';
+        method = editingItem ? 'PUT' : 'POST';
+        payload = {
+          term: tTerm.trim(),
+          kind: tKind,
+          replacement: tReplacement.trim() || null,
+          note: tNote.trim() || null,
+        };
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Operation failed');
+      }
+
+      if (activeTab === 'guidelines') {
+        const item = data.guideline as Guideline;
+        if (editingItem) {
+          setGuidelines((prev) => prev.map((g) => (g.id === item.id ? item : g)));
+        } else {
+          setGuidelines((prev) => [item, ...prev]);
+        }
+      } else if (activeTab === 'facts') {
+        const item = data.fact as Fact;
+        if (editingItem) {
+          setFacts((prev) => prev.map((f) => (f.id === item.id ? item : f)));
+        } else {
+          setFacts((prev) => [item, ...prev]);
+        }
+      } else if (activeTab === 'terms') {
+        const item = data.term as Term;
+        if (editingItem) {
+          setTerms((prev) => prev.map((t) => (t.id === item.id ? item : t)));
+        } else {
+          setTerms((prev) => [item, ...prev]);
+        }
+      }
+
+      closeModal();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleParseImport = () => {
     setImportError(null);
     if (!importRawText.trim()) {
-      setImportError('Please paste markdown text to parse.');
+      setImportError('Please enter markdown text to parse');
       return;
     }
 
     try {
       const parsed = parseGuidelinesMarkdown(importRawText, importDefaultCategory);
-      if (parsed.length === 0) {
-        setImportError('No guidelines could be parsed from the provided text. Make sure sections have headings.');
+      if (!parsed.length) {
+        setImportError('Could not find any guidelines. Check formatting headings.');
         return;
       }
       setParsedGuidelines(parsed);
       setImportStep('preview');
-    } catch (err: unknown) {
-      setImportError((err as Error).message);
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Failed to parse markdown');
     }
   };
 
@@ -174,170 +271,41 @@ export function LibraryManager({
       const res = await fetch('/api/library/guidelines/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ guidelines: parsedGuidelines }),
+        body: JSON.stringify({
+          rawMarkdown: importRawText,
+          defaultCategory: importDefaultCategory,
+        }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to import guidelines');
+        throw new Error(data.error || 'Import failed');
       }
 
-      setGuidelines((prev) => [...data.guidelines, ...prev]);
-      setActiveTab('guidelines');
+      const importedItems = (data.guidelines || []) as Guideline[];
+      setGuidelines((prev) => [...importedItems, ...prev]);
       setIsImportModalOpen(false);
       setImportRawText('');
       setParsedGuidelines([]);
       setImportStep('input');
-      setImportSuccess(`Successfully imported ${data.count} guidelines into your brand library!`);
-    } catch (err: unknown) {
-      setImportError((err as Error).message);
+      setImportSuccess(`Imported ${importedItems.length} guidelines into library.`);
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Import failed');
     } finally {
       setIsImporting(false);
     }
   };
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (modalMode === 'edit' && !editingItem) return;
-    setFormError(null);
-    setIsSubmitting(true);
-
-    try {
-      if (activeTab === 'guidelines') {
-        const payload = {
-          title: gTitle,
-          category: gCategory,
-          body: gBody,
-          clarification: gClarification.trim() || null,
-        };
-
-        const url =
-          modalMode === 'create'
-            ? '/api/library/guidelines'
-            : `/api/library/guidelines/${editingItem?.id}`;
-        const method = modalMode === 'create' ? 'POST' : 'PUT';
-
-        const res = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || 'Failed to save guideline');
-        }
-
-        if (modalMode === 'create') {
-          setGuidelines((prev) => [data.guideline, ...prev]);
-        } else {
-          setGuidelines((prev) =>
-            prev.map((g) => (g.id === editingItem?.id ? data.guideline : g))
-          );
-        }
-      } else if (activeTab === 'facts') {
-        const payload = {
-          statement: fStatement,
-          source_note: fSourceNote.trim() || null,
-          owner: fOwner.trim() || null,
-          expires_at: fExpiresAt ? new Date(fExpiresAt).toISOString() : null,
-          status: fStatus,
-        };
-
-        const url =
-          modalMode === 'create'
-            ? '/api/library/facts'
-            : `/api/library/facts/${editingItem?.id}`;
-        const method = modalMode === 'create' ? 'POST' : 'PUT';
-
-        const res = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || 'Failed to save fact');
-        }
-
-        if (modalMode === 'create') {
-          setFacts((prev) => [data.fact, ...prev]);
-        } else {
-          setFacts((prev) =>
-            prev.map((f) => (f.id === editingItem?.id ? data.fact : f))
-          );
-        }
-      } else {
-        const payload = {
-          term: tTerm,
-          kind: tKind,
-          replacement: tReplacement.trim() || null,
-          note: tNote.trim() || null,
-        };
-
-        const url =
-          modalMode === 'create'
-            ? '/api/library/terms'
-            : `/api/library/terms/${editingItem?.id}`;
-        const method = modalMode === 'create' ? 'POST' : 'PUT';
-
-        const res = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || 'Failed to save term');
-        }
-
-        if (modalMode === 'create') {
-          setTerms((prev) => [data.term, ...prev]);
-        } else {
-          setTerms((prev) =>
-            prev.map((t) => (t.id === editingItem?.id ? data.term : t))
-          );
-        }
-      }
-
-      closeModal();
-    } catch (err: unknown) {
-      setFormError((err as Error).message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleRetireFact = async (factId: string) => {
-    try {
-      const res = await fetch(`/api/library/facts/${factId}/retire`, {
-        method: 'POST',
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || 'Failed to retire fact');
-        return;
-      }
-
-      setFacts((prev) =>
-        prev.map((f) => (f.id === factId ? { ...f, status: 'retired' as const } : f))
-      );
-    } catch {
-      alert('Network error while retiring fact');
-    }
-  };
-
   const confirmDelete = async () => {
     if (!deleteTarget) return;
+
     setIsDeleting(true);
-
     try {
-      const url = `/api/library/${deleteTarget.type}/${deleteTarget.id}`;
-      const res = await fetch(url, { method: 'DELETE' });
-      const data = await res.json();
+      const res = await fetch(`/api/library/${deleteTarget.type}/${deleteTarget.id}`, {
+        method: 'DELETE',
+      });
 
+      const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Failed to delete item');
       }
@@ -346,7 +314,7 @@ export function LibraryManager({
         setGuidelines((prev) => prev.filter((g) => g.id !== deleteTarget.id));
       } else if (deleteTarget.type === 'facts') {
         setFacts((prev) => prev.filter((f) => f.id !== deleteTarget.id));
-      } else {
+      } else if (deleteTarget.type === 'terms') {
         setTerms((prev) => prev.filter((t) => t.id !== deleteTarget.id));
       }
 
@@ -359,7 +327,6 @@ export function LibraryManager({
     }
   };
 
-  // Filtered entries based on search
   const q = searchQuery.toLowerCase().trim();
 
   const filteredGuidelines = guidelines.filter(
@@ -390,11 +357,11 @@ export function LibraryManager({
   );
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6">
-      {/* Top Header */}
+    <div className="space-y-8">
+      {/* Page Header */}
       <PageHeader
-        title="Governance library"
-        description="Approved guidelines, clinical facts, and terminology standards that govern brand communications."
+        title="Library"
+        description="Approved guidelines, verified facts, and terminology standards that govern brand communications."
         actions={
           isAdmin ? (
             <div className="flex items-center gap-2">
@@ -406,11 +373,6 @@ export function LibraryManager({
                   setImportStep('input');
                   setIsImportModalOpen(true);
                 }}
-                icon={
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                  </svg>
-                }
               >
                 Import markdown
               </Button>
@@ -418,11 +380,6 @@ export function LibraryManager({
                 variant="primary"
                 size="sm"
                 onClick={openCreateModal}
-                icon={
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                }
               >
                 {activeTab === 'guidelines' && 'Add guideline'}
                 {activeTab === 'facts' && 'Add fact'}
@@ -430,8 +387,8 @@ export function LibraryManager({
               </Button>
             </div>
           ) : (
-            <span className="text-xs text-[#7b7b94] bg-[#171724] px-3 py-1.5 rounded-lg border border-white/[0.06]">
-              Read-only view • Admins manage library
+            <span className="font-mono text-[11px] uppercase tracking-[0.04em] text-[#5e574c] bg-[#fffdf8] px-2.5 py-1 border border-[#ddd5c4]">
+              Read-only · Admins manage library
             </span>
           )
         }
@@ -441,32 +398,25 @@ export function LibraryManager({
       {importSuccess && (
         <div
           role="alert"
-          className="p-3.5 bg-[#5fd1a0]/10 border border-[#5fd1a0]/30 rounded-xl text-xs text-[#5fd1a0] flex items-center justify-between"
+          className="p-3 bg-[#fffdf8] border border-[#1f6b3a] text-xs text-[#1f6b3a] flex items-center justify-between"
         >
-          <div className="flex items-center gap-2">
-            <span>✓</span>
-            <span className="font-medium text-[#ececf6]">{importSuccess}</span>
-          </div>
+          <span>{importSuccess}</span>
           <button
             type="button"
             onClick={() => setImportSuccess(null)}
-            className="text-xs font-mono underline hover:text-white"
+            className="text-xs underline hover:opacity-75 cursor-pointer ml-3"
           >
             Dismiss
           </button>
         </div>
       )}
 
-      {/* Search and Tabs Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-3">
-        {/* Navigation Tabs */}
-        <nav
-          className="flex space-x-1"
-          role="tablist"
-          aria-label="Library sections"
-        >
+      {/* Top Controls: Tabs and Search */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Segmented Paper Tabs */}
+        <div className="inline-flex items-center border border-[#ddd5c4] bg-[#fffdf8] rounded-none p-0 overflow-x-auto">
           {[
-            { id: 'guidelines' as TabType, label: 'Brand guidelines', count: guidelines.length },
+            { id: 'guidelines' as TabType, label: 'Guidelines', count: guidelines.length },
             { id: 'facts' as TabType, label: 'Approved facts', count: facts.length },
             { id: 'terms' as TabType, label: 'Terminology', count: terms.length },
           ].map((tab) => (
@@ -478,21 +428,19 @@ export function LibraryManager({
                 setActiveTab(tab.id);
                 setSearchQuery('');
               }}
-              className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
+              className={`px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.04em] transition-colors cursor-pointer border-r last:border-r-0 border-[#ddd5c4] ${
                 activeTab === tab.id
-                  ? 'bg-[#171724] text-[#ececf6] border border-white/10'
-                  : 'text-[#a3a3bb] hover:text-[#ececf6]'
+                  ? 'bg-[#1f1c18] text-[#f5f1e8]'
+                  : 'bg-[#fffdf8] text-[#5e574c] hover:bg-[#f5f1e8] hover:text-[#1f1c18]'
               }`}
             >
               <span>{tab.label}</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-black/30 text-[#7b7b94]">
-                {tab.count}
-              </span>
+              <span className="ml-1.5 opacity-75">({tab.count})</span>
             </button>
           ))}
-        </nav>
+        </div>
 
-        {/* Search Input */}
+        {/* Search */}
         <div className="relative w-full sm:w-64">
           <input
             id="library-search"
@@ -500,228 +448,208 @@ export function LibraryManager({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={`Search ${activeTab}...`}
-            className="w-full pl-8 pr-3 py-1.5 text-xs bg-[#171724] text-[#ececf6] placeholder-[#7b7b94] border border-white/[0.08] rounded-lg focus:outline-none focus:border-indigo-400"
+            aria-label={`Search ${activeTab}`}
+            className="w-full bg-[#fffdf8] text-[#1f1c18] placeholder-[#5e574c] border border-[#ddd5c4] rounded-none px-3 py-1.5 text-xs focus:border-[#1f1c18] focus:outline-none"
           />
-          <svg
-            className="w-3.5 h-3.5 text-[#7b7b94] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
         </div>
       </div>
 
-      {/* Main Tab Panels */}
-      {/* 1. Guidelines Tab */}
+      {/* 1. Guidelines Ledger Table */}
       {activeTab === 'guidelines' && (
-        <div role="tabpanel" aria-label="Brand guidelines" className="space-y-4">
+        <div className="border border-[#ddd5c4] bg-[#fffdf8] overflow-x-auto">
           {filteredGuidelines.length === 0 ? (
-            <div className="text-center py-12 bg-[#11111a] rounded-xl border border-white/[0.08] p-8">
-              <h3 className="text-sm font-medium text-[#ececf6]">No guidelines found</h3>
-              <p className="text-xs text-[#a3a3bb] mt-1 max-w-sm mx-auto">
-                {searchQuery
-                  ? `No brand guidelines matched "${searchQuery}". Clear query to see all items.`
-                  : 'No guidelines have been configured yet.'}
-              </p>
+            <div className="p-8 text-center text-xs text-[#5e574c]">
+              No brand guidelines matched your query.
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredGuidelines.map((g) => (
-                <div
-                  key={g.id}
-                  className="p-5 rounded-xl border border-white/[0.08] bg-[#11111a] hover:border-white/15 transition-all flex flex-col justify-between space-y-3"
-                >
-                  <div className="space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <Badge variant="indigo">
+            <table className="w-full text-left text-sm border-collapse">
+              <thead className="bg-[#fffdf8] border-b border-[#ddd5c4] font-mono text-[11px] uppercase tracking-[0.04em] text-[#5e574c] sticky top-14 z-10">
+                <tr>
+                  <th scope="col" className="px-5 py-3 font-medium">Category</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Title and rule body</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Version</th>
+                  {isAdmin && <th scope="col" className="px-5 py-3 font-medium text-right">Actions</th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#ddd5c4]">
+                {filteredGuidelines.map((g) => (
+                  <tr key={g.id} className="hover:bg-[#f5f1e8] transition-colors duration-120">
+                    <td className="px-5 py-3.5 align-top">
+                      <span className="font-mono text-[11px] uppercase tracking-[0.04em] px-1.5 py-0.5 bg-[#f5f1e8] border border-[#ddd5c4] text-[#1f1c18] whitespace-nowrap inline-block">
                         {g.category}
-                      </Badge>
-                      <span className="text-[11px] text-[#7b7b94] font-mono bg-[#171724] px-2 py-0.5 rounded border border-white/[0.06]">
-                        v{g.version}
                       </span>
-                    </div>
-
-                    <h3 className="font-medium text-[#ececf6] text-sm leading-snug">
-                      {g.title}
-                    </h3>
-
-                    <p className="text-xs text-[#a3a3bb] leading-relaxed whitespace-pre-line">
-                      {g.body}
-                    </p>
-
-                    {g.clarification && (
-                      <div className="p-3 bg-[#171724] border border-white/[0.06] rounded-lg text-xs text-[#fde68a]">
-                        <strong className="font-medium text-[#ececf6] block mb-0.5">Application guidance:</strong>
-                        <span>{g.clarification}</span>
+                    </td>
+                    <td className="px-5 py-3.5 align-top max-w-xl">
+                      <div className="font-medium text-[#1f1c18] text-sm">
+                        {g.title}
                       </div>
-                    )}
-                  </div>
-
-                  {isAdmin && (
-                    <div className="pt-3 border-t border-white/[0.06] flex items-center justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditModal(g)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          setDeleteTarget({
-                            type: 'guidelines',
-                            id: g.id,
-                            title: g.title,
-                          })
-                        }
-                        className="text-[#ff7a8a] hover:text-white"
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 2. Facts Tab */}
-      {activeTab === 'facts' && (
-        <div role="tabpanel" aria-label="Approved facts" className="space-y-4">
-          {filteredFacts.length === 0 ? (
-            <div className="text-center py-12 bg-[#11111a] rounded-xl border border-white/[0.08] p-8">
-              <h3 className="text-sm font-medium text-[#ececf6]">No verified facts found</h3>
-              <p className="text-xs text-[#a3a3bb] mt-1 max-w-sm mx-auto">
-                {searchQuery
-                  ? `No verified facts matched "${searchQuery}". Clear query to see all items.`
-                  : 'No clinical or scientific facts have been registered yet.'}
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredFacts.map((f) => {
-                const isExpiredByDate = f.expires_at ? new Date(f.expires_at) < new Date() : false;
-                const isRetired = f.status === 'retired';
-                const isActive = f.status === 'approved' && !isExpiredByDate;
-
-                return (
-                  <div
-                    key={f.id}
-                    className={`p-5 rounded-xl border transition-all flex flex-col justify-between space-y-3 ${
-                      !isActive
-                        ? 'bg-[#11111a]/60 border-rose-500/20 opacity-80'
-                        : 'bg-[#11111a] border-white/[0.08] hover:border-white/15'
-                    }`}
-                  >
-                    <div className="space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <Badge variant={isActive ? 'success' : 'high'}>
-                          {isActive ? 'APPROVED' : isRetired ? 'RETIRED' : 'EXPIRED'}
-                        </Badge>
-                        {f.owner && (
-                          <span className="text-xs text-[#7b7b94] font-mono">
-                            Owner: {f.owner}
-                          </span>
-                        )}
-                      </div>
-
-                      <blockquote className="text-xs sm:text-sm font-mono text-[#ececf6] border-l-2 border-indigo-400 pl-3 italic">
-                        &ldquo;{f.statement}&rdquo;
-                      </blockquote>
-
-                      {f.source_note && (
-                        <div className="text-xs text-[#a3a3bb]">
-                          <span className="text-[#ececf6] font-medium">Source: </span>
-                          {f.source_note}
+                      <p className="text-xs text-[#5e574c] mt-1 leading-relaxed">
+                        {g.body}
+                      </p>
+                      {g.clarification && (
+                        <div className="mt-2 p-2.5 bg-[#f5f1e8] border border-[#ddd5c4] text-xs">
+                          <strong className="font-mono text-[10px] uppercase text-[#1f1c18] block mb-0.5">
+                            Application guidance:
+                          </strong>
+                          <span className="text-[#5e574c]">{g.clarification}</span>
                         </div>
                       )}
-
-                      {f.expires_at && (
-                        <div className="text-xs text-[#7b7b94] font-mono">
-                          <span>Expires: </span>
-                          <span className={isExpiredByDate ? 'text-[#ff7a8a]' : 'text-[#ececf6]'}>
-                            {new Date(f.expires_at).toLocaleDateString()}
-                          </span>
-                          {isExpiredByDate && (
-                            <span className="ml-1.5 text-[#ff7a8a]">(Date passed)</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
+                    </td>
+                    <td className="px-5 py-3.5 align-top font-mono text-[12px] text-[#5e574c] whitespace-nowrap">
+                      v{g.version}
+                    </td>
                     {isAdmin && (
-                      <div className="pt-3 border-t border-white/[0.06] flex items-center justify-end gap-2">
-                        {isActive && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRetireFact(f.id)}
-                            className="text-[#f5b74f] hover:text-[#fde68a]"
+                      <td className="px-5 py-3.5 align-top text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-3 text-xs">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(g)}
+                            className="font-medium text-[#1f1c18] underline underline-offset-2 hover:text-[#5e574c] cursor-pointer"
                           >
-                            Retire fact
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditModal(f)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            setDeleteTarget({
-                              type: 'facts',
-                              id: f.id,
-                              title: f.statement,
-                            })
-                          }
-                          className="text-[#ff7a8a] hover:text-white"
-                        >
-                          Delete
-                        </Button>
-                      </div>
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setDeleteTarget({
+                                type: 'guidelines',
+                                id: g.id,
+                                title: g.title,
+                              })
+                            }
+                            className="font-medium text-[#b3261e] underline underline-offset-2 hover:opacity-75 cursor-pointer"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
                     )}
-                  </div>
-                );
-              })}
-            </div>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       )}
 
-      {/* 3. Terminology Tab */}
-      {activeTab === 'terms' && (
-        <div role="tabpanel" aria-label="Terminology dictionary" className="space-y-4">
-          {filteredTerms.length === 0 ? (
-            <div className="text-center py-12 bg-[#11111a] rounded-xl border border-white/[0.08] p-8">
-              <h3 className="text-sm font-medium text-[#ececf6]">No terms found</h3>
-              <p className="text-xs text-[#a3a3bb] mt-1 max-w-sm mx-auto">
-                {searchQuery
-                  ? `No terminology standards matched "${searchQuery}". Clear query to see all items.`
-                  : 'No terminology rules have been created yet.'}
-              </p>
+      {/* 2. Facts Ledger Table */}
+      {activeTab === 'facts' && (
+        <div className="border border-[#ddd5c4] bg-[#fffdf8] overflow-x-auto">
+          {filteredFacts.length === 0 ? (
+            <div className="p-8 text-center text-xs text-[#5e574c]">
+              No verified clinical facts found.
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredTerms.map((t) => (
-                <div
-                  key={t.id}
-                  className="p-4 rounded-xl border border-white/[0.08] bg-[#11111a] hover:border-white/15 transition-all flex flex-col justify-between space-y-3"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono font-medium text-sm text-[#ececf6]">
-                        {t.term}
-                      </span>
+            <table className="w-full text-left text-sm border-collapse">
+              <thead className="bg-[#fffdf8] border-b border-[#ddd5c4] font-mono text-[11px] uppercase tracking-[0.04em] text-[#5e574c] sticky top-14 z-10">
+                <tr>
+                  <th scope="col" className="px-5 py-3 font-medium">Status</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Statement</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Source citation</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Owner</th>
+                  {isAdmin && <th scope="col" className="px-5 py-3 font-medium text-right">Actions</th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#ddd5c4]">
+                {filteredFacts.map((f) => {
+                  const isExpiredByDate = f.expires_at ? new Date(f.expires_at) < new Date() : false;
+                  const isRetired = f.status === 'retired';
+                  const isActive = f.status === 'approved' && !isExpiredByDate;
+                  const expiryDateFormatted = f.expires_at ? new Date(f.expires_at).toLocaleDateString() : '';
+
+                  return (
+                    <tr key={f.id} className="hover:bg-[#f5f1e8] transition-colors duration-120">
+                      <td className="px-5 py-3.5 align-top whitespace-nowrap">
+                        {isActive ? (
+                          <Badge variant="success">Approved</Badge>
+                        ) : isRetired ? (
+                          <Badge variant="neutral">Retired</Badge>
+                        ) : (
+                          <span className="font-mono text-[11px] uppercase tracking-[0.04em] px-1.5 py-0.5 bg-[#fffdf8] border border-[#b3261e] text-[#b3261e] inline-block">
+                            Expired ({expiryDateFormatted})
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5 align-top max-w-md">
+                        <blockquote className="source-quote text-[15px] text-[#1f1c18] border-l-2 border-[#1f1c18] pl-3 leading-relaxed">
+                          &ldquo;{f.statement}&rdquo;
+                        </blockquote>
+                      </td>
+                      <td className="px-5 py-3.5 align-top text-xs text-[#5e574c] max-w-xs">
+                        {f.source_note || '—'}
+                      </td>
+                      <td className="px-5 py-3.5 align-top font-mono text-[12px] text-[#5e574c] whitespace-nowrap">
+                        {f.owner || '—'}
+                      </td>
+                      {isAdmin && (
+                        <td className="px-5 py-3.5 align-top text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-3 text-xs">
+                            {isActive && (
+                              <button
+                                type="button"
+                                onClick={() => handleRetireFact(f.id)}
+                                className="font-medium text-[#8a5a00] underline underline-offset-2 hover:opacity-75 cursor-pointer"
+                              >
+                                Retire
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(f)}
+                              className="font-medium text-[#1f1c18] underline underline-offset-2 hover:text-[#5e574c] cursor-pointer"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setDeleteTarget({
+                                  type: 'facts',
+                                  id: f.id,
+                                  title: f.statement,
+                                })
+                              }
+                              className="font-medium text-[#b3261e] underline underline-offset-2 hover:opacity-75 cursor-pointer"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {/* 3. Terms Ledger Table */}
+      {activeTab === 'terms' && (
+        <div className="border border-[#ddd5c4] bg-[#fffdf8] overflow-x-auto">
+          {filteredTerms.length === 0 ? (
+            <div className="p-8 text-center text-xs text-[#5e574c]">
+              No terminology standards found.
+            </div>
+          ) : (
+            <table className="w-full text-left text-sm border-collapse">
+              <thead className="bg-[#fffdf8] border-b border-[#ddd5c4] font-mono text-[11px] uppercase tracking-[0.04em] text-[#5e574c] sticky top-14 z-10">
+                <tr>
+                  <th scope="col" className="px-5 py-3 font-medium">Term</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Classification</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Suggested replacement</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Usage guidance</th>
+                  {isAdmin && <th scope="col" className="px-5 py-3 font-medium text-right">Actions</th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#ddd5c4]">
+                {filteredTerms.map((t) => (
+                  <tr key={t.id} className="hover:bg-[#f5f1e8] transition-colors duration-120">
+                    <td className="px-5 py-3.5 align-top font-mono text-[13px] font-medium text-[#1f1c18] whitespace-nowrap">
+                      {t.term}
+                    </td>
+                    <td className="px-5 py-3.5 align-top whitespace-nowrap">
                       <Badge
                         variant={
                           t.kind === 'banned'
@@ -733,50 +661,43 @@ export function LibraryManager({
                       >
                         {t.kind}
                       </Badge>
-                    </div>
-
-                    {t.replacement && (
-                      <div className="p-2 bg-[#171724] rounded-lg border border-white/[0.06] text-xs">
-                        <span className="text-[#7b7b94] font-mono uppercase text-[10px] block">Suggested replacement:</span>
-                        <span className="font-mono text-[#5fd1a0]">{t.replacement}</span>
-                      </div>
+                    </td>
+                    <td className="px-5 py-3.5 align-top font-mono text-[12px] text-[#1f6b3a] whitespace-nowrap">
+                      {t.replacement ? `+ ${t.replacement}` : '—'}
+                    </td>
+                    <td className="px-5 py-3.5 align-top text-xs text-[#5e574c] max-w-sm">
+                      {t.note || '—'}
+                    </td>
+                    {isAdmin && (
+                      <td className="px-5 py-3.5 align-top text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-3 text-xs">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(t)}
+                            className="font-medium text-[#1f1c18] underline underline-offset-2 hover:text-[#5e574c] cursor-pointer"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setDeleteTarget({
+                                type: 'terms',
+                                id: t.id,
+                                title: t.term,
+                              })
+                            }
+                            className="font-medium text-[#b3261e] underline underline-offset-2 hover:opacity-75 cursor-pointer"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
                     )}
-
-                    {t.note && (
-                      <p className="text-xs text-[#a3a3bb] leading-relaxed">
-                        {t.note}
-                      </p>
-                    )}
-                  </div>
-
-                  {isAdmin && (
-                    <div className="pt-3 border-t border-white/[0.06] flex items-center justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditModal(t)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          setDeleteTarget({
-                            type: 'terms',
-                            id: t.id,
-                            title: t.term,
-                          })
-                        }
-                        className="text-[#ff7a8a] hover:text-white"
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       )}
@@ -785,7 +706,7 @@ export function LibraryManager({
       <Dialog
         isOpen={isModalOpen}
         onClose={closeModal}
-        title={`${modalMode === 'create' ? 'Add new ' : 'Edit '}${
+        title={`${modalMode === 'create' ? 'Add ' : 'Edit '}${
           activeTab === 'guidelines'
             ? 'brand guideline'
             : activeTab === 'facts'
@@ -796,7 +717,7 @@ export function LibraryManager({
         {formError && (
           <div
             role="alert"
-            className="mb-4 p-3 bg-rose-500/10 border border-rose-500/25 rounded-lg text-xs text-[#ff7a8a]"
+            className="mb-4 p-3 bg-[#fffdf8] border border-[#b3261e] text-xs text-[#b3261e]"
           >
             {formError}
           </div>
@@ -807,7 +728,7 @@ export function LibraryManager({
           {activeTab === 'guidelines' && (
             <>
               <div>
-                <label htmlFor="guideline-title" className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1">
+                <label htmlFor="guideline-title" className="block text-xs font-mono uppercase text-[#5e574c] mb-1">
                   Title *
                 </label>
                 <Input
@@ -816,12 +737,12 @@ export function LibraryManager({
                   required
                   value={gTitle}
                   onChange={(e) => setGTitle(e.target.value)}
-                  placeholder="e.g. Tone: Empathic, Transparent, Non-Aggressive"
+                  placeholder="e.g., Tone: Empathic, Transparent, Non-Aggressive"
                 />
               </div>
 
               <div>
-                <label htmlFor="guideline-category" className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1">
+                <label htmlFor="guideline-category" className="block text-xs font-mono uppercase text-[#5e574c] mb-1">
                   Category *
                 </label>
                 <Select
@@ -842,7 +763,7 @@ export function LibraryManager({
               </div>
 
               <div>
-                <label htmlFor="guideline-body" className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1">
+                <label htmlFor="guideline-body" className="block text-xs font-mono uppercase text-[#5e574c] mb-1">
                   Rule body *
                 </label>
                 <Textarea
@@ -856,7 +777,7 @@ export function LibraryManager({
               </div>
 
               <div>
-                <label htmlFor="guideline-clarification" className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1">
+                <label htmlFor="guideline-clarification" className="block text-xs font-mono uppercase text-[#5e574c] mb-1">
                   Application guidance / clarification (optional)
                 </label>
                 <Textarea
@@ -874,7 +795,7 @@ export function LibraryManager({
           {activeTab === 'facts' && (
             <>
               <div>
-                <label htmlFor="fact-statement" className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1">
+                <label htmlFor="fact-statement" className="block text-xs font-mono uppercase text-[#5e574c] mb-1">
                   Fact statement *
                 </label>
                 <Textarea
@@ -883,12 +804,12 @@ export function LibraryManager({
                   rows={3}
                   value={fStatement}
                   onChange={(e) => setFStatement(e.target.value)}
-                  placeholder="e.g. 78% of study participants observed smoother skin within 4 weeks."
+                  placeholder="e.g., 78% of study participants observed smoother skin within 4 weeks."
                 />
               </div>
 
               <div>
-                <label htmlFor="fact-source" className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1">
+                <label htmlFor="fact-source" className="block text-xs font-mono uppercase text-[#5e574c] mb-1">
                   Source note / citation
                 </label>
                 <Input
@@ -896,13 +817,13 @@ export function LibraryManager({
                   type="text"
                   value={fSourceNote}
                   onChange={(e) => setFSourceNote(e.target.value)}
-                  placeholder="e.g. Clinical Study VS-2025-04, Third-Party Lab"
+                  placeholder="e.g., Clinical Study VS-2025-04, Third-Party Lab"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="fact-owner" className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1">
+                  <label htmlFor="fact-owner" className="block text-xs font-mono uppercase text-[#5e574c] mb-1">
                     Owner / department
                   </label>
                   <Input
@@ -910,12 +831,12 @@ export function LibraryManager({
                     type="text"
                     value={fOwner}
                     onChange={(e) => setFOwner(e.target.value)}
-                    placeholder="e.g. Dr. Maya Lin, R&D"
+                    placeholder="e.g., Dr. Maya Lin, R&D"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="fact-expires" className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1">
+                  <label htmlFor="fact-expires" className="block text-xs font-mono uppercase text-[#5e574c] mb-1">
                     Expires at (optional)
                   </label>
                   <Input
@@ -928,7 +849,7 @@ export function LibraryManager({
               </div>
 
               <div>
-                <label htmlFor="fact-status" className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1">
+                <label htmlFor="fact-status" className="block text-xs font-mono uppercase text-[#5e574c] mb-1">
                   Status
                 </label>
                 <Select
@@ -948,7 +869,7 @@ export function LibraryManager({
           {activeTab === 'terms' && (
             <>
               <div>
-                <label htmlFor="term-text" className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1">
+                <label htmlFor="term-text" className="block text-xs font-mono uppercase text-[#5e574c] mb-1">
                   Term / phrase *
                 </label>
                 <Input
@@ -957,12 +878,12 @@ export function LibraryManager({
                   required
                   value={tTerm}
                   onChange={(e) => setTTerm(e.target.value)}
-                  placeholder="e.g. anti-aging, miracle cure, clean beauty"
+                  placeholder="e.g., anti-aging, miracle cure, clean beauty"
                 />
               </div>
 
               <div>
-                <label htmlFor="term-kind" className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1">
+                <label htmlFor="term-kind" className="block text-xs font-mono uppercase text-[#5e574c] mb-1">
                   Classification *
                 </label>
                 <Select
@@ -970,14 +891,14 @@ export function LibraryManager({
                   value={tKind}
                   onChange={(e) => setTKind(e.target.value as 'banned' | 'caution' | 'preferred')}
                 >
-                  <option value="banned">Banned (Flagged as High severity)</option>
-                  <option value="caution">Caution (Flagged as Medium severity)</option>
+                  <option value="banned">Banned (High severity)</option>
+                  <option value="caution">Caution (Medium severity)</option>
                   <option value="preferred">Preferred (Recommended alternative)</option>
                 </Select>
               </div>
 
               <div>
-                <label htmlFor="term-replacement" className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1">
+                <label htmlFor="term-replacement" className="block text-xs font-mono uppercase text-[#5e574c] mb-1">
                   Suggested replacement (optional)
                 </label>
                 <Input
@@ -985,12 +906,12 @@ export function LibraryManager({
                   type="text"
                   value={tReplacement}
                   onChange={(e) => setTReplacement(e.target.value)}
-                  placeholder="e.g. age-supporting, clinically tested"
+                  placeholder="e.g., age-supporting, clinically tested"
                 />
               </div>
 
               <div>
-                <label htmlFor="term-note" className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1">
+                <label htmlFor="term-note" className="block text-xs font-mono uppercase text-[#5e574c] mb-1">
                   Usage guidance / note (optional)
                 </label>
                 <Textarea
@@ -1004,7 +925,7 @@ export function LibraryManager({
             </>
           )}
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.06]">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#ddd5c4]">
             <Button
               type="button"
               variant="ghost"
@@ -1032,15 +953,15 @@ export function LibraryManager({
         isOpen={Boolean(deleteTarget)}
         onClose={() => setDeleteTarget(null)}
         title="Confirm deletion"
-        description="Are you sure you want to permanently delete this library entry?"
+        description="Are you sure you want to delete this library item?"
       >
         {deleteTarget && (
-          <div className="space-y-4 text-xs sm:text-sm text-[#a3a3bb]">
-            <div className="p-3 bg-[#11111a] rounded-lg border border-white/[0.06] font-mono text-xs text-[#ff7a8a]">
+          <div className="space-y-4 text-xs text-[#5e574c]">
+            <div className="p-3 bg-[#f5f1e8] border border-[#ddd5c4] font-mono text-xs text-[#b3261e]">
               &ldquo;{deleteTarget.title}&rdquo;
             </div>
             <p>
-              This entry will no longer be cited in future reviews. Past review audit logs referencing it remain intact.
+              This entry will no longer be cited in future reviews. Past audit logs remain intact.
             </p>
             <div className="flex items-center justify-end gap-2 pt-2">
               <Button
@@ -1072,13 +993,13 @@ export function LibraryManager({
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         title="Import guidelines from markdown"
-        description="Paste brand document sections or markdown tables to parse into individual guidelines."
+        description="Paste markdown sections to parse into individual guideline entries."
         maxWidth="lg"
       >
         {importError && (
           <div
             role="alert"
-            className="mb-4 p-3 bg-rose-500/10 border border-rose-500/25 rounded-lg text-xs text-[#ff7a8a]"
+            className="mb-4 p-3 bg-[#fffdf8] border border-[#b3261e] text-xs text-[#b3261e]"
           >
             {importError}
           </div>
@@ -1087,8 +1008,8 @@ export function LibraryManager({
         {importStep === 'input' ? (
           <div className="space-y-4">
             <div>
-              <label htmlFor="import-category" className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1">
-                Default fallback category
+              <label htmlFor="import-category" className="block text-xs font-mono uppercase text-[#5e574c] mb-1">
+                Default category
               </label>
               <Select
                 id="import-category"
@@ -1106,7 +1027,7 @@ export function LibraryManager({
             </div>
 
             <div>
-              <label htmlFor="import-textarea" className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1">
+              <label htmlFor="import-textarea" className="block text-xs font-mono uppercase text-[#5e574c] mb-1">
                 Paste markdown text
               </label>
               <Textarea
@@ -1114,8 +1035,8 @@ export function LibraryManager({
                 rows={10}
                 value={importRawText}
                 onChange={(e) => setImportRawText(e.target.value)}
-                placeholder="# Tone of Voice&#10;Write with clear empathy. Avoid aggressive superlatives.&#10;&#10;# Prohibited Claims&#10;Never state a product can cure or medically treat acne without prescription registration."
-                className="font-mono"
+                placeholder="# Tone of Voice&#10;Write with clear empathy. Avoid aggressive superlatives.&#10;&#10;# Prohibited Claims&#10;Never state a product can cure or medically treat acne."
+                className="font-mono text-xs"
               />
             </div>
 
@@ -1134,24 +1055,26 @@ export function LibraryManager({
                 size="sm"
                 onClick={handleParseImport}
               >
-                Parse &amp; preview →
+                Parse and preview
               </Button>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-xs text-[#a3a3bb]">
-              Parsed <strong className="text-[#ececf6]">{parsedGuidelines.length}</strong> guidelines. Review the preview below before committing:
+            <p className="text-xs text-[#5e574c]">
+              Parsed <strong className="text-[#1f1c18] font-mono">{parsedGuidelines.length}</strong> guidelines. Review the preview below before importing:
             </p>
 
-            <div className="max-h-72 overflow-y-auto divide-y divide-white/[0.06] rounded-lg border border-white/[0.08] bg-[#11111a]">
+            <div className="max-h-72 overflow-y-auto divide-y divide-[#ddd5c4] border border-[#ddd5c4] bg-[#fffdf8]">
               {parsedGuidelines.map((pg, idx) => (
                 <div key={idx} className="p-3 text-xs space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium text-[#ececf6]">{pg.title}</span>
-                    <Badge variant="indigo">{pg.category}</Badge>
+                    <span className="font-medium text-[#1f1c18]">{pg.title}</span>
+                    <span className="font-mono text-[10px] uppercase text-[#5e574c] px-1 py-0.5 bg-[#f5f1e8] border border-[#ddd5c4]">
+                      {pg.category}
+                    </span>
                   </div>
-                  <p className="text-[#a3a3bb] line-clamp-2">{pg.body}</p>
+                  <p className="text-[#5e574c] line-clamp-2">{pg.body}</p>
                 </div>
               ))}
             </div>
@@ -1164,7 +1087,7 @@ export function LibraryManager({
                 onClick={() => setImportStep('input')}
                 disabled={isImporting}
               >
-                ← Back to edit
+                Back to edit
               </Button>
 
               <Button

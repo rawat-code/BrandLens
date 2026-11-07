@@ -41,7 +41,6 @@ export function CommandPalette({
     router.push(href);
   };
 
-  const isApprover = userRole === 'manager' || userRole === 'reviewer' || userRole === 'admin';
   const isAdmin = userRole === 'admin';
 
   return (

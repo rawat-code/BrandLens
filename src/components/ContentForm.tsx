@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea, Select } from '@/components/ui/Input';
-import { Card } from '@/components/ui/Card';
 
 const MAX_CHAR_LIMIT = 10000;
 
@@ -81,26 +80,26 @@ export function ContentForm() {
       {errorMessage && (
         <div
           role="alert"
-          className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/25 text-[#ff7a8a] text-xs flex items-start gap-3 shadow-lg"
+          className="p-4 bg-[#fffdf8] border border-[#b3261e] text-[#b3261e] text-xs flex items-start gap-3"
         >
-          <svg className="w-4 h-4 text-[#ff7a8a] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <span className="font-mono uppercase font-semibold text-[11px] shrink-0 mt-0.5">
+            Error
+          </span>
           <div>
-            <strong className="font-medium text-[#ececf6] block">Submission error</strong>
+            <strong className="font-medium text-[#1f1c18] block">Submission failed</strong>
             <span>{errorMessage}</span>
           </div>
         </div>
       )}
 
-      <Card variant="panel" className="p-6 md:p-8 space-y-6">
+      <div className="bg-[#fffdf8] border border-[#ddd5c4] p-6 sm:p-8 space-y-6">
         {/* Title */}
         <div>
           <label
             htmlFor="content-title"
-            className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1.5"
+            className="block text-[11px] font-mono uppercase tracking-wider text-[#5e574c] mb-1.5"
           >
-            Content title <span className="text-[#ff7a8a]">*</span>
+            Content title <span className="text-[#b3261e]">*</span>
           </label>
           <Input
             id="content-title"
@@ -119,22 +118,22 @@ export function ContentForm() {
           <div>
             <label
               htmlFor="content-channel"
-              className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1.5"
+              className="block text-[11px] font-mono uppercase tracking-wider text-[#5e574c] mb-1.5"
             >
-              Publication channel <span className="text-[#ff7a8a]">*</span>
+              Publication channel <span className="text-[#b3261e]">*</span>
             </label>
             <Select
               id="content-channel"
               value={channel}
               onChange={(e) => setChannel(e.target.value)}
             >
-              <option value="instagram" className="bg-[#171724]">Instagram / Social Media</option>
-              <option value="blog" className="bg-[#171724]">Brand Blog & Editorial</option>
-              <option value="newsletter" className="bg-[#171724]">Email Newsletter</option>
-              <option value="packaging" className="bg-[#171724]">Product Packaging & Labels</option>
-              <option value="ad_copy" className="bg-[#171724]">Paid Advertising / Search Ads</option>
-              <option value="press_release" className="bg-[#171724]">Press Release / Public Notice</option>
-              <option value="website" className="bg-[#171724]">E-Commerce / Website Copy</option>
+              <option value="instagram">Instagram / Social Media</option>
+              <option value="blog">Brand Blog & Editorial</option>
+              <option value="newsletter">Email Newsletter</option>
+              <option value="packaging">Product Packaging & Labels</option>
+              <option value="ad_copy">Paid Advertising / Search Ads</option>
+              <option value="press_release">Press Release / Public Notice</option>
+              <option value="website">E-Commerce / Website Copy</option>
             </Select>
           </div>
 
@@ -142,7 +141,7 @@ export function ContentForm() {
           <div>
             <label
               htmlFor="content-audience"
-              className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1.5"
+              className="block text-[11px] font-mono uppercase tracking-wider text-[#5e574c] mb-1.5"
             >
               Target audience (optional)
             </label>
@@ -158,21 +157,21 @@ export function ContentForm() {
         </div>
 
         {/* Confidentiality Toggle (Rule 4) */}
-        <div className="p-4 rounded-xl bg-[#171724] border border-white/[0.06] flex items-start gap-3">
+        <div className="p-4 bg-[#f5f1e8] border border-[#ddd5c4] flex items-start gap-3">
           <input
             id="confidential-toggle"
             type="checkbox"
             checked={confidential}
             onChange={(e) => setConfidential(e.target.checked)}
-            className="mt-1 h-4 w-4 rounded bg-[#11111a] border-white/20 text-indigo-500 focus:ring-indigo-400"
+            className="mt-1 h-4 w-4 rounded-none border border-[#1f1c18] text-[#1f1c18] focus:ring-[#1f1c18] accent-[#1f1c18]"
           />
           <label htmlFor="confidential-toggle" className="text-xs cursor-pointer select-none">
-            <span className="font-medium text-[#ececf6] block">
+            <span className="font-medium text-[#1f1c18] block">
               Mark content as confidential
             </span>
-            <span className="text-[#a3a3bb] block mt-0.5 leading-relaxed">
-              When checked, this text will strictly be audited using deterministic organization rules.
-              It will never be transmitted to external AI services.
+            <span className="text-[#5e574c] block mt-0.5 leading-relaxed">
+              When checked, this text is audited exclusively with deterministic organisation rules.
+              It will never be sent to external AI services.
             </span>
           </label>
         </div>
@@ -182,17 +181,17 @@ export function ContentForm() {
           <div className="flex items-center justify-between mb-1.5">
             <label
               htmlFor="content-body"
-              className="block text-xs font-mono uppercase text-[#a3a3bb]"
+              className="block text-[11px] font-mono uppercase tracking-wider text-[#5e574c]"
             >
-              Copy draft text <span className="text-[#ff7a8a]">*</span>
+              Copy draft text <span className="text-[#b3261e]">*</span>
             </label>
             <span
               className={`text-xs font-mono ${
                 isAtLimit
-                  ? 'text-[#ff7a8a] font-bold'
+                  ? 'text-[#b3261e] font-semibold'
                   : isNearLimit
-                  ? 'text-[#f5b74f]'
-                  : 'text-[#7b7b94]'
+                  ? 'text-[#8a5a00]'
+                  : 'text-[#5e574c]'
               }`}
             >
               {charCount.toLocaleString()} / {MAX_CHAR_LIMIT.toLocaleString()} chars
@@ -206,7 +205,7 @@ export function ContentForm() {
             maxLength={MAX_CHAR_LIMIT}
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="Type or paste your copy draft here. It will be checked against brand guidelines, approved facts, and registered terminology..."
+            placeholder="Type or paste draft copy here. It will be audited against brand guidelines, verified clinical facts, and approved terminology."
           />
         </div>
 
@@ -214,7 +213,7 @@ export function ContentForm() {
         <div>
           <label
             htmlFor="version-note"
-            className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1.5"
+            className="block text-[11px] font-mono uppercase tracking-wider text-[#5e574c] mb-1.5"
           >
             Version note (optional)
           </label>
@@ -229,10 +228,10 @@ export function ContentForm() {
         </div>
 
         {/* Action Buttons */}
-        <div className="pt-4 border-t border-white/[0.06] flex items-center justify-between gap-4">
+        <div className="pt-4 border-t border-[#ddd5c4] flex items-center justify-between gap-4">
           <Link href="/dashboard">
             <Button variant="ghost" size="md">
-              ← Cancel
+              Cancel
             </Button>
           </Link>
 
@@ -243,10 +242,10 @@ export function ContentForm() {
             disabled={isSubmitting || !title.trim() || !body.trim() || isAtLimit}
             isLoading={isSubmitting}
           >
-            {isSubmitting ? 'Creating draft...' : 'Create draft & open workbench →'}
+            {isSubmitting ? 'Creating draft...' : 'Create draft'}
           </Button>
         </div>
-      </Card>
+      </div>
     </form>
   );
 }

@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Dialog } from '@/components/ui/Dialog';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 
 interface SettingsClientViewProps {
   initialOrg: {
@@ -68,7 +67,7 @@ export function SettingsClientView({
 
       setOrgName(data.org.name);
       setEditedName(data.org.name);
-      setNameMessage({ type: 'success', text: 'Organisation name updated successfully.' });
+      setNameMessage({ type: 'success', text: 'Organisation name updated.' });
       if (onOrgNameChange) {
         onOrgNameChange(data.org.name);
       }
@@ -123,62 +122,62 @@ export function SettingsClientView({
   const canConfirmReset = confirmationInput.trim().toLowerCase() === orgName.trim().toLowerCase();
 
   return (
-    <div className="p-6 sm:p-8 max-w-4xl w-full mx-auto space-y-6">
+    <div className="max-w-4xl w-full mx-auto space-y-8">
       <PageHeader
         title="Settings"
-        description="Workspace governance parameters, brand identity, and data lifecycle management."
+        description="Organisation configuration, repository counts, and reset controls."
       />
 
       {resetMessage && (
         <div
           role="alert"
-          className={`p-4 rounded-xl text-xs flex items-center justify-between border ${
+          className={`p-4 text-xs flex items-center justify-between border ${
             resetMessage.type === 'success'
-              ? 'bg-[#5fd1a0]/10 text-[#5fd1a0] border-[#5fd1a0]/30'
-              : 'bg-rose-500/10 text-[#ff7a8a] border-rose-500/30'
+              ? 'bg-[#fffdf8] text-[#1f6b3a] border-[#1f6b3a]'
+              : 'bg-[#fffdf8] text-[#b3261e] border-[#b3261e]'
           }`}
         >
           <div>
             <span className="font-medium">{resetMessage.text}</span>
             {resetMessage.type === 'success' && (
-              <p className="text-xs text-[#a3a3bb] mt-0.5">
-                Head to the{' '}
-                <Link href="/library" className="underline text-[#a5b4fc] hover:text-white">
-                  Brand library
+              <p className="text-xs text-[#5e574c] mt-0.5">
+                Visit the{' '}
+                <Link href="/library" className="underline text-[#1f1c18] hover:text-[#5e574c]">
+                  library
                 </Link>{' '}
-                to load fresh brand guidelines.
+                to import new brand guidelines.
               </p>
             )}
           </div>
           <button
             type="button"
             onClick={() => setResetMessage(null)}
-            className="text-xs font-mono underline hover:text-white"
+            className="text-xs font-mono uppercase underline text-[#5e574c] hover:text-[#1f1c18]"
           >
             Dismiss
           </button>
         </div>
       )}
 
-      {/* Card 1: Organisation Details */}
-      <Card variant="panel">
-        <CardHeader>
-          <div>
-            <CardTitle>Organisation details</CardTitle>
-            <CardDescription>
-              The display name rendered throughout the workspace and review reports.
-            </CardDescription>
-          </div>
-        </CardHeader>
+      {/* Section 1: Organisation Details */}
+      <section className="bg-[#fffdf8] border border-[#ddd5c4] p-6 space-y-6">
+        <div>
+          <h2 className="font-serif text-2xl font-medium text-[#1f1c18] tracking-tight">
+            Organisation details
+          </h2>
+          <p className="text-sm text-[#5e574c] mt-1">
+            Display name shown across review reports, notifications, and approval queues.
+          </p>
+        </div>
 
-        <form onSubmit={handleSaveName} className="p-5 sm:p-6 space-y-4">
+        <form onSubmit={handleSaveName} className="space-y-4">
           {nameMessage && (
             <div
               role="alert"
-              className={`p-3 rounded-lg text-xs font-mono border ${
+              className={`p-3 text-xs font-mono border ${
                 nameMessage.type === 'success'
-                  ? 'bg-[#5fd1a0]/10 text-[#5fd1a0] border-[#5fd1a0]/30'
-                  : 'bg-rose-500/10 text-[#ff7a8a] border-rose-500/25'
+                  ? 'bg-[#fffdf8] text-[#1f6b3a] border-[#1f6b3a]'
+                  : 'bg-[#fffdf8] text-[#b3261e] border-[#b3261e]'
               }`}
             >
               {nameMessage.text}
@@ -186,8 +185,8 @@ export function SettingsClientView({
           )}
 
           <div>
-            <label htmlFor="org-name" className="block text-xs font-mono uppercase text-[#a3a3bb] mb-1.5">
-              Organisation / brand name
+            <label htmlFor="org-name" className="block text-[11px] font-mono uppercase tracking-wider text-[#5e574c] mb-1.5">
+              Organisation name
             </label>
             <div className="flex flex-col sm:flex-row gap-2.5">
               <Input
@@ -213,78 +212,88 @@ export function SettingsClientView({
             </div>
           </div>
 
-          <div className="pt-3 border-t border-white/[0.06] flex flex-wrap gap-6 text-xs text-[#7b7b94]">
+          <dl className="pt-4 border-t border-[#ddd5c4] grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <span className="text-[#a3a3bb]">Organisation ID:</span>{' '}
-              <code className="bg-[#171724] px-1.5 py-0.5 rounded text-[11px] font-mono text-[#ececf6] select-all border border-white/[0.06]">
-                {initialOrg.id}
-              </code>
+              <dt className="text-[11px] font-mono uppercase tracking-wider text-[#5e574c]">Organisation identifier</dt>
+              <dd className="font-mono text-[#1f1c18] mt-0.5 select-all">{initialOrg.id}</dd>
             </div>
             {initialOrg.created_at && (
               <div>
-                <span className="text-[#a3a3bb]">Created:</span>{' '}
-                <span className="font-mono text-[#ececf6]">{new Date(initialOrg.created_at).toLocaleDateString()}</span>
+                <dt className="text-[11px] font-mono uppercase tracking-wider text-[#5e574c]">Created</dt>
+                <dd className="font-mono text-[#1f1c18] mt-0.5">{new Date(initialOrg.created_at).toLocaleDateString()}</dd>
               </div>
             )}
-          </div>
+          </dl>
         </form>
-      </Card>
+      </section>
 
-      {/* Card 2: Workspace Data Summary */}
-      <Card variant="panel" className="p-5 sm:p-6 space-y-4">
+      {/* Section 2: Workspace Data Summary */}
+      <section className="bg-[#fffdf8] border border-[#ddd5c4] p-6 space-y-4">
         <div>
-          <CardTitle>Current workspace data</CardTitle>
-          <CardDescription>
-            Inventory of registered guidelines, facts, terms, and submissions.
-          </CardDescription>
+          <h2 className="font-serif text-2xl font-medium text-[#1f1c18] tracking-tight">
+            Current inventory
+          </h2>
+          <p className="text-sm text-[#5e574c] mt-1">
+            Registered governance items and content submissions in this workspace.
+          </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-4 rounded-xl bg-[#171724] border border-white/[0.06] text-center">
-            <span className="text-2xl font-mono text-[#ececf6] block">{counts.guidelines}</span>
-            <span className="text-xs text-[#a3a3bb] mt-0.5 block">Guidelines</span>
+        <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+          <div className="p-4 bg-[#f5f1e8] border border-[#ddd5c4] text-center">
+            <dd className="text-2xl font-mono font-semibold text-[#1f1c18]">{counts.guidelines}</dd>
+            <dt className="text-[11px] font-mono uppercase tracking-wider text-[#5e574c] mt-1">Guidelines</dt>
           </div>
-          <div className="p-4 rounded-xl bg-[#171724] border border-white/[0.06] text-center">
-            <span className="text-2xl font-mono text-[#ececf6] block">{counts.facts}</span>
-            <span className="text-xs text-[#a3a3bb] mt-0.5 block">Clinical facts</span>
+          <div className="p-4 bg-[#f5f1e8] border border-[#ddd5c4] text-center">
+            <dd className="text-2xl font-mono font-semibold text-[#1f1c18]">{counts.facts}</dd>
+            <dt className="text-[11px] font-mono uppercase tracking-wider text-[#5e574c] mt-1">Clinical facts</dt>
           </div>
-          <div className="p-4 rounded-xl bg-[#171724] border border-white/[0.06] text-center">
-            <span className="text-2xl font-mono text-[#ececf6] block">{counts.terms}</span>
-            <span className="text-xs text-[#a3a3bb] mt-0.5 block">Terminology</span>
+          <div className="p-4 bg-[#f5f1e8] border border-[#ddd5c4] text-center">
+            <dd className="text-2xl font-mono font-semibold text-[#1f1c18]">{counts.terms}</dd>
+            <dt className="text-[11px] font-mono uppercase tracking-wider text-[#5e574c] mt-1">Terminology</dt>
           </div>
-          <div className="p-4 rounded-xl bg-[#171724] border border-white/[0.06] text-center">
-            <span className="text-2xl font-mono text-[#ececf6] block">{counts.contents}</span>
-            <span className="text-xs text-[#a3a3bb] mt-0.5 block">Submissions</span>
+          <div className="p-4 bg-[#f5f1e8] border border-[#ddd5c4] text-center">
+            <dd className="text-2xl font-mono font-semibold text-[#1f1c18]">{counts.contents}</dd>
+            <dt className="text-[11px] font-mono uppercase tracking-wider text-[#5e574c] mt-1">Submissions</dt>
           </div>
-        </div>
-      </Card>
+        </dl>
+      </section>
 
-      {/* Card 3: Danger Zone (Start Fresh) */}
-      <Card variant="panel" className="border-rose-500/25 overflow-hidden">
-        <CardHeader className="bg-rose-500/[0.04] border-b border-rose-500/20">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#ff7a8a]" />
-            <CardTitle className="text-[#ff7a8a]">Danger zone: Start fresh</CardTitle>
+      {/* Section 3: Danger Zone */}
+      <section className="bg-[#fffdf8] border border-[#ddd5c4] border-t-4 border-t-[#b3261e] p-6 space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="font-serif text-2xl font-medium text-[#b3261e] tracking-tight">
+              Start fresh
+            </h2>
+            <p className="text-sm text-[#5e574c] mt-1">
+              Permanently clear all library items, content submissions, and review findings.
+            </p>
           </div>
-          <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-rose-500/15 text-[#ff7a8a] border border-rose-500/30">
+          <span className="text-[11px] font-mono uppercase tracking-wider px-2 py-0.5 border border-[#b3261e] text-[#b3261e]">
             Irreversible
           </span>
-        </CardHeader>
+        </div>
 
-        <div className="p-5 sm:p-6 space-y-4 text-xs sm:text-sm text-[#a3a3bb] leading-relaxed">
+        <div className="text-sm text-[#1f1c18] leading-relaxed space-y-3">
           <p>
-            The <strong className="text-[#ececf6]">Start fresh</strong> action permanently clears all guidelines, clinical facts,
-            terminology dictionaries, content submissions, and review findings for this organisation.
+            This action deletes all guidelines, clinical facts, terminology entries, content drafts, and
+            associated findings.
           </p>
 
-          <div className="p-3 bg-[#171724] rounded-lg border border-white/[0.06] text-xs text-[#a3a3bb] space-y-1">
-            <div className="font-medium text-[#ececf6]">What will happen:</div>
-            <ul className="list-disc list-inside space-y-0.5 pl-1">
-              <li>All {counts.guidelines} guidelines, {counts.facts} facts, and {counts.terms} terms will be erased.</li>
-              <li>All {counts.contents} content drafts, review histories, and comments will be deleted.</li>
-              <li><strong className="text-[#5fd1a0]">User accounts and append-only audit logs are safely preserved.</strong></li>
-            </ul>
-          </div>
+          <dl className="p-4 bg-[#f5f1e8] border border-[#ddd5c4] space-y-2 text-xs">
+            <div>
+              <dt className="font-mono uppercase tracking-wider text-[#5e574c]">Items deleted</dt>
+              <dd className="text-[#1f1c18] mt-0.5">
+                {counts.guidelines} guidelines, {counts.facts} clinical facts, {counts.terms} terminology entries, and {counts.contents} content submissions.
+              </dd>
+            </div>
+            <div>
+              <dt className="font-mono uppercase tracking-wider text-[#5e574c]">Items preserved</dt>
+              <dd className="text-[#1f6b3a] font-medium mt-0.5">
+                User accounts, role assignments, and append-only audit log records are kept intact.
+              </dd>
+            </div>
+          </dl>
 
           <div className="pt-2 flex justify-end">
             <Button
@@ -300,22 +309,22 @@ export function SettingsClientView({
             </Button>
           </div>
         </div>
-      </Card>
+      </section>
 
       {/* Confirmation Dialog */}
       <Dialog
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Reset brand data: Start fresh"
+        title="Reset brand data"
         description="This action is permanent and cannot be undone."
       >
-        <div className="space-y-4 text-xs sm:text-sm text-[#a3a3bb]">
+        <div className="space-y-4 text-sm text-[#1f1c18]">
           <p>
-            To prevent accidental deletion, please type the exact organisation name{' '}
-            <strong className="text-[#ececf6] font-mono bg-[#11111a] px-1.5 py-0.5 rounded border border-white/10">
+            To confirm deletion, type the organisation name{' '}
+            <strong className="font-mono bg-[#f5f1e8] px-1.5 py-0.5 border border-[#ddd5c4]">
               {orgName}
             </strong>{' '}
-            below to confirm:
+            below:
           </p>
 
           <form onSubmit={handleStartFresh} className="space-y-4">
@@ -328,7 +337,7 @@ export function SettingsClientView({
                 placeholder={`Type "${orgName}" to confirm`}
                 autoFocus
                 disabled={isResetting}
-                className="font-mono"
+                className="font-mono text-xs"
               />
             </div>
 
@@ -349,7 +358,7 @@ export function SettingsClientView({
                 disabled={!canConfirmReset || isResetting}
                 isLoading={isResetting}
               >
-                {isResetting ? 'Clearing data...' : 'I understand, delete brand data'}
+                {isResetting ? 'Clearing data...' : 'Delete brand data'}
               </Button>
             </div>
           </form>

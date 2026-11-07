@@ -65,9 +65,6 @@ export default async function InsightsPage() {
       </AppShell>
     );
   }
-      </AppShell>
-    );
-  }
 
   // 2. Authorized data fetch for managers and admins
   const admin = getAdminClient();

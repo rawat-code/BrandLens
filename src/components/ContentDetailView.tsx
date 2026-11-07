@@ -1,13 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect, useCallback } from 'react';
 import { RoleBadge } from '@/components/RoleBadge';
 import { computeWordDiff, type DiffChange } from '@/lib/diff';
 import { HighlightedText } from '@/components/HighlightedText';
 import { FindingsGroup } from '@/components/FindingsGroup';
 import { AiDisclosureTab } from '@/components/AiDisclosureTab';
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Dialog } from '@/components/ui/Dialog';

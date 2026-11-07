@@ -119,7 +119,7 @@ export function Note({
               AI-assisted
             </span>
           )}
-          <Badge variant={f.status as any}>{f.status}</Badge>
+          <Badge variant={f.status}>{f.status}</Badge>
         </div>
       </div>
 
