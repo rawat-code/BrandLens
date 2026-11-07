@@ -1,22 +1,25 @@
 import type { Metadata } from "next";
-import { Instrument_Serif, Geist, Geist_Mono } from "next/font/google";
+import { Newsreader, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
 
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-serif",
-  weight: "400",
+const newsreader = Newsreader({
+  variable: "--font-newsreader",
   subsets: ["latin"],
+  weight: ["400", "500"],
+  style: ["normal", "italic"],
 });
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const plexSans = IBM_Plex_Sans({
+  variable: "--font-plex-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
   subsets: ["latin"],
+  weight: ["400", "600"],
 });
 
 export const metadata: Metadata = {
@@ -34,9 +37,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body
-        className={`${instrumentSerif.variable} ${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-[#0a0a10] text-[#ececf6] min-h-screen`}
+        className={`${newsreader.variable} ${plexSans.variable} ${plexMono.variable} font-sans antialiased bg-[#f5f1e8] text-[#1f1c18] min-h-screen`}
       >
         <ToastProvider>{children}</ToastProvider>
       </body>

@@ -53,8 +53,8 @@ export function TabList({
 }: TabListProps) {
   const baseStyle =
     variant === "line"
-      ? "flex items-center gap-1 border-b border-white/[0.08]"
-      : "inline-flex items-center gap-1 p-1 bg-[#171724] rounded-lg border border-white/[0.06]";
+      ? "flex items-center gap-6 border-b border-[#ddd5c4]"
+      : "inline-flex items-center gap-0 border border-[#ddd5c4] bg-[#fffdf8] rounded-none p-0";
 
   return (
     <div role="tablist" className={`${baseStyle} ${className}`} {...props}>
@@ -83,15 +83,15 @@ export function TabTrigger({
 
   const style =
     variant === "line"
-      ? `px-3.5 py-2 text-sm font-medium transition-colors relative cursor-pointer ${
+      ? `pb-2.5 pt-1 text-sm font-medium transition-colors relative cursor-pointer ${
           isSelected
-            ? "text-[#ececf6] border-b-2 border-indigo-400"
-            : "text-[#a3a3bb] hover:text-[#ececf6] border-b-2 border-transparent"
+            ? "text-[#1f1c18] border-b-2 border-[#1f1c18]"
+            : "text-[#5e574c] hover:text-[#1f1c18] border-b-2 border-transparent"
         }`
-      : `px-3 py-1.5 text-xs font-medium rounded-md transition-all cursor-pointer ${
+      : `px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.04em] transition-colors cursor-pointer border-r last:border-r-0 border-[#ddd5c4] ${
           isSelected
-            ? "bg-[#11111a] text-[#ececf6] shadow-sm shadow-black/40 border border-white/10"
-            : "text-[#a3a3bb] hover:text-[#ececf6]"
+            ? "bg-[#1f1c18] text-[#f5f1e8]"
+            : "bg-[#fffdf8] text-[#5e574c] hover:bg-[#f5f1e8] hover:text-[#1f1c18]"
         }`;
 
   return (
@@ -127,11 +127,10 @@ export function TabContent({
     <div
       role="tabpanel"
       tabIndex={0}
-      className={`pt-4 focus:outline-none ${className}`}
+      className={`focus:outline-none pt-4 ${className}`}
       {...props}
     >
       {children}
     </div>
   );
 }
-

@@ -22,42 +22,29 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <div
-      className={`pb-5 border-b border-white/[0.08] flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${className}`}
+      className={`pb-5 border-b border-[#ddd5c4] flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between ${className}`}
     >
       <div>
         {backHref && (
           <Link
             href={backHref}
-            className="inline-flex items-center gap-1.5 text-xs text-[#a3a3bb] hover:text-[#ececf6] mb-2 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs text-[#5e574c] hover:text-[#1f1c18] mb-2 transition-colors duration-120"
           >
-            <svg
-              className="w-3.5 h-3.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
+            <span>←</span>
             <span>{backLabel}</span>
           </Link>
         )}
-        <h1 className="font-serif text-2xl sm:text-3xl font-normal text-[#ececf6] tracking-normal leading-snug">
+        <h1 className="font-serif text-[38px] font-medium text-[#1f1c18] tracking-normal leading-[1.1]">
           {title}
         </h1>
         {description && (
-          <p className="mt-1 text-sm text-[#a3a3bb]">{description}</p>
+          <p className="mt-1.5 text-[13px] text-[#5e574c]">{description}</p>
         )}
         {children}
       </div>
       {actions && (
-        <div className="flex items-center gap-2.5 shrink-0">{actions}</div>
+        <div className="flex items-center gap-2.5 shrink-0 pt-2 sm:pt-0">{actions}</div>
       )}
     </div>
   );
 }
-

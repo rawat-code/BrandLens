@@ -1,13 +1,22 @@
 import React from "react";
 
+export type StatusState =
+  | "draft"
+  | "ai_reviewed"
+  | "needs_changes"
+  | "in_review"
+  | "approved"
+  | "rejected"
+  | "published";
+
 export type BadgeVariant =
   | "high"
   | "medium"
   | "low"
   | "success"
   | "neutral"
-  | "indigo"
-  | "ai";
+  | "ai"
+  | StatusState;
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
@@ -21,59 +30,104 @@ export function Badge({
   className = "",
   ...props
 }: BadgeProps) {
+  // Styles based on Redline tokens (square, 1px border, ink/paper)
   const variantStyles: Record<BadgeVariant, string> = {
-    high: "bg-[#ff7a8a]/10 text-[#ff7a8a] border-[#ff7a8a]/30",
-    medium: "bg-[#f5b74f]/10 text-[#f5b74f] border-[#f5b74f]/30",
-    low: "bg-[#7fb4ff]/10 text-[#7fb4ff] border-[#7fb4ff]/30",
-    success: "bg-[#5fd1a0]/10 text-[#5fd1a0] border-[#5fd1a0]/30",
-    neutral: "bg-[#a3a3bb]/10 text-[#a3a3bb] border-[#a3a3bb]/25",
-    indigo: "bg-indigo-500/10 text-[#a5b4fc] border-indigo-500/30",
-    ai: "bg-indigo-500/15 text-[#c7d2fe] border-indigo-400/35",
+    high: "bg-[#fffdf8] text-[#b3261e] border-[#b3261e]",
+    medium: "bg-[#f6e3b4] text-[#8a5a00] border-[#8a5a00]",
+    low: "bg-[#fffdf8] text-[#1d4f9c] border-[#1d4f9c]",
+    success: "bg-[#fffdf8] text-[#1f6b3a] border-[#1f6b3a]",
+    neutral: "bg-[#fffdf8] text-[#5e574c] border-[#ddd5c4]",
+    ai: "bg-[#f5f1e8] text-[#1f1c18] border-[#1f1c18]",
+
+    // Status chips
+    draft: "bg-[#fffdf8] text-[#5e574c] border-[#ddd5c4]",
+    ai_reviewed: "bg-[#fffdf8] text-[#1d4f9c] border-[#1d4f9c]",
+    needs_changes: "bg-[#f6e3b4] text-[#8a5a00] border-[#8a5a00]",
+    in_review: "bg-[#fffdf8] text-[#1f1c18] border-[#1f1c18]",
+    approved: "bg-[#fffdf8] text-[#1f6b3a] border-[#1f6b3a]",
+    rejected: "bg-[#fffdf8] text-[#b3261e] border-[#b3261e]",
+    published: "bg-[#1f1c18] text-[#f5f1e8] border-[#1f1c18]",
   };
 
   const defaultIcons: Record<BadgeVariant, React.ReactNode> = {
+    // Draft: empty circle
+    draft: (
+      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+        <circle cx="5" cy="5" r="3.75" />
+      </svg>
+    ),
+    // AI reviewed: half circle
+    ai_reviewed: (
+      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
+        <path d="M5 1A4 4 0 0 0 5 9V1Z" />
+        <circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" strokeWidth="1" />
+      </svg>
+    ),
+    // Needs changes: triangle
+    needs_changes: (
+      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
+        <path d="M5 1.5L9 8.5H1L5 1.5Z" />
+      </svg>
+    ),
+    // In review: filled circle
+    in_review: (
+      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
+        <circle cx="5" cy="5" r="4" />
+      </svg>
+    ),
+    // Approved: check
+    approved: (
+      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
+        <path d="M1.5 5.2L3.8 7.5L8.5 2.5" />
+      </svg>
+    ),
+    // Rejected: cross
+    rejected: (
+      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
+        <path d="M2 2L8 8M8 2L2 8" />
+      </svg>
+    ),
+    // Published: filled square
+    published: (
+      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
+        <rect x="1.5" y="1.5" width="7" height="7" />
+      </svg>
+    ),
+
+    // Severities
     high: (
-      <span className="w-1.5 h-1.5 rounded-full bg-[#ff7a8a] shrink-0" aria-hidden="true" />
+      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
+        <rect x="1" y="1" width="8" height="8" />
+      </svg>
     ),
     medium: (
-      <span className="w-1.5 h-1.5 rounded-sm bg-[#f5b74f] shrink-0" aria-hidden="true" />
+      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
+        <polygon points="5,1 9,8 1,8" />
+      </svg>
     ),
     low: (
-      <span className="w-1.5 h-1.5 rounded-none bg-[#7fb4ff] shrink-0" aria-hidden="true" />
+      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+        <circle cx="5" cy="5" r="3.5" />
+      </svg>
     ),
     success: (
-      <svg
-        className="w-2.5 h-2.5 text-[#5fd1a0] shrink-0"
-        viewBox="0 0 12 12"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        aria-hidden="true"
-      >
-        <path d="M2 6l3 3 5-6" />
+      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
+        <path d="M1.5 5.2L3.8 7.5L8.5 2.5" />
       </svg>
     ),
     neutral: (
-      <span className="w-1.5 h-1.5 rounded-full bg-[#a3a3bb]/60 shrink-0" aria-hidden="true" />
-    ),
-    indigo: (
-      <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" aria-hidden="true" />
+      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+        <line x1="2" y1="5" x2="8" y2="5" />
+      </svg>
     ),
     ai: (
-      <svg
-        className="w-2.5 h-2.5 text-[#a5b4fc] shrink-0"
-        viewBox="0 0 16 16"
-        fill="currentColor"
-        aria-hidden="true"
-      >
-        <path d="M8 0L9.5 5.5L15 7L9.5 8.5L8 14L6.5 8.5L1 7L6.5 5.5L8 0Z" />
-      </svg>
+      <span className="font-mono text-[9px] font-semibold">AI</span>
     ),
   };
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-md border ${variantStyles[variant]} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 font-mono text-[11px] font-medium tracking-[0.04em] uppercase border rounded-none select-none ${variantStyles[variant]} ${className}`}
       {...props}
     >
       {icon !== undefined ? icon : defaultIcons[variant]}
@@ -81,4 +135,3 @@ export function Badge({
     </span>
   );
 }
-

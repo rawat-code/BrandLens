@@ -25,26 +25,26 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const base =
-      "inline-flex items-center justify-center font-medium transition-colors select-none disabled:opacity-50 disabled:pointer-events-none cursor-pointer";
+      "inline-flex items-center justify-center font-medium transition-opacity duration-120 select-none disabled:opacity-40 disabled:pointer-events-none cursor-pointer rounded-none";
 
     const variantStyles: Record<ButtonVariant, string> = {
       primary:
-        "bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white shadow-sm shadow-indigo-950/40 border border-indigo-400/30 active:scale-[0.98]",
+        "bg-[#1f1c18] hover:bg-[#1f1c18]/90 text-[#f5f1e8] border border-[#1f1c18] focus-visible:ring-1 focus-visible:ring-[#f5f1e8] focus-visible:ring-inset",
       secondary:
-        "bg-[#171724] hover:bg-[#1d1d2e] text-[#ececf6] border border-white/10 active:scale-[0.98]",
+        "bg-[#fffdf8] hover:bg-[#f5f1e8] text-[#1f1c18] border border-[#1f1c18]",
       ghost:
-        "bg-transparent hover:bg-[#171724] text-[#a3a3bb] hover:text-[#ececf6] active:scale-[0.98]",
+        "bg-transparent hover:bg-[#ddd5c4]/30 text-[#1f1c18]",
       danger:
-        "bg-rose-500/10 hover:bg-rose-500/20 text-[#ff7a8a] border border-rose-500/25 active:scale-[0.98]",
+        "bg-[#fffdf8] hover:bg-[#b3261e]/10 text-[#b3261e] border border-[#b3261e]",
       subtle:
-        "bg-[#11111a] hover:bg-[#171724] text-[#ececf6] border border-white/5 active:scale-[0.98]",
-      link: "bg-transparent text-[#a5b4fc] hover:underline p-0 h-auto font-normal",
+        "bg-[#fffdf8] hover:bg-[#f5f1e8] text-[#1f1c18] border border-[#ddd5c4]",
+      link: "bg-transparent text-[#1f1c18] underline underline-offset-4 hover:text-[#5e574c] p-0 h-auto font-normal",
     };
 
     const sizeStyles: Record<ButtonSize, string> = {
-      sm: "text-xs px-2.5 py-1 rounded-md gap-1.5",
-      md: "text-sm px-3.5 py-1.5 rounded-lg gap-2",
-      lg: "text-base px-4 py-2 rounded-lg gap-2.5",
+      sm: "text-xs px-2.5 py-1 gap-1.5",
+      md: "text-sm px-3.5 py-1.5 gap-2",
+      lg: "text-base px-4 py-2 gap-2.5",
     };
 
     return (
@@ -86,4 +86,3 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = "Button";
-

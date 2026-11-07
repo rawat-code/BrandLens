@@ -55,36 +55,36 @@ export function Dialog({
       aria-labelledby={title ? "dialog-title" : undefined}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
     >
-      {/* Backdrop */}
+      {/* Backdrop without glass blur */}
       <div
-        className="fixed inset-0 bg-[#0a0a10]/80 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-[#1f1c18]/40 transition-opacity duration-120"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Surface */}
+      {/* Surface - Paper sheet with square corners and 1px border */}
       <div
         ref={dialogRef}
-        className={`relative w-full ${widthClass} bg-[#171724] border border-white/[0.12] rounded-xl shadow-2xl shadow-black/80 z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-150`}
+        className={`relative w-full ${widthClass} bg-[#fffdf8] border border-[#ddd5c4] rounded-none z-10 overflow-hidden shadow-none transition-opacity duration-120`}
       >
-        <div className="px-5 py-4 border-b border-white/[0.08] flex items-center justify-between">
+        <div className="px-5 py-4 border-b border-[#ddd5c4] flex items-center justify-between">
           <div>
             {title && (
               <h2
                 id="dialog-title"
-                className="text-base font-medium text-[#ececf6]"
+                className="font-serif text-xl font-normal text-[#1f1c18]"
               >
                 {title}
               </h2>
             )}
             {description && (
-              <p className="mt-0.5 text-xs text-[#a3a3bb]">{description}</p>
+              <p className="mt-0.5 text-xs text-[#5e574c]">{description}</p>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-[#a3a3bb] hover:text-[#ececf6] p-1 rounded-md hover:bg-white/5 transition-colors cursor-pointer"
+            className="text-[#5e574c] hover:text-[#1f1c18] p-1 rounded-none hover:bg-[#f5f1e8] transition-colors cursor-pointer"
             aria-label="Close dialog"
           >
             <svg
@@ -107,4 +107,3 @@ export function Dialog({
     </div>
   );
 }
-

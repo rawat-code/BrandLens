@@ -17,28 +17,16 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div
-      className={`flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-xl border border-white/[0.08] bg-[#11111a] ${className}`}
+      className={`flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-none border border-[#ddd5c4] bg-[#fffdf8] ${className}`}
     >
-      <div className="w-12 h-12 rounded-xl bg-[#171724] border border-white/[0.08] flex items-center justify-center text-[#7b7b94] mb-3.5">
-        {icon || (
-          <svg
-            className="w-6 h-6 stroke-[1.5]"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
-            />
-          </svg>
-        )}
-      </div>
-      <h3 className="text-base font-medium text-[#ececf6]">{title}</h3>
-      <p className="mt-1 text-xs text-[#a3a3bb] max-w-sm">{description}</p>
+      {icon && (
+        <div className="w-10 h-10 rounded-none bg-[#f5f1e8] border border-[#ddd5c4] flex items-center justify-center text-[#5e574c] mb-3">
+          {icon}
+        </div>
+      )}
+      <h3 className="font-serif text-lg font-normal text-[#1f1c18]">{title}</h3>
+      <p className="mt-1 text-xs text-[#5e574c] max-w-sm">{description}</p>
       {action && <div className="mt-4">{action}</div>}
     </div>
   );
 }
-

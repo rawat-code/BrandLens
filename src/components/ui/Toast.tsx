@@ -51,30 +51,30 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       <div
         aria-live="polite"
-        className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"
+        className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"
       >
         {toasts.map((toast) => {
           const borderStyle = {
-            info: "border-indigo-400/30 text-[#ececf6]",
-            success: "border-[#5fd1a0]/30 text-[#5fd1a0]",
-            warning: "border-[#f5b74f]/30 text-[#f5b74f]",
-            error: "border-[#ff7a8a]/30 text-[#ff7a8a]",
+            info: "border-[#1f1c18] text-[#1f1c18]",
+            success: "border-[#1f6b3a] text-[#1f6b3a]",
+            warning: "border-[#8a5a00] text-[#8a5a00]",
+            error: "border-[#b3261e] text-[#b3261e]",
           }[toast.type];
 
           return (
             <div
               key={toast.id}
-              className={`pointer-events-auto p-3.5 bg-[#171724] border ${borderStyle} rounded-xl shadow-xl shadow-black/60 text-sm flex items-start justify-between gap-3 animate-in fade-in slide-in-from-bottom-2 duration-150`}
+              className={`pointer-events-auto p-3.5 bg-[#fffdf8] border ${borderStyle} rounded-none shadow-none text-sm flex items-start justify-between gap-3 transition-opacity duration-120`}
             >
               <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
-                <span className="text-[#ececf6]">{toast.message}</span>
+                <span className="w-1.5 h-1.5 bg-current shrink-0" />
+                <span className="text-[#1f1c18]">{toast.message}</span>
               </div>
               <button
                 type="button"
                 onClick={() => removeToast(toast.id)}
-                className="text-[#a3a3bb] hover:text-[#ececf6] shrink-0 p-0.5"
-                aria-label="Dismiss toast"
+                className="text-[#5e574c] hover:text-[#1f1c18] shrink-0 p-0.5 rounded-none"
+                aria-label="Dismiss message"
               >
                 <svg
                   className="w-3.5 h-3.5"
@@ -97,4 +97,3 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     </ToastContext.Provider>
   );
 }
-

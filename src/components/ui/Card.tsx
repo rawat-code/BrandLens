@@ -5,20 +5,13 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export function Card({
-  variant = "panel",
   className = "",
   children,
   ...props
 }: CardProps) {
-  const bg = {
-    panel: "bg-[#11111a] border-white/[0.08]",
-    raised: "bg-[#171724] border-white/[0.10]",
-    overlay: "bg-[#1d1d2e] border-white/[0.14]",
-  }[variant];
-
   return (
     <div
-      className={`rounded-xl border ${bg} ${className}`}
+      className={`rounded-none border border-[#ddd5c4] bg-[#fffdf8] text-[#1f1c18] ${className}`}
       {...props}
     >
       {children}
@@ -33,7 +26,7 @@ export function CardHeader({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`px-5 py-4 border-b border-white/[0.06] flex items-center justify-between ${className}`}
+      className={`px-5 py-4 border-b border-[#ddd5c4] flex items-center justify-between ${className}`}
       {...props}
     >
       {children}
@@ -48,7 +41,7 @@ export function CardTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className={`text-base font-medium text-[#ececf6] ${className}`}
+      className={`text-base font-medium text-[#1f1c18] ${className}`}
       {...props}
     >
       {children}
@@ -62,7 +55,7 @@ export function CardDescription({
   ...props
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p className={`text-xs text-[#a3a3bb] mt-0.5 ${className}`} {...props}>
+    <p className={`text-xs text-[#5e574c] mt-0.5 ${className}`} {...props}>
       {children}
     </p>
   );
@@ -87,11 +80,10 @@ export function CardFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`px-5 py-3 border-t border-white/[0.06] bg-[#0a0a10]/20 flex items-center justify-between rounded-b-xl ${className}`}
+      className={`px-5 py-3 border-t border-[#ddd5c4] bg-[#f5f1e8] flex items-center justify-between rounded-none ${className}`}
       {...props}
     >
       {children}
     </div>
   );
 }
-
