@@ -41,13 +41,64 @@ export async function getSessionProfile(): Promise<SessionProfile | null> {
     }
 
     const admin = getAdminClient();
-    const { data: profile, error: profileError } = await admin
+    const { data: initialProfile, error: profileError } = await admin
       .from('profiles')
       .select('id, org_id, role, full_name, created_at')
       .eq('id', user.id)
       .maybeSingle();
 
-    if (profileError || !profile) {
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      return null;
+    }
+
+    let profile = initialProfile;
+
+    // Auto-provision profile for authenticated user if not yet in database
+    if (!profile) {
+      try {
+        let orgId: string | null = null;
+        const { data: org } = await admin
+          .from('orgs')
+          .select('id')
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (org) {
+          orgId = org.id;
+        } else {
+          const newOrgId = crypto.randomUUID();
+          await admin.from('orgs').insert({ id: newOrgId, name: 'Verdant Skin' });
+          orgId = newOrgId;
+        }
+
+        const fullName =
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          user.email?.split('@')[0] ||
+          'Creator';
+
+        const { data: newProfile, error: insertError } = await admin
+          .from('profiles')
+          .insert({
+            id: user.id,
+            org_id: orgId,
+            full_name: fullName,
+            role: 'creator',
+          })
+          .select('id, org_id, role, full_name, created_at')
+          .maybeSingle();
+
+        if (!insertError && newProfile) {
+          profile = newProfile;
+        }
+      } catch (provisionErr) {
+        console.error('Error auto-provisioning profile in getSessionProfile:', provisionErr);
+      }
+    }
+
+    if (!profile) {
       return null;
     }
 

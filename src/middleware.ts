@@ -37,13 +37,18 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Bypass health check and auth callbacks
-  if (pathname.startsWith('/api/health') || pathname.startsWith('/auth/callback')) {
+  const isAuthRoute =
+    pathname === '/login' ||
+    pathname === '/signup' ||
+    pathname.startsWith('/auth/');
+
+  // Bypass health check and auth routes
+  if (pathname.startsWith('/api/health') || pathname.startsWith('/auth/')) {
     return supabaseResponse;
   }
 
-  // If unauthenticated and not on /login, redirect pages to /login or return 401 for /api
-  if (!user && pathname !== '/login') {
+  // If unauthenticated and not on an auth route, redirect pages to /login or return 401 for /api
+  if (!user && !isAuthRoute) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
@@ -52,8 +57,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // If authenticated and visiting /login or root /, redirect to /dashboard
-  if (user && (pathname === '/login' || pathname === '/')) {
+  // If authenticated and visiting an auth route or root /, redirect to /dashboard
+  if (user && (isAuthRoute || pathname === '/')) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = '/dashboard';
     return NextResponse.redirect(redirectUrl);

@@ -22,7 +22,7 @@ interface AppShellProps {
   children: React.ReactNode;
 }
 
-export function AppShell({ user: _user, profile, orgName, children }: AppShellProps) {
+export function AppShell({ profile, orgName, children }: AppShellProps) {
   const pathname = usePathname();
   const currentOrgName = orgName || profile.org_name || 'Verdant Skin';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
