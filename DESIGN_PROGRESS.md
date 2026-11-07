@@ -1,12 +1,10 @@
-# BrandLens: Premium UI Progress
+# BrandLens: Redline UI Progress
 
-- STAGE A - AUDIT: DONE - Captured 18 before screenshots to docs/design/before/ and documented generic tells in docs/design/AUDIT.md.
-- STAGE B - DESIGN TOKENS AND THEME: DONE - Configured dark luxury theme tokens, Instrument Serif + Geist font variables, dark scrollbars, noise texture, and reusable dark UI primitives (Button, Input, Badge, Card, Table, Tabs, PageHeader, Dialog, Kbd, Toast, Skeleton, EmptyState).
-- STAGE C - APP SHELL AND COPY: DONE - Redesigned sidebar with BL monogram, sticky glass header, sentence-case titles, subtle active indicators, ToastProvider, and clean SVG monogram favicon.
-- STAGE D - LOGIN: DONE - Implemented split desktop layout with Instrument Serif brand headline, fictional workspace badge, fast-track demo persona selector, dark authentication form, and throttled constellation canvas.
-- STAGE E - DASHBOARD AND REVIEW QUEUE: DONE - Replaced large stat cards with single tabular figures metrics strip, sticky-header content table, status Badge primitives, segmented filter controls, search, and priority review queue.
-- STAGE F - CONTENT DETAIL AND FINDINGS: DONE - Transformed content detail workbench into centrepiece: two-column layout, wavy/solid/dotted underlines with numbered markers, 3px left severity borders, Geist Mono source quotes, inline diffs, J/K keyboard navigation, shimmer skeletons, and dark dialogs.
-- STAGE G - LIBRARY, INSIGHTS, SETTINGS, ABOUT: DONE - Restyled Library with tabbed tables, search, filters, and inline modal editors; transformed Insights with KPI figures strip, SVG category/rule charts, clarification proposals, reviewer overrides, and stale clinical facts table; upgraded Settings with structured definition lists and irreversible red-zone confirmation; refreshed About page with clear architecture, model disclosure, and data sovereignty notice.
-- STAGE H - MOTION AND MICRO-INTERACTIONS: DONE - Implemented PageTransition (150ms fade + 6px slide), StaggerContainer and StaggerItem for findings, active tap scales, full prefers-reduced-motion gating via framer-motion useReducedMotion().
-- STAGE I - COMMAND PALETTE AND TOASTS: DONE - Implemented cmdk glass command palette with ⌘K / Ctrl+K listener, navigation to all app sections, role-gated quick actions, and keyboard navigation hints.
-- STAGE J - VERIFY: DONE - Captured all 19 after screenshots to docs/design/after/, verified WCAG AA contrast (all text >= 7.5:1), keyboard navigation (⌘K, J/K, Esc), full test suite (111/111 passing), lint (0 errors), build (12/12 static/dynamic routes in 9.4s), and documented all changes in docs/design/CHANGES.md.
+- STAGE A - AUDIT: DONE
+- STAGE B - TOKENS, FONTS AND BASE COMPONENTS: IN PROGRESS
+- STAGE C - SHELL AND COPY: PENDING
+- STAGE D - DASHBOARD AND REVIEW QUEUE: PENDING
+- STAGE E - CONTENT DETAIL AND FINDINGS: PENDING
+- STAGE F - LOGIN, LIBRARY, INSIGHTS, SETTINGS, ABOUT: PENDING
+- STAGE G - PRINT VIEW: PENDING
+- STAGE H - VERIFY: PENDING
