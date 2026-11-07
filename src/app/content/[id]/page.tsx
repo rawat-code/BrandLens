@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { requireRole } from '@/lib/auth';
 import { getAdminClient } from '@/lib/supabase/admin';
@@ -6,6 +7,11 @@ import { ContentDetailView, type CommentWithProfile } from '@/components/Content
 import type { Content, ContentVersion, Finding, AiRun } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Content review — BrandLens',
+  description: 'Pre-publication brand governance workbench and findings redline.',
+};
 
 export default async function ContentDetailPage({
   params,

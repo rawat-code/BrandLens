@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { requireRole } from '@/lib/auth';
 import { AppShell } from '@/components/AppShell';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -5,15 +6,20 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata: Metadata = {
+  title: 'About — BrandLens',
+  description: 'Brand governance review architecture, model transparency, and boundaries.',
+};
+
 export default async function AboutPage() {
   const { user, profile } = await requireRole(['creator', 'manager', 'reviewer', 'admin']);
 
   return (
     <AppShell user={user} profile={profile}>
-      <div className="p-6 sm:p-8 max-w-4xl w-full mx-auto space-y-6">
+      <div className="max-w-4xl w-full mx-auto space-y-6">
         <PageHeader
-          title="About BrandLens"
-          description={`Pre-publication brand-governance & compliance review platform for ${profile.org_name || 'your organisation'}.`}
+          title="About"
+          description={`Pre-publication brand governance and compliance review platform for ${profile.org_name || 'Verdant Skin'}.`}
         />
 
         <Card variant="panel" className="space-y-5">

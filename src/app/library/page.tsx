@@ -1,8 +1,14 @@
+import type { Metadata } from 'next';
 import { requireRole } from '@/lib/auth';
 import { getAdminClient } from '@/lib/supabase/admin';
 import { AppShell } from '@/components/AppShell';
 import { LibraryManager } from '@/components/LibraryManager';
 import type { Guideline, Fact, Term } from '@/lib/types';
+
+export const metadata: Metadata = {
+  title: 'Library — BrandLens',
+  description: 'Approved brand guidelines, clinical facts, and terminology library.',
+};
 
 export const dynamic = 'force-dynamic';
 

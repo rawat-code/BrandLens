@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSessionProfile } from '@/lib/auth';
@@ -16,6 +17,11 @@ import type {
 
 export const dynamic = 'force-dynamic';
 
+export const metadata: Metadata = {
+  title: 'Insights — BrandLens',
+  description: 'Compliance trends, guideline health, and reviewer override analytics.',
+};
+
 export default async function InsightsPage() {
   const session = await getSessionProfile();
 
@@ -29,40 +35,36 @@ export default async function InsightsPage() {
   if (profile.role !== 'manager' && profile.role !== 'admin') {
     return (
       <AppShell user={user} profile={profile}>
-        <div className="p-6 sm:p-12 max-w-2xl w-full mx-auto my-auto">
-          <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm text-center space-y-4">
-            <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-2xl mx-auto border border-amber-200/60 shadow-xs">
-              🛡️
-            </div>
-            <div className="space-y-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-full">
-                Role Restricted
-              </span>
-              <h1 className="text-xl font-extrabold text-slate-900 tracking-tight pt-1">
-                Compliance Insights Access
-              </h1>
-            </div>
-            <p className="text-sm text-slate-600 leading-relaxed max-w-md mx-auto">
-              Organization-wide compliance trends, reviewer overrides, and guideline health analytics are reserved for{' '}
-              <span className="font-semibold text-slate-800">Managers</span> and{' '}
-              <span className="font-semibold text-slate-800">Administrators</span>.
+        <div className="p-6 sm:p-12 max-w-xl w-full mx-auto my-auto">
+          <div className="bg-[#fffdf8] p-8 rounded-none border border-[#ddd5c4] shadow-none text-center space-y-4">
+            <span className="font-mono text-[11px] uppercase tracking-[0.04em] text-[#8a5a00] bg-[#f6e3b4] px-2 py-0.5 border border-[#8a5a00] inline-block">
+              Access restricted
+            </span>
+            <h1 className="font-serif text-[32px] font-medium text-[#1f1c18] leading-[1.1]">
+              Insights restricted
+            </h1>
+            <p className="text-sm text-[#5e574c] leading-[1.55] max-w-md mx-auto">
+              Compliance trends and guideline analytics are reserved for Managers and Administrators.
             </p>
             <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/dashboard"
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold text-xs hover:bg-emerald-700 transition shadow-xs"
+                className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-[#f5f1e8] bg-[#1f1c18] hover:bg-[#1f1c18]/90 rounded-none transition-opacity duration-120"
               >
-                ← Return to Dashboard
+                Return to dashboard
               </Link>
               <Link
                 href="/library"
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-700 font-medium text-xs hover:bg-slate-50 transition"
+                className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-[#1f1c18] bg-[#fffdf8] hover:bg-[#f5f1e8] border border-[#1f1c18] rounded-none transition-colors duration-120"
               >
-                View Brand Library
+                View library
               </Link>
             </div>
           </div>
         </div>
+      </AppShell>
+    );
+  }
       </AppShell>
     );
   }

@@ -15,27 +15,24 @@ export default function GlobalError({
 
   return (
     <html lang="en">
-      <body className="bg-stone-50 text-stone-900 font-sans min-h-screen flex items-center justify-center p-4">
+      <body className="bg-[#f5f1e8] text-[#1f1c18] font-sans min-h-screen flex items-center justify-center p-4">
         <main
           role="alert"
           aria-live="assertive"
-          className="max-w-md w-full bg-white rounded-2xl border border-red-200 p-8 shadow-sm text-center"
+          className="max-w-md w-full bg-[#fffdf8] border border-[#ddd5c4] p-8 rounded-none shadow-none text-center"
         >
-          <div
-            className="w-12 h-12 mx-auto mb-4 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-red-700 font-bold text-lg"
-            aria-hidden="true"
-          >
-            !
+          <div className="font-mono text-xs uppercase tracking-[0.04em] text-[#b3261e] mb-2">
+            Critical error
           </div>
-          <h1 className="text-xl font-bold text-stone-900 tracking-tight">
-            Application Error
+          <h1 className="font-serif text-[32px] font-medium text-[#1f1c18] leading-[1.1]">
+            Application error
           </h1>
-          <p className="mt-2 text-sm text-stone-600 leading-relaxed">
-            A critical application error occurred. We have safely logged the incident.
+          <p className="mt-3 text-sm text-[#5e574c] leading-[1.55]">
+            A critical application error occurred. The incident has been recorded.
           </p>
 
           {error.digest && (
-            <p className="mt-3 text-xs font-mono text-stone-400">
+            <p className="mt-3 font-mono text-[11px] text-[#5e574c]">
               Reference code: {error.digest}
             </p>
           )}
@@ -44,7 +41,7 @@ export default function GlobalError({
             <button
               type="button"
               onClick={() => reset()}
-              className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-[#f5f1e8] bg-[#1f1c18] hover:bg-[#1f1c18]/90 rounded-none transition-opacity duration-120 cursor-pointer"
             >
               Reload application
             </button>
@@ -54,4 +51,3 @@ export default function GlobalError({
     </html>
   );
 }
-

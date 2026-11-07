@@ -1,8 +1,14 @@
+import type { Metadata } from 'next';
 import { requireRole } from '@/lib/auth';
 import { getAdminClient } from '@/lib/supabase/admin';
 import { AppShell } from '@/components/AppShell';
 import { DashboardView } from '@/components/DashboardView';
 import type { Content, Finding } from '@/lib/types';
+
+export const metadata: Metadata = {
+  title: 'Content — BrandLens',
+  description: 'Manage and review content submissions.',
+};
 
 export const dynamic = 'force-dynamic';
 

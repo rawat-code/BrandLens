@@ -53,55 +53,39 @@ export function CommandPalette({
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-[#1f1c18]/40 transition-opacity duration-120"
         onClick={() => onOpenChange(false)}
         aria-hidden="true"
       />
 
       {/* Palette Container */}
-      <div className="relative w-full max-w-lg rounded-xl border border-white/10 bg-[#11111a]/95 backdrop-blur-md shadow-2xl shadow-black/80 overflow-hidden z-10 animate-in fade-in-0 zoom-in-95 duration-100">
+      <div className="relative w-full max-w-lg rounded-none border border-[#ddd5c4] bg-[#fffdf8] shadow-none overflow-hidden z-10">
         <Command
           label="Command Menu"
           className="w-full flex flex-col"
         >
-          <div className="flex items-center px-4 border-b border-white/[0.08] bg-[#171724]/40">
-            <svg
-              className="w-4 h-4 text-[#7b7b94] mr-3 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+          <div className="flex items-center px-4 border-b border-[#ddd5c4] bg-[#fffdf8]">
             <Command.Input
               autoFocus
               placeholder="Type a command or search..."
-              className="w-full bg-transparent py-3.5 text-sm text-[#ececf6] placeholder-[#7b7b94] focus:outline-none"
+              className="w-full bg-transparent py-3 text-sm text-[#1f1c18] placeholder-[#5e574c] focus:outline-none"
             />
             <Kbd className="ml-2">Esc</Kbd>
           </div>
 
           <Command.List className="max-h-80 overflow-y-auto p-2 space-y-1 text-xs">
-            <Command.Empty className="py-8 text-center text-xs text-[#7b7b94]">
+            <Command.Empty className="py-8 text-center text-xs text-[#5e574c]">
               No results found.
             </Command.Empty>
 
             {/* Quick Actions */}
-            <Command.Group heading="Actions" className="px-2 py-1.5 text-[10px] font-mono uppercase tracking-wider text-[#7b7b94]">
-              {userRole === 'creator' && (
+            <Command.Group heading="Actions" className="px-2 py-1.5 font-mono text-[11px] uppercase tracking-[0.04em] text-[#5e574c]">
+              {(userRole === 'creator' || userRole === 'manager') && (
                 <Command.Item
                   onSelect={() => navigate('/content/new')}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg text-[#ececf6] hover:bg-[#171724] cursor-pointer transition-colors aria-selected:bg-[#171724] aria-selected:text-white"
+                  className="flex items-center justify-between px-3 py-2 text-[#1f1c18] hover:bg-[#f5f1e8] cursor-pointer transition-colors aria-selected:bg-[#f5f1e8]"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-[#a5b4fc]">＋</span>
-                    <span>New content draft</span>
-                  </div>
+                  <span>New content</span>
                   <Kbd>N</Kbd>
                 </Command.Item>
               )}
@@ -112,116 +96,79 @@ export function CommandPalette({
                     onOpenChange(false);
                     onSignOut();
                   }}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg text-[#ff7a8a] hover:bg-rose-500/10 cursor-pointer transition-colors aria-selected:bg-rose-500/10"
+                  className="flex items-center justify-between px-3 py-2 text-[#b3261e] hover:bg-[#b3261e]/10 cursor-pointer transition-colors aria-selected:bg-[#b3261e]/10"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span>↪</span>
-                    <span>Sign out</span>
-                  </div>
+                  <span>Sign out</span>
                 </Command.Item>
               )}
             </Command.Group>
 
             {/* Navigation */}
-            <Command.Group heading="Navigation" className="px-2 py-1.5 text-[10px] font-mono uppercase tracking-wider text-[#7b7b94]">
+            <Command.Group heading="Navigation" className="px-2 py-1.5 font-mono text-[11px] uppercase tracking-[0.04em] text-[#5e574c]">
               <Command.Item
                 onSelect={() => navigate('/dashboard')}
-                className="flex items-center justify-between px-3 py-2 rounded-lg text-[#ececf6] hover:bg-[#171724] cursor-pointer transition-colors aria-selected:bg-[#171724] aria-selected:text-white"
+                className="flex items-center justify-between px-3 py-2 text-[#1f1c18] hover:bg-[#f5f1e8] cursor-pointer transition-colors aria-selected:bg-[#f5f1e8]"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-[#7b7b94]">▦</span>
-                  <span>Dashboard</span>
-                </div>
+                <span>{userRole === 'creator' ? 'Content' : 'Review queue'}</span>
               </Command.Item>
-
-              {isApprover && (
-                <Command.Item
-                  onSelect={() => navigate('/dashboard')}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg text-[#ececf6] hover:bg-[#171724] cursor-pointer transition-colors aria-selected:bg-[#171724] aria-selected:text-white"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-indigo-400">⚡</span>
-                    <span>Review queue</span>
-                  </div>
-                </Command.Item>
-              )}
 
               <Command.Item
                 onSelect={() => navigate('/library?tab=guidelines')}
-                className="flex items-center justify-between px-3 py-2 rounded-lg text-[#ececf6] hover:bg-[#171724] cursor-pointer transition-colors aria-selected:bg-[#171724] aria-selected:text-white"
+                className="flex items-center justify-between px-3 py-2 text-[#1f1c18] hover:bg-[#f5f1e8] cursor-pointer transition-colors aria-selected:bg-[#f5f1e8]"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-[#7b7b94]">📚</span>
-                  <span>Brand library: Guidelines</span>
-                </div>
+                <span>Library: Guidelines</span>
               </Command.Item>
 
               <Command.Item
                 onSelect={() => navigate('/library?tab=facts')}
-                className="flex items-center justify-between px-3 py-2 rounded-lg text-[#ececf6] hover:bg-[#171724] cursor-pointer transition-colors aria-selected:bg-[#171724] aria-selected:text-white"
+                className="flex items-center justify-between px-3 py-2 text-[#1f1c18] hover:bg-[#f5f1e8] cursor-pointer transition-colors aria-selected:bg-[#f5f1e8]"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-[#7b7b94]">🧪</span>
-                  <span>Brand library: Clinical facts</span>
-                </div>
+                <span>Library: Facts</span>
               </Command.Item>
 
               <Command.Item
                 onSelect={() => navigate('/library?tab=terms')}
-                className="flex items-center justify-between px-3 py-2 rounded-lg text-[#ececf6] hover:bg-[#171724] cursor-pointer transition-colors aria-selected:bg-[#171724] aria-selected:text-white"
+                className="flex items-center justify-between px-3 py-2 text-[#1f1c18] hover:bg-[#f5f1e8] cursor-pointer transition-colors aria-selected:bg-[#f5f1e8]"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-[#7b7b94]">📖</span>
-                  <span>Brand library: Terminology</span>
-                </div>
+                <span>Library: Terms</span>
               </Command.Item>
 
-              {isAdmin && (
+              {(userRole === 'manager' || isAdmin) && (
                 <Command.Item
                   onSelect={() => navigate('/insights')}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg text-[#ececf6] hover:bg-[#171724] cursor-pointer transition-colors aria-selected:bg-[#171724] aria-selected:text-white"
+                  className="flex items-center justify-between px-3 py-2 text-[#1f1c18] hover:bg-[#f5f1e8] cursor-pointer transition-colors aria-selected:bg-[#f5f1e8]"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-[#5fd1a0]">📊</span>
-                    <span>Insights &amp; Guideline health</span>
-                  </div>
+                  <span>Insights</span>
                 </Command.Item>
               )}
 
               {isAdmin && (
                 <Command.Item
                   onSelect={() => navigate('/settings')}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg text-[#ececf6] hover:bg-[#171724] cursor-pointer transition-colors aria-selected:bg-[#171724] aria-selected:text-white"
+                  className="flex items-center justify-between px-3 py-2 text-[#1f1c18] hover:bg-[#f5f1e8] cursor-pointer transition-colors aria-selected:bg-[#f5f1e8]"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-[#7b7b94]">⚙</span>
-                    <span>Organization settings</span>
-                  </div>
+                  <span>Settings</span>
                 </Command.Item>
               )}
 
               <Command.Item
                 onSelect={() => navigate('/about')}
-                className="flex items-center justify-between px-3 py-2 rounded-lg text-[#ececf6] hover:bg-[#171724] cursor-pointer transition-colors aria-selected:bg-[#171724] aria-selected:text-white"
+                className="flex items-center justify-between px-3 py-2 text-[#1f1c18] hover:bg-[#f5f1e8] cursor-pointer transition-colors aria-selected:bg-[#f5f1e8]"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-[#7b7b94]">ℹ</span>
-                  <span>About &amp; AI disclosure</span>
-                </div>
+                <span>About</span>
               </Command.Item>
             </Command.Group>
           </Command.List>
 
-          <div className="px-4 py-2 border-t border-white/[0.06] bg-[#0d0d15] flex items-center justify-between text-[11px] text-[#7b7b94]">
+          <div className="px-4 py-2 border-t border-[#ddd5c4] bg-[#f5f1e8] flex items-center justify-between text-[11px] text-[#5e574c]">
             <div className="flex items-center gap-3">
               <span>Use <Kbd className="text-[10px]">↑</Kbd> <Kbd className="text-[10px]">↓</Kbd> to navigate</span>
               <span><Kbd className="text-[10px]">↵</Kbd> to select</span>
             </div>
-            <span>BrandLens</span>
+            <span className="font-serif">BrandLens</span>
           </div>
         </Command>
       </div>
     </div>
   );
 }
-

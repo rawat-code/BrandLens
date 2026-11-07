@@ -1,3 +1,5 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { requireRole, UnauthorizedError, ForbiddenError } from '@/lib/auth';
 import { getAdminClient } from '@/lib/supabase/admin';
@@ -5,6 +7,11 @@ import { AppShell } from '@/components/AppShell';
 import { SettingsClientView } from '@/components/SettingsClientView';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Settings — BrandLens',
+  description: 'Organization settings and brand data management.',
+};
 
 export default async function SettingsPage() {
   let session;
@@ -17,21 +24,23 @@ export default async function SettingsPage() {
     // Polite 403 screen for non-admin roles
     if (err instanceof ForbiddenError) {
       return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-          <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm max-w-md w-full text-center space-y-4">
-            <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-xl mx-auto border border-amber-200">
-              🛡️
-            </div>
-            <h1 className="text-xl font-bold text-slate-900">Access Restricted</h1>
-            <p className="text-sm text-slate-600">
-              Organisation Settings and brand data management are reserved exclusively for Administrators.
+        <div className="min-h-screen bg-[#f5f1e8] flex items-center justify-center p-4">
+          <div className="bg-[#fffdf8] p-8 rounded-none border border-[#ddd5c4] shadow-none max-w-md w-full text-center space-y-4">
+            <span className="font-mono text-[11px] uppercase tracking-[0.04em] text-[#8a5a00] bg-[#f6e3b4] px-2 py-0.5 border border-[#8a5a00] inline-block">
+              Access restricted
+            </span>
+            <h1 className="font-serif text-[32px] font-medium text-[#1f1c18] leading-[1.1]">
+              Access restricted
+            </h1>
+            <p className="text-sm text-[#5e574c] leading-[1.55]">
+              Organisation settings and brand data management are reserved exclusively for Administrators.
             </p>
-            <a
+            <Link
               href="/dashboard"
-              className="inline-block px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition"
+              className="inline-block px-4 py-2 bg-[#1f1c18] hover:bg-[#1f1c18]/90 text-[#f5f1e8] rounded-none text-sm font-medium transition-opacity duration-120"
             >
-              Return to Dashboard
-            </a>
+              Return to dashboard
+            </Link>
           </div>
         </div>
       );
