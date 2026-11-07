@@ -49,5 +49,5 @@ the work, supplied the product rules and prompts, and ran the tests and deployme
 - **Claude (Anthropic):** used to help plan the project and to draft the Round 1 plan and Round 2 update
   documents, the build prompts given to Antigravity, and design mockups. The team reviewed these and is
   responsible for their content.
-- **Models called by the product:** Google Gemini through the Gemini API. The default is Gemini 3.5 Flash
-  Lite, with Gemini 3.1 Flash Lite as a fallback (set by environment variables).
+- **Models called by the product:** Google Gemini through the Gemini API. The default is Gemini 3.8 Flash
+  
