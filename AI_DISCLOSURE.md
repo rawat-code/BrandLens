@@ -38,5 +38,5 @@ AI is utilized in the following specific product capabilities:
 BrandLens was developed using **Google Antigravity**, an agentic AI coding assistant.
 
 - **Development Assistant**: Google Antigravity
-- **Model(s) Used Inside Antigravity**: ____________________ *(To be filled in by the development team. Do not guess.)*
+- **Model(s) Used Inside Antigravity**: gemini 3.8 flash 
 
