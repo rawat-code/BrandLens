@@ -32,11 +32,22 @@ AI is utilized in the following specific product capabilities:
 - **Graceful Degradation**: If AI calls fail or timeout, the platform falls back to deterministic rule-based checks with an explicit user alert banner.
 
 ---
-
 ## 2. AI-Assisted Development Disclosure
 
-BrandLens was developed using **Google Antigravity**, an agentic AI coding assistant.
+BrandLens was developed using **Google Antigravity**, an agentic AI coding assistant. Himanshu Rawat directed
+the work, supplied the product rules and prompts, and ran the tests and deployments.
 
-- **Development Assistant**: Google Antigravity
-- **Model(s) Used Inside Antigravity**: gemini 3.8 flash 
+- **Development assistant:** Google Antigravity
+- **Models used inside Antigravity:** gemini 3.8 flash
+- **Skills and tools added to the workspace:** an Onlook skill (`.agents/skills/onlook`), a visual editing tool
+  for React and Tailwind projects. 
+- **Scaffold:** the project was created with `create-next-app` (a template). All application code was written
+  during the event.
 
+## 3. Other AI Assistance
+
+- **Claude (Anthropic):** used to help plan the project and to draft the Round 1 plan and Round 2 update
+  documents, the build prompts given to Antigravity, and design mockups. The team reviewed these and is
+  responsible for their content.
+- **Models called by the product:** Google Gemini through the Gemini API. The default is Gemini 3.5 Flash
+  Lite, with Gemini 3.1 Flash Lite as a fallback (set by environment variables).
