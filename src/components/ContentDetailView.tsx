@@ -491,7 +491,7 @@ export function ContentDetailView({
       {bannerMessage && (
         <div
           role="alert"
-          className={`p-3.5 border rounded-none text-xs flex items-center justify-between ${
+          className={`p-3.5 border rounded-none text-xs flex items-center justify-between print:hidden ${
             bannerMessage.type === 'success'
               ? 'bg-[#fffdf8] border-[#1f6b3a] text-[#1f6b3a]'
               : 'bg-[#fffdf8] border-[#b3261e] text-[#b3261e]'
@@ -512,7 +512,7 @@ export function ContentDetailView({
       {reRunPromptMessage && (
         <div
           role="status"
-          className="p-3.5 border border-[#ddd5c4] bg-[#fffdf8] text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+          className="p-3.5 border border-[#ddd5c4] bg-[#fffdf8] text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden"
         >
           <div>
             <strong className="font-medium text-[#1f1c18] block">Draft modified</strong>
@@ -555,7 +555,7 @@ export function ContentDetailView({
           </div>
 
           {/* Workflow Action Buttons */}
-          <div className="flex items-center gap-3 shrink-0 flex-wrap">
+          <div className="flex items-center gap-3 shrink-0 flex-wrap print:hidden">
             {/* Creator actions */}
             {isCreator && isOwnContent && (content.status === 'ai_reviewed' || content.status === 'draft') && (
               <Button
@@ -627,7 +627,7 @@ export function ContentDetailView({
         {/* Left Column: Reading Pane */}
         <div className="space-y-4 min-w-0">
           {/* Top Controls: Version picker & Edit toggle & Run review */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#ddd5c4] pb-3 gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#ddd5c4] pb-3 gap-3 print:hidden">
             <div className="flex items-center gap-3">
               <label htmlFor="version-picker" className="font-mono text-[11px] uppercase tracking-[0.04em] text-[#5e574c]">
                 Version:
@@ -739,6 +739,7 @@ export function ContentDetailView({
               onClick={handleRunReview}
               disabled={isReviewing}
               isLoading={isReviewing}
+              className="print:hidden"
             >
               {isReviewing ? 'Auditing...' : 'Run review'}
             </Button>
@@ -791,7 +792,7 @@ export function ContentDetailView({
       </div>
 
       {/* Tabs below: Comments, History, Activity, AI disclosure */}
-      <section aria-label="Review details and audit tabs" className="border-t border-[#ddd5c4] pt-8 space-y-6">
+      <section aria-label="Review details and audit tabs" className="border-t border-[#ddd5c4] pt-8 space-y-6 print:hidden">
         <nav className="flex space-x-6 border-b border-[#ddd5c4] pb-0 flex-wrap" role="tablist">
           <button
             role="tab"

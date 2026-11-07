@@ -68,7 +68,7 @@ export function AppShell({ user: _user, profile, orgName, children }: AppShellPr
   return (
     <div className="min-h-screen flex flex-col bg-[#f5f1e8] text-[#1f1c18]">
       {/* Top Bar (Paper background, bottom border) */}
-      <header className="sticky top-0 z-40 bg-[#fffdf8] border-b border-[#ddd5c4] w-full">
+      <header className="sticky top-0 z-40 bg-[#fffdf8] border-b border-[#ddd5c4] w-full print:hidden">
         <div className="max-w-[1280px] mx-auto px-6 sm:px-10 h-14 flex items-center justify-between gap-6">
           {/* Left: BrandLens in Newsreader 20px + Nav Links */}
           <div className="flex items-center gap-8 min-w-0">

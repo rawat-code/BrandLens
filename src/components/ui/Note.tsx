@@ -218,7 +218,7 @@ export function Note({
 
       {/* Action Buttons (Accept primary, Edit, Dispute, Dismiss) */}
       {f.status === 'open' && (
-        <div className="pt-2 border-t border-[#ddd5c4] space-y-2">
+        <div className="pt-2 border-t border-[#ddd5c4] space-y-2 print:hidden">
           {inlineAction === null ? (
             <div className="flex items-center justify-end gap-2 flex-wrap">
               {f.suggestion && (

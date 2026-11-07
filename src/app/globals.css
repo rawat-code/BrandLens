@@ -140,3 +140,60 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Print View — Clean Review Report (Stage G) */
+@media print {
+  @page {
+    margin: 15mm;
+    size: auto;
+  }
+
+  html,
+  body {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #1f1c18 !important;
+    font-size: 11pt !important;
+    line-height: 1.5 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Force background colors and exact border rules */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide navigation, buttons, controls, and print-hidden elements */
+  header,
+  nav,
+  button,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Ensure linear stacked document flow */
+  .grid {
+    display: block !important;
+  }
+
+  /* Clean readable font sizing in print */
+  .reading-text {
+    font-size: 16pt !important;
+    line-height: 1.8 !important;
+  }
+
+  aside {
+    margin-top: 2rem !important;
+  }
+
+  /* Avoid splitting margin notes across page breaks */
+  article {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-bottom: 1rem !important;
+    background-color: #ffffff !important;
+  }
+}
+
