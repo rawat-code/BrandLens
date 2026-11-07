@@ -45,8 +45,6 @@ The `/login` screen includes convenient **"Try a demo role"** one-click buttons 
 | *AI disclosure tab displaying the Gemini model identifier, zero PII redactions, finding counts, and a preview of redacted text sent to the model.* | *Confidential content item displaying the banner confirming external AI processing was bypassed in favor of local rules.* |
 | ![Insights dashboard showing cited findings count, dispute rate, category bars, and top rules](docs/screenshots/screenshot-insights.png) | ![Library Approved Facts tab with statements, source citations, and expired fact badges](docs/screenshots/screenshot-library.png) |
 | *Insights dashboard displaying 30-day cited findings, dispute rate, rule category distribution, and frequently cited rules.* | *Brand library Approved Facts tab displaying clinical and marketing statements, source citations, owner teams, and an expired fact badge.* |
-| ![Mobile viewport view of the content findings page showing responsive layout and flagged text](docs/screenshots/screenshot-mobile.png) | |
-| *Mobile viewport at 390x844 displaying the responsive navigation, content title, status, and underlined draft copy.* | |
 
 ---
 
