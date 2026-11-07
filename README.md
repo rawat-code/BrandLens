@@ -35,15 +35,18 @@ The `/login` screen includes convenient **"Try a demo role"** one-click buttons 
 
 ## Key Screenshots
 
-| Content Findings & Suggestion Diffs | Governance Insights & Guideline Health |
+| View | View |
 | :---: | :---: |
-| ![Findings Review](docs/screenshots/screenshot-desktop.png) | ![Insights Dashboard](docs/screenshots/screenshot-insights-desktop.png) |
-| *Side-by-side suggestion diffs, intent preservation badges, and "No Source, No Flag" citations.* | *Guideline health scoring, dispute analytics, stale facts, and AI clarification proposals.* |
-
-| AI Disclosure & Audit Preview | Responsive Mobile View |
-| :---: | :---: |
-| ![AI Disclosure Modal](docs/screenshots/screenshot-ai-disclosure.png) | ![Mobile View](docs/screenshots/screenshot-mobile.png) |
-| *Transparent telemetry: model name, exact sent text preview, PII redaction count, and rule breakdown.* | *Accessible, touch-friendly UI operable on mobile and desktop viewports.* |
+| ![Sign-in screen with email, Google authentication, and demo persona buttons](docs/screenshots/screenshot-login.png) | ![Creator dashboard with content table, status badges, and action links](docs/screenshots/screenshot-dashboard.png) |
+| *Sign-in screen showing email authentication, Google sign-in button, and one-click demo persona buttons.* | *Creator dashboard displaying content submissions with status badges, version numbers, and action links.* |
+| ![Content editor showing flagged text, numbered notes, library citation, and suggestion diff](docs/screenshots/screenshot-findings.png) | ![Manager review view with disabled Approve button and role restriction notice](docs/screenshots/screenshot-review-queue.png) |
+| *Content review view showing underlined draft text, numbered notes, a library citation, a suggested edit diff, and an intent preservation badge.* | *Manager review view showing the Approve button disabled because open high-severity findings require a Reviewer role.* |
+| ![AI disclosure tab with model name, redaction count, finding counts, and redacted text preview](docs/screenshots/screenshot-ai-disclosure.png) | ![Confidential content draft showing the banner confirming external AI was bypassed](docs/screenshots/screenshot-confidential.png) |
+| *AI disclosure tab displaying the Gemini model identifier, zero PII redactions, finding counts, and a preview of redacted text sent to the model.* | *Confidential content item displaying the banner confirming external AI processing was bypassed in favor of local rules.* |
+| ![Insights dashboard showing cited findings count, dispute rate, category bars, and top rules](docs/screenshots/screenshot-insights.png) | ![Library Approved Facts tab with statements, source citations, and expired fact badges](docs/screenshots/screenshot-library.png) |
+| *Insights dashboard displaying 30-day cited findings, dispute rate, rule category distribution, and frequently cited rules.* | *Brand library Approved Facts tab displaying clinical and marketing statements, source citations, owner teams, and an expired fact badge.* |
+| ![Mobile viewport view of the content findings page showing responsive layout and flagged text](docs/screenshots/screenshot-mobile.png) | |
+| *Mobile viewport at 390x844 displaying the responsive navigation, content title, status, and underlined draft copy.* | |
 
 ---
 

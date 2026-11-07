@@ -55,6 +55,7 @@ Extracted directly from `package.json`:
 | `@types/react` | `^19` | Type Definitions | React type definitions. |
 | `@types/react-dom` | `^19` | Type Definitions | React DOM type definitions. |
 | `ws` | `^8.22.1` | Testing / Tooling | WebSocket client for CDP screenshot capture and local automation scripts. |
+| `playwright` | `^1.65.0` | Testing / Tooling | Browser automation for live screenshot captures and end-to-end verification. |
 
 ---
 
