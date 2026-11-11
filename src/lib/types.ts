@@ -121,13 +121,20 @@ export interface Finding {
   source_type: FindingSourceType;
   source_id?: string | null;
   source_quote?: string | null;
+  source_version?: number | null;
+  source_hash?: string | null;
+  quote_verified?: boolean;
   suggestion?: string | null;
+  suggestions?: string[] | Array<{ text: string; label: string; intent_check?: string }> | null;
   intent_check: FindingIntentCheck;
   intent_note?: string | null;
+  intent_reasons?: string[] | Record<string, unknown> | null;
+  intent_override_reason?: string | null;
   needs_human_check: boolean;
   requires_reviewer: boolean;
   status: FindingStatus;
   dispute_reason?: string | null;
+  is_demo?: boolean;
   created_at?: string;
 }
 
@@ -152,6 +159,10 @@ export interface AiRun {
   sent_preview: string | null;
   rule_count: number;
   ai_count: number;
+  citations_total?: number;
+  citations_verified?: number;
+  citations_downgraded?: number;
+  is_demo?: boolean;
   error: string | null;
   created_at?: string;
 }
@@ -168,6 +179,29 @@ export interface GuidelineProposal {
   status: ProposalStatus;
   created_by: string | null;
   decided_by: string | null;
+  applied_at?: string | null;
+  created_at?: string;
+}
+
+export interface GuidelineVersion {
+  id: string;
+  guideline_id: string;
+  version: number;
+  title: string;
+  body: string;
+  clarification?: string | null;
+  changed_by?: string | null;
+  change_note?: string | null;
+  created_at?: string;
+}
+
+export interface GuidelineGap {
+  id: string;
+  org_id: string;
+  topic: string;
+  example_excerpts?: string[] | null;
+  finding_count: number;
+  status: 'open' | 'addressed' | 'dismissed';
   created_at?: string;
 }
 

@@ -122,7 +122,26 @@ describe('Settings API Endpoints', () => {
   });
 
   describe('POST /api/settings/start-fresh', () => {
-    it('returns 400 if confirmation name does not match current org name', async () => {
+    it('returns 403 if DEMO_MODE is active to protect showcase data', async () => {
+      process.env.DEMO_MODE = 'true';
+      vi.mocked(requireRole).mockResolvedValueOnce({
+        user: { id: 'admin-1' } as any,
+        profile: { id: 'admin-1', org_id: 'org-1', role: 'admin', full_name: 'Admin' },
+      });
+
+      const req = new Request('http://localhost/api/settings/start-fresh', {
+        method: 'POST',
+        body: JSON.stringify({ confirmationName: 'Verdant Skin' }),
+      });
+
+      const res = await POST(req);
+      expect(res.status).toBe(403);
+      const data = await res.json();
+      expect(data.error).toContain('disabled in demo mode');
+    });
+
+    it('returns 400 if confirmation name does not match current org name when demo mode is off', async () => {
+      process.env.DEMO_MODE = 'false';
       vi.mocked(requireRole).mockResolvedValueOnce({
         user: { id: 'admin-1' } as any,
         profile: { id: 'admin-1', org_id: 'org-1', role: 'admin', full_name: 'Admin' },
@@ -156,6 +175,7 @@ describe('Settings API Endpoints', () => {
     });
 
     it('resets guidelines, facts, terms, and contents, and logs audit entry', async () => {
+      process.env.DEMO_MODE = 'false';
       vi.mocked(requireRole).mockResolvedValueOnce({
         user: { id: 'admin-1' } as any,
         profile: { id: 'admin-1', org_id: 'org-1', role: 'admin', full_name: 'Admin' },

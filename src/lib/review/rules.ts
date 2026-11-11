@@ -1,4 +1,5 @@
 import type { Term, Guideline, Fact, Finding, FindingSeverity } from '@/lib/types';
+import { computeSourceHash } from './grounding';
 
 export interface RuleCheckParams {
   contentId: string;
@@ -163,6 +164,21 @@ export function runRuleChecks({
       source_quote = null;
     }
 
+    let source_hash: string | null = null;
+    let source_version: number | null = null;
+    let quote_verified = false;
+
+    if (!needs_human_check && source_id) {
+      quote_verified = true;
+      if (params.guideline) {
+        source_hash = computeSourceHash(params.guideline.body || params.guideline.title);
+        source_version = params.guideline.version || 1;
+      } else if (source_quote) {
+        source_hash = computeSourceHash(source_quote);
+        source_version = 1;
+      }
+    }
+
     return {
       content_id: contentId,
       version,
@@ -178,6 +194,9 @@ export function runRuleChecks({
       source_type,
       source_id,
       source_quote,
+      source_version,
+      source_hash,
+      quote_verified,
       suggestion: params.suggestion ?? null,
       intent_check: params.intent_check ?? (params.suggestion ? 'preserved' : null),
       intent_note: params.intent_note ?? null,

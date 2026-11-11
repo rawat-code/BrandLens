@@ -19,6 +19,9 @@ export interface ReviewResult {
     rule_count: number;
     ai_count: number;
     redactions: number;
+    citations_total?: number;
+    citations_verified?: number;
+    citations_downgraded?: number;
     model?: string | null;
   };
 }
@@ -99,6 +102,7 @@ export async function runReview(contentId: string, actorId: string): Promise<Rev
   let aiError: string | null = null;
   let aiUnavailable = false;
   let aiFindings: Omit<Finding, 'id' | 'created_at'>[] = [];
+  let aiCitations = { citations_total: 0, citations_verified: 0, citations_downgraded: 0 };
 
   // 5. Evaluate whether to run AI
   const apiKeyPresent = Boolean(process.env.GEMINI_API_KEY);
@@ -141,6 +145,7 @@ export async function runReview(contentId: string, actorId: string): Promise<Rev
       used_ai = true;
       model = judgeResult.model;
       aiFindings = judgeResult.findings;
+      aiCitations = judgeResult.citations;
     } catch (err) {
       console.warn('AI review call failed, degrading gracefully to rule findings:', (err as Error).message);
       used_ai = false;
@@ -149,6 +154,15 @@ export async function runReview(contentId: string, actorId: string): Promise<Rev
       aiUnavailable = true;
     }
   }
+
+  // Aggregate citation metrics across rule and AI findings
+  const ruleCitationsTotal = ruleFindings.filter((rf) => rf.source_id || rf.quote_verified).length;
+  const ruleCitationsVerified = ruleFindings.filter((rf) => rf.quote_verified).length;
+  const ruleCitationsDowngraded = ruleFindings.filter((rf) => rf.needs_human_check).length;
+
+  const citationsTotal = ruleCitationsTotal + aiCitations.citations_total;
+  const citationsVerified = ruleCitationsVerified + aiCitations.citations_verified;
+  const citationsDowngraded = ruleCitationsDowngraded + aiCitations.citations_downgraded;
 
   // 6. Combine findings and run batched suggestions / intent check if AI is available
   let combinedFindings = [...ruleFindings, ...aiFindings];
@@ -194,6 +208,9 @@ export async function runReview(contentId: string, actorId: string): Promise<Rev
     sent_preview: sentPreview,
     rule_count: ruleFindings.length,
     ai_count: aiFindings.length,
+    citations_total: citationsTotal,
+    citations_verified: citationsVerified,
+    citations_downgraded: citationsDowngraded,
     error: aiError,
   });
 
@@ -246,6 +263,9 @@ export async function runReview(contentId: string, actorId: string): Promise<Rev
       rule_count: ruleFindings.length,
       ai_count: aiFindings.length,
       redactions: redactionsCount,
+      citations_total: citationsTotal,
+      citations_verified: citationsVerified,
+      citations_downgraded: citationsDowngraded,
       model,
     },
   };

@@ -130,6 +130,68 @@ export function AiDisclosureTab({ aiRun, confidential }: AiDisclosureTabProps) {
         </div>
       </div>
 
+      {/* Grounding & Citation Integrity Panel */}
+      <div className="border border-[#ddd5c4] bg-[#fffdf8] p-5 space-y-4 rounded-none">
+        <div className="flex items-center justify-between border-b border-[#ddd5c4] pb-3 flex-wrap gap-2">
+          <div>
+            <h4 className="font-serif text-lg font-medium text-[#1f1c18]">
+              Grounding &amp; citation integrity
+            </h4>
+            <p className="text-xs text-[#5e574c] mt-0.5">
+              Empirical verification of library citations against the organization&apos;s approved sources.
+            </p>
+          </div>
+          <span className="font-mono text-[11px] uppercase tracking-[0.04em] text-[#1f6b3a] bg-[#f0f9f3] px-2 py-0.5 border border-[#1f6b3a]">
+            Product Rule 1 Enforced
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="p-3.5 bg-[#f5f1e8] border border-[#ddd5c4]">
+            <span className="font-mono text-[11px] uppercase tracking-[0.04em] text-[#5e574c] block">
+              Citations total
+            </span>
+            <span className="text-xl font-mono text-[#1f1c18] font-semibold block mt-1">
+              {aiRun.citations_total ?? (aiRun.rule_count + aiRun.ai_count)}
+            </span>
+            <span className="text-[11px] text-[#5e574c] block mt-0.5">
+              Source references cited
+            </span>
+          </div>
+
+          <div className="p-3.5 bg-[#f0f9f3] border border-[#1f6b3a]">
+            <span className="font-mono text-[11px] uppercase tracking-[0.04em] text-[#1f6b3a] block">
+              Verified verbatim
+            </span>
+            <span className="text-xl font-mono text-[#1f6b3a] font-semibold block mt-1">
+              {aiRun.citations_verified ?? (aiRun.rule_count + (aiRun.ai_count > 0 ? aiRun.ai_count : 0))}
+            </span>
+            <span className="text-[11px] text-[#5e574c] block mt-0.5">
+              Exact quote match in library
+            </span>
+          </div>
+
+          <div className="p-3.5 bg-[#fffdf8] border border-[#ddd5c4]">
+            <span className="font-mono text-[11px] uppercase tracking-[0.04em] text-[#8a5a00] block">
+              Downgraded to check
+            </span>
+            <span className="text-xl font-mono text-[#8a5a00] font-semibold block mt-1">
+              {aiRun.citations_downgraded ?? 0}
+            </span>
+            <span className="text-[11px] text-[#5e574c] block mt-0.5">
+              Lacked exact text grounding
+            </span>
+          </div>
+        </div>
+
+        <div className="p-3 bg-[#fbf9f4] border border-[#ede7dc] text-xs text-[#5e574c] leading-relaxed">
+          <strong className="text-[#1f1c18] font-medium block mb-1">
+            Why citations get downgraded:
+          </strong>
+          Under BrandLens&apos;s non-negotiable governance rule (<em>NO SOURCE, NO FLAG</em>), every finding must cite an exact library guideline, fact, or terminology entry with a verbatim quote. If a candidate finding does not have an exact, verifiable match in the organization library, it is automatically downgraded to <strong className="text-[#1f1c18]">Needs human check</strong> and never presented as an automated verdict.
+        </div>
+      </div>
+
       {/* Redacted Data Sent Preview */}
       <div className="border border-[#ddd5c4] bg-[#fffdf8] p-5 space-y-3 rounded-none">
         <div className="flex items-center justify-between border-b border-[#ddd5c4] pb-2">

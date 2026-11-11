@@ -13,6 +13,8 @@ interface FindingsGroupProps {
   onDisputeFinding: (finding: Finding, reason?: string) => void;
   onDismissFinding: (findingId: string, reason?: string) => void;
   isProcessingAction?: boolean;
+  sourceHashMap?: Record<string, { hash: string; exists: boolean; title?: string }>;
+  onReRunReview?: () => void;
 }
 
 export function FindingsGroup({
@@ -24,6 +26,8 @@ export function FindingsGroup({
   onDisputeFinding,
   onDismissFinding,
   isProcessingAction,
+  sourceHashMap,
+  onReRunReview,
 }: FindingsGroupProps) {
   if (!findings.length) {
     return (
@@ -50,6 +54,8 @@ export function FindingsGroup({
           onDispute={onDisputeFinding}
           onDismiss={onDismissFinding}
           isProcessingAction={isProcessingAction}
+          sourceHashMap={sourceHashMap}
+          onReRunReview={onReRunReview}
         />
       ))}
     </div>

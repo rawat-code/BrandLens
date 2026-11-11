@@ -42,6 +42,7 @@ interface ContentDetailViewProps {
   initialFindings: Finding[];
   initialComments: CommentWithProfile[];
   initialAiRun?: AiRun | null;
+  sourceHashMap?: Record<string, { hash: string; exists: boolean; title?: string }>;
 }
 
 type BottomTab = 'comments' | 'history' | 'activity' | 'disclosure';
@@ -54,6 +55,7 @@ export function ContentDetailView({
   initialFindings,
   initialComments,
   initialAiRun,
+  sourceHashMap,
 }: ContentDetailViewProps) {
   const [content, setContent] = useState<Content>(initialContent);
   const [versions, setVersions] = useState<ContentVersion[]>(initialVersions);
@@ -785,6 +787,8 @@ export function ContentDetailView({
                 onDisputeFinding={handleDisputeFinding}
                 onDismissFinding={handleDismissFinding}
                 isProcessingAction={isProcessingAction}
+                sourceHashMap={sourceHashMap}
+                onReRunReview={handleRunReview}
               />
             </div>
           )}

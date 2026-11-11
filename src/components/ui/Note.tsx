@@ -16,6 +16,8 @@ export interface NoteProps {
   onDispute?: (finding: Finding, reason?: string) => void;
   onDismiss?: (findingId: string, reason?: string) => void;
   isProcessingAction?: boolean;
+  sourceHashMap?: Record<string, { hash: string; exists: boolean; title?: string }>;
+  onReRunReview?: () => void;
 }
 
 export function Note({
@@ -28,6 +30,8 @@ export function Note({
   onDispute,
   onDismiss,
   isProcessingAction = false,
+  sourceHashMap,
+  onReRunReview,
 }: NoteProps) {
   const [inlineAction, setInlineAction] = React.useState<'dispute' | 'dismiss' | null>(null);
   const [reasonText, setReasonText] = React.useState('');
@@ -153,30 +157,104 @@ export function Note({
       )}
 
       {/* Source Citation Section */}
-      <div className="space-y-1.5 pt-1">
-        <div className="flex items-baseline justify-between text-xs">
-          <span className="font-mono text-[11px] uppercase tracking-[0.04em] text-[#5e574c]">
-            Source ({f.source_type || 'Unspecified'}):
-          </span>
-          <Link
-            href={getLibraryLink(f.source_type)}
-            onClick={(e) => e.stopPropagation()}
-            className="text-[12px] text-[#1f1c18] underline underline-offset-2 hover:text-[#5e574c]"
-          >
-            Library item
-          </Link>
-        </div>
+      {(() => {
+        const sourceInfo = f.source_id && sourceHashMap ? sourceHashMap[f.source_id] : null;
+        let sourceStatus: 'verified' | 'stale' | 'deleted' | null = null;
 
-        {f.source_quote ? (
-          <blockquote className="source-quote pl-3 border-l-2 border-[#1f1c18] text-[15px] leading-relaxed break-words my-1 text-[#1f1c18]">
-            &ldquo;{f.source_quote}&rdquo;
-          </blockquote>
-        ) : (
-          <p className="source-quote text-[13px] text-[#5e574c] pl-1">
-            No exact quote cited.
-          </p>
-        )}
-      </div>
+        if (f.source_id && sourceHashMap) {
+          if (!sourceInfo || !sourceInfo.exists) {
+            sourceStatus = 'deleted';
+          } else if (f.source_hash && sourceInfo.hash !== f.source_hash) {
+            sourceStatus = 'stale';
+          } else if (f.quote_verified || (!f.needs_human_check && f.source_quote)) {
+            sourceStatus = 'verified';
+          }
+        } else if (f.quote_verified || (!f.needs_human_check && f.source_quote)) {
+          sourceStatus = 'verified';
+        }
+
+        return (
+          <div className="space-y-1.5 pt-1">
+            <div className="flex items-center justify-between text-xs flex-wrap gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-mono text-[11px] uppercase tracking-[0.04em] text-[#5e574c]">
+                  Source ({f.source_type || 'Unspecified'}):
+                </span>
+
+                {sourceStatus === 'verified' && (
+                  <span
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider bg-[#f0f9f3] text-[#1f6b3a] border border-[#1f6b3a]"
+                    aria-label="Verified verbatim citation against brand library"
+                  >
+                    <svg className="w-3 h-3 text-[#1f6b3a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Verified verbatim</span>
+                  </span>
+                )}
+
+                {sourceStatus === 'stale' && (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider bg-[#fef9ec] text-[#8a5a00] border border-[#8a5a00]"
+                      role="status"
+                      aria-label="Source changed since this review"
+                    >
+                      <svg className="w-3 h-3 text-[#8a5a00]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <span>Source changed since this review</span>
+                    </span>
+                    {onReRunReview && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onReRunReview();
+                        }}
+                        className="text-[10px] font-mono uppercase underline text-[#1f1c18] hover:text-[#5e574c] cursor-pointer"
+                      >
+                        Re-run review
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {sourceStatus === 'deleted' && (
+                  <span
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider bg-[#fdf2f2] text-[#b3261e] border border-[#b3261e]"
+                    role="alert"
+                    aria-label="Source no longer exists in library"
+                  >
+                    <svg className="w-3 h-3 text-[#b3261e]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span>Source no longer exists</span>
+                  </span>
+                )}
+              </div>
+
+              <Link
+                href={getLibraryLink(f.source_type)}
+                onClick={(e) => e.stopPropagation()}
+                className="text-[12px] text-[#1f1c18] underline underline-offset-2 hover:text-[#5e574c]"
+              >
+                Library item
+              </Link>
+            </div>
+
+            {f.source_quote ? (
+              <blockquote className="source-quote pl-3 border-l-2 border-[#1f1c18] text-[15px] leading-relaxed break-words my-1 text-[#1f1c18]">
+                &ldquo;{f.source_quote}&rdquo;
+              </blockquote>
+            ) : (
+              <p className="source-quote text-[13px] text-[#5e574c] pl-1">
+                No exact quote cited.
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Suggestion Block: Diff & Intent line */}
       {f.suggestion && (

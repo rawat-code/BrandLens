@@ -4,7 +4,8 @@ import { requirePageRole } from '@/lib/auth';
 import { getAdminClient } from '@/lib/supabase/admin';
 import { AppShell } from '@/components/AppShell';
 import { ContentDetailView, type CommentWithProfile } from '@/components/ContentDetailView';
-import type { Content, ContentVersion, Finding, AiRun } from '@/lib/types';
+import type { Content, ContentVersion, Finding, AiRun, Guideline, Fact, Term } from '@/lib/types';
+import { computeSourceHash } from '@/lib/review/grounding';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,6 +65,28 @@ export default async function ContentDetailPage({
     .limit(1)
     .maybeSingle();
 
+  // 6. Fetch library items to evaluate live source freshness
+  const [
+    { data: guidelinesData },
+    { data: factsData },
+    { data: termsData },
+  ] = await Promise.all([
+    admin.from('guidelines').select('id, title, body, version').eq('org_id', profile.org_id),
+    admin.from('facts').select('id, statement, status').eq('org_id', profile.org_id),
+    admin.from('terms').select('id, term, kind').eq('org_id', profile.org_id),
+  ]);
+
+  const sourceHashMap: Record<string, { hash: string; exists: boolean; title?: string }> = {};
+  for (const g of (guidelinesData as Guideline[]) || []) {
+    sourceHashMap[g.id] = { hash: computeSourceHash(g.body || g.title), exists: true, title: g.title };
+  }
+  for (const f of (factsData as Fact[]) || []) {
+    sourceHashMap[f.id] = { hash: computeSourceHash(f.statement), exists: true, title: f.statement };
+  }
+  for (const t of (termsData as Term[]) || []) {
+    sourceHashMap[t.id] = { hash: computeSourceHash(t.term), exists: true, title: t.term };
+  }
+
   return (
     <AppShell user={user} profile={profile}>
       <ContentDetailView
@@ -74,6 +97,7 @@ export default async function ContentDetailPage({
         initialFindings={(findings as Finding[]) || []}
         initialComments={(comments as unknown as CommentWithProfile[]) || []}
         initialAiRun={(latestAiRun as AiRun) || null}
+        sourceHashMap={sourceHashMap}
       />
     </AppShell>
   );

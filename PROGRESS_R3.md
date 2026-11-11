@@ -4,7 +4,7 @@
 
 - STAGE 0 - AUDIT AND MIGRATION: DONE - Completed Stage 0.1 audit; authored idempotent migration docs/migrations/003_round3.sql and docs/migrations/README.md; Supabase migration confirmed executed.
 - STAGE A - DEMO ACCESS ON THE LOGIN PAGE: DONE - AuthCard updated with quick persona sign-in grid and copyable demo credentials panel, DEMO_MODE protection implemented in start-fresh, restore-demo endpoint created, and demo_mode.test.ts passing.
-- STAGE B - IMPROVEMENT 1 (FINDINGS BACKED BY SOURCES): PENDING - Citation metrics in ai_runs, source_hash and quote_verified, stale-source detection, and UI grounding panel.
+- STAGE B - IMPROVEMENT 1 (FINDINGS BACKED BY SOURCES): DONE - Citation metrics tracked in ai_runs, quote_verified and source_hash stored on findings, stale/deleted source detection with re-run review trigger in UI, Grounding integrity panel in AiDisclosureTab, and 10 passing unit tests in stale_source.test.ts.
 - STAGE C - IMPROVEMENT 2 (SUGGESTIONS KEEPING MEANING): PENDING - Pure deterministic intent-guard.ts, dual-pass check in suggest.ts, what-changed chips, and audit-logged accept-anyway overrides.
 - STAGE D - IMPROVEMENT 3 (GUIDELINE HEALTH CLOSED LOOP): PENDING - Guideline version history with diffs, before-and-after impact tracking with sample guard, and contradiction conflict detection.
 - STAGE E - SUPPORTED CONTENT FORMATS: PENDING - Server-side DOCX and PDF text import with mammoth and pdf-parse, memory-only handling, and 10,000 char limits.

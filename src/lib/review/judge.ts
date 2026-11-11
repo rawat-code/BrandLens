@@ -4,6 +4,7 @@ import type { RetrievedChunk } from './retrieve';
 import type { RedactionMapping } from './redact';
 import { unredact } from './redact';
 import { callGeminiJson } from '@/lib/ai/gemini';
+import { computeSourceHash } from './grounding';
 
 export interface JudgeInput {
   contentId: string;
@@ -75,7 +76,16 @@ export async function judgeContentWithAi({
   facts,
   terms,
   ruleFindings,
-}: JudgeInput): Promise<{ findings: Omit<Finding, 'id' | 'created_at'>[]; rawAiCount: number; model: string }> {
+}: JudgeInput): Promise<{
+  findings: Omit<Finding, 'id' | 'created_at'>[];
+  rawAiCount: number;
+  model: string;
+  citations: {
+    citations_total: number;
+    citations_verified: number;
+    citations_downgraded: number;
+  };
+}> {
   // Build lookup maps for fast source verification
   // Guideline chunks: map both chunk ID and parent guidelineId to text
   const sourceTexts = new Map<string, string>();
@@ -159,7 +169,16 @@ Respond with JSON adhering to this structure:
   const rawFindings = parsed.data.findings;
   const verifiedFindings: Omit<Finding, 'id' | 'created_at'>[] = [];
 
+  let citationsTotal = 0;
+  let citationsVerified = 0;
+  let citationsDowngraded = 0;
+
   for (const raw of rawFindings) {
+    const rawHadCitation = Boolean(raw.source_id && raw.source_quote);
+    if (rawHadCitation) {
+      citationsTotal++;
+    }
+
     // 1. Map excerpt back through redactions
     const unredactedExcerpt = unredact(raw.excerpt, mappings).trim();
     const excerptInOriginal =
@@ -177,16 +196,21 @@ Respond with JSON adhering to this structure:
     let verifiedSourceId = raw.source_id;
     let verifiedSourceType = raw.source_type;
     let verifiedSourceQuote = raw.source_quote;
+    let matchedSourceBody: string | null = null;
 
     if (raw.source_id && raw.source_quote && sourceTexts.has(raw.source_id)) {
       const sourceBody = sourceTexts.get(raw.source_id)!;
       if (sourceBody.toLowerCase().includes(raw.source_quote.toLowerCase().trim())) {
         sourceValid = true;
+        matchedSourceBody = sourceBody;
       }
     }
 
     let needs_human_check = false;
     let severity: FindingSeverity = raw.severity;
+    let quote_verified = false;
+    let source_hash: string | null = null;
+    let source_version: number | null = null;
 
     // "Anything failing verification is kept but set needs_human_check = true, source cleared and severity capped at medium."
     if (!excerptInOriginal || !sourceValid || !verifiedSourceId) {
@@ -194,9 +218,17 @@ Respond with JSON adhering to this structure:
       verifiedSourceType = null;
       verifiedSourceId = null;
       verifiedSourceQuote = null;
+      if (rawHadCitation) {
+        citationsDowngraded++;
+      }
       if (severity === 'high') {
         severity = 'medium';
       }
+    } else {
+      quote_verified = true;
+      citationsVerified++;
+      source_hash = computeSourceHash(matchedSourceBody || verifiedSourceQuote);
+      source_version = 1;
     }
 
     // 3. Drop AI findings that duplicate a rule finding (overlapping ranges, same category)
@@ -224,6 +256,9 @@ Respond with JSON adhering to this structure:
       source_type: verifiedSourceType,
       source_id: verifiedSourceId,
       source_quote: verifiedSourceQuote,
+      source_version,
+      source_hash,
+      quote_verified,
       suggestion: raw.suggestion || null,
       intent_check: raw.suggestion ? 'preserved' : null,
       intent_note: null,
@@ -241,5 +276,10 @@ Respond with JSON adhering to this structure:
     findings: cappedFindings,
     rawAiCount: rawFindings.length,
     model: aiResponse.model,
+    citations: {
+      citations_total: citationsTotal,
+      citations_verified: citationsVerified,
+      citations_downgraded: citationsDowngraded,
+    },
   };
 }
