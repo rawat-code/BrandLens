@@ -114,3 +114,4 @@ Please choose how you would like to proceed:
 
 2. **Option B (Complete & Merge to Main)**:
    - Reply **`MERGE`** to receive the final git merge commands into `main` and production Vercel deployment checklist.
+

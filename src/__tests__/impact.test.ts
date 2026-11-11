@@ -87,3 +87,4 @@ describe('Stage D: Improvement 3 - Before-and-After Impact Tracking', () => {
     expect(result.afterTotal).toBe(0);
   });
 });
+

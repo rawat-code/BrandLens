@@ -199,3 +199,4 @@ Every journey can be reproduced step-by-step using the pre-seeded demo environme
   8. Inspect the audit log in `/settings` (or via Admin): verify `org.restore_demo` and `org.start_fresh_blocked` entries are recorded.
 - **Expected UI Response**: Demo showcase data is protected against accidental destruction; restore action re-seeds canonical state cleanly.
 - **Audit & Database State**: Audit log remains completely intact (append-only); `org.start_fresh_blocked` and `org.restore_demo` appended.
+

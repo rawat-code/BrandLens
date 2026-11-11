@@ -47,3 +47,4 @@ For incremental deployments across existing databases, individual migration scri
 - `001_initial.sql`: Base tables and workflow schemas.
 - `002_insights.sql`: Guideline proposals and insights aggregation support.
 - `003_round3.sql`: Source grounding hashes (`source_hash`), quote verification, deterministic intent metadata (`intent_reasons`), guideline version history (`guideline_versions`), and proposal impact tracking (`applied_at`).
+

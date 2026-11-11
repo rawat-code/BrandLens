@@ -48,3 +48,4 @@ BrandLens is engineered to meet or exceed **WCAG 2.1 Level AA** compliance acros
 - All asynchronous submission and review actions indicate status via `aria-busy` and explicit text notifications.
 - Error alerts use `role="alert"` with `aria-live="assertive"` so screen readers immediately announce validation issues.
 - Empty states and loading spinners include non-visual text descriptions for screen reader users.
+

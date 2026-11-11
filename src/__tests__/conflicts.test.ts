@@ -136,3 +136,4 @@ describe('Stage D: Improvement 3 - Conflicts & Contradiction Detection', () => {
     expect(conflicts).toHaveLength(0);
   });
 });
+

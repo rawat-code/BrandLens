@@ -105,3 +105,4 @@ Every successful document import creates an append-only audit trail in `audit_lo
 }
 ```
 No document body or binary data is stored in the audit log—only operational metadata for governance compliance.
+

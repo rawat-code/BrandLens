@@ -113,3 +113,4 @@ export function calculateProposalImpact({
     relativeReductionPercent: roundedReduction,
   };
 }
+
