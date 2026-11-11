@@ -37,6 +37,8 @@ All dependencies listed below are strictly present in `package.json`:
 | `@supabase/supabase-js` | `^2.119.0` | MIT | Production | Supabase client library for admin database operations. |
 | `cmdk` | `^1.1.1` | MIT | Production | Fast accessible command menu for global Cmd+K palette. |
 | `framer-motion` | `^14.10.0` | MIT | Production | Declarative animation primitives for tab transitions and drawer drawers. |
+| `mammoth` | `^1.9.1` | BSD-2-Clause | Production | Lightweight Word document (.docx) raw text extraction with zero document storage. |
+| `pdf-parse` | `^2.4.5` | MIT | Production | Pure JavaScript PDF text extraction with zero external system binaries. |
 | `next` | `15.5.29` | MIT | Framework | React framework with App Router, server actions, and streaming. |
 | `react` | `19.1.0` | MIT | UI Library | Core declarative user interface library. |
 | `react-dom` | `19.1.0` | MIT | UI Library | DOM renderer for React. |

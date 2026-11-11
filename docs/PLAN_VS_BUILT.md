@@ -41,8 +41,8 @@ This document provides a line-by-line audit comparing the commitments made in th
 | **Accessibility: Flesch-Kincaid Readability** | Issue Types | **Done** | `src/lib/review/rules.ts:584` | Computes reading grade level; flags copy exceeding grade level 10. |
 | **Format: Plain Text Input** | Formats | **Done** | `src/components/ContentForm.tsx:160` | Direct text entry in web form with 10,000 character limit. |
 | **Format: PNG/JPG Image Upload** | Formats | **Not built** | `src/components/ContentForm.tsx` | No image upload input or storage bucket; `sharp` not installed. |
-| **Format: PDF Document Text Extraction** | Formats | **Not built** | `package.json` | `pdf-parse` not installed. Guideline import uses text/markdown paste. |
-| **Format: Word (.docx) Text Extraction** | Formats | **Not built** | `package.json` | `mammoth` not installed. Word documents must be converted or pasted as text. |
+| **Format: PDF Document Text Extraction** | Formats | **Done (R3)** | `package.json`, `src/lib/content/file-extract.ts`, `src/app/api/content/import-file/route.ts` | Implemented in Round 3 via `pdf-parse` with in-memory extraction and zero document storage. |
+| **Format: Word (.docx) Text Extraction** | Formats | **Done (R3)** | `package.json`, `src/lib/content/file-extract.ts`, `src/app/api/content/import-file/route.ts` | Implemented in Round 3 via `mammoth` with in-memory extraction and zero document storage. |
 | **Format: PowerPoint & Web Pages (Stretch)** | Formats | **Out of scope** | N/A | Explicitly identified as out of scope for Round 2 MVP. |
 | **Next.js 15 App Router** | Tech Stack | **Done** | `package.json:20` (`15.5.29`) | Server components, route handlers, server actions, dynamic streaming. |
 | **React 19** | Tech Stack | **Done** | `package.json:21` (`19.1.0`) | Modern declarative UI, transitions, server action hooks. |
@@ -51,8 +51,8 @@ This document provides a line-by-line audit comparing the commitments made in th
 | **Supabase Storage** | Tech Stack | **Not built** | N/A | No binary asset buckets created; content stored in PostgreSQL text columns. |
 | **Supabase Row Level Security (RLS)** | Tech Stack | **Done** | `src/lib/auth.ts:25-90` | Enabled across all tables; all access mediated through service-role client after session verification. |
 | **PostgreSQL pgvector Embeddings** | Tech Stack | **Changed** | `src/lib/review/retrieve.ts:10` | Substituted with pure TypeScript lexical keyword retriever to eliminate vector database cold starts. |
-| **mammoth Library** | Tech Stack | **Not built** | `package.json` | Not included in dependencies. |
-| **pdf-parse Library** | Tech Stack | **Not built** | `package.json` | Not included in dependencies. |
+| **mammoth Library** | Tech Stack | **Done (R3)** | `package.json:20`, `src/lib/content/file-extract.ts` | Installed in Round 3 for in-memory DOCX text parsing. |
+| **pdf-parse Library** | Tech Stack | **Done (R3)** | `package.json:21`, `src/lib/content/file-extract.ts` | Installed in Round 3 for in-memory PDF text parsing. |
 | **sharp Library** | Tech Stack | **Not built** | `package.json` | Not included in dependencies. |
 | **Google Gemini API SDK** | Tech Stack | **Done** | `package.json:15` (`@google/genai ^2.32.0`) | Primary model `gemini-3.5-flash-lite`, fallback `gemini-3.1-flash-lite`. |
 | **Local Ollama Model for Confidential Content** | Tech Stack | **Changed** | `src/lib/review/pipeline.ts:45` | Replaced by deterministic bypass: confidential content strictly stays on-server and skips all external AI calls. |

@@ -1,10 +1,10 @@
 # BrandLens
 
 > **Pre-publication brand-governance & AI compliance review platform.**  
-> Built for the Inkloom AI Hackathon (Round 2 build).  
+> Built for the Inkloom AI Hackathon (Round 3 build: "The Finish").  
 > **Core Philosophy**: *AI suggests, humans decide. Never auto-approve, never auto-publish, never auto-rewrite.*
 
-[![Test Suite](https://img.shields.io/badge/Vitest-Passing%20(115%20tests)-emerald)](https://github.com/rawat-code/BrandLens)
+[![Test Suite](https://img.shields.io/badge/Vitest-Passing%20(168%20tests)-emerald)](https://github.com/rawat-code/BrandLens)
 [![Next.js 15](https://img.shields.io/badge/Next.js-15.5.29-black)](https://nextjs.org)
 [![React 19](https://img.shields.io/badge/React-19.1.0-blue)](https://react.dev)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20%2B%20RLS-3ECF8E)](https://supabase.com)
@@ -244,7 +244,7 @@ A transparent inventory of known issues, root causes, judge impact, and planned 
 2. **Readability Formula False Flags**: Flesch-Kincaid formula in `rules.ts` flags standard marketing sentences with polysyllabic words, contributing to a 40% false-flag rate on clean posts.
 3. **Edit-Then-Accept Parameter Mismatch**: UI edit modal passes `custom_replacement`, but API route expects `custom_suggestion`, causing the server to fall back to the default suggestion.
 4. **In-Memory Rate Limiting**: The 10 req/min/user limit is stored in a server memory `Map`, which resets upon serverless container recycling.
-5. **Binary Document & Image Uploads**: Style guide import and content submission accept Markdown and plain text; binary `.docx`, `.pdf`, and image analysis are not implemented in the MVP.
+5. **Binary Document Support**: Word documents (`.docx`) and PDF (`.pdf`) files are now natively supported in Round 3 via in-memory extraction (`mammoth`, `pdf-parse`) with zero document storage. Raster image asset analysis (e.g. Photoshop/Figma files) remains out of scope.
 
 ---
 
