@@ -47,6 +47,14 @@ export async function POST(
       return NextResponse.json({ error: 'Creators can only modify their own content' }, { status: 403 });
     }
 
+    // Concurrency protection: prevent double-accepting or accepting already resolved findings
+    if (finding.status !== 'open') {
+      return NextResponse.json(
+        { error: `Conflict: Finding has already been marked "${finding.status}". Please refresh the review.` },
+        { status: 409 }
+      );
+    }
+
     const requestJson = await _req.json().catch(() => ({}));
     const appliedSuggestion = (
       typeof requestJson.custom_suggestion === 'string' && requestJson.custom_suggestion.trim()

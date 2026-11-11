@@ -39,6 +39,17 @@ export async function POST(
     const fromStatus = content.status;
     const toStatus = to as ContentStatus;
 
+    // Concurrency protection: verify expected status if client provided it
+    if (body.expected_from && body.expected_from !== fromStatus) {
+      return NextResponse.json(
+        {
+          error: `Workflow conflict: Content status has changed from "${body.expected_from}" to "${fromStatus}". Please refresh.`,
+          current_status: fromStatus,
+        },
+        { status: 409 }
+      );
+    }
+
     // 2. Check open high-severity findings that require reviewer
     const { data: highSevFindings } = await admin
       .from('findings')
@@ -80,7 +91,7 @@ export async function POST(
       );
     }
 
-    // 5. Update content status
+    // 5. Update content status with optimistic lock on fromStatus
     const { data: updatedContent, error: updateError } = await admin
       .from('contents')
       .update({
@@ -88,11 +99,21 @@ export async function POST(
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
+      .eq('status', fromStatus)
       .select()
-      .single();
+      .maybeSingle();
 
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
+
+    if (!updatedContent) {
+      return NextResponse.json(
+        {
+          error: 'Workflow conflict: Content status was modified by another reviewer concurrently. Please refresh.',
+        },
+        { status: 409 }
+      );
     }
 
     // 6. Insert comment if provided

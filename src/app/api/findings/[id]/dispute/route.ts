@@ -57,6 +57,14 @@ export async function POST(
       return NextResponse.json({ error: 'Creators can only dispute findings on their own content' }, { status: 403 });
     }
 
+    // Concurrency protection: prevent disputing already resolved or disputed findings
+    if (finding.status !== 'open') {
+      return NextResponse.json(
+        { error: `Conflict: Finding has already been marked "${finding.status}". Please refresh the review.` },
+        { status: 409 }
+      );
+    }
+
     // 4. Update finding status
     const { error: updateError } = await admin
       .from('findings')

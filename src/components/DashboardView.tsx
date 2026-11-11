@@ -6,6 +6,7 @@ import { Badge, type BadgeVariant } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { StartHereCard } from '@/components/StartHereCard';
 import { formatTimestamp } from '@/lib/time';
 import type { Content, Profile } from '@/lib/types';
 
@@ -88,6 +89,9 @@ export function DashboardView({
           ) : undefined
         }
       />
+
+      {/* Role-Aware Getting Started Guide */}
+      <StartHereCard role={profile.role} />
 
       {/* Review Queue (For Managers & Reviewers) */}
       {isApprover && reviewQueue.length > 0 && (
