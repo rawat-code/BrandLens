@@ -51,6 +51,23 @@ export function AuthCard({ initialMode = 'signin', initialError = null }: AuthCa
   const [activeDemo, setActiveDemo] = useState<UserRole | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(initialError);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const sharedDemoPassword = 'verdant12110';
+
+  const copyToClipboard = async (text: string, fieldKey: string) => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(text);
+        setCopiedField(fieldKey);
+        setTimeout(() => {
+          setCopiedField((prev) => (prev === fieldKey ? null : prev));
+        }, 2000);
+      }
+    } catch {
+      // Ignore copy error
+    }
+  };
 
   // Google OAuth sign-in and sign-up
   const handleGoogleAuth = async () => {
@@ -147,6 +164,100 @@ export function AuthCard({ initialMode = 'signin', initialError = null }: AuthCa
           Pre-publication brand governance review citing organization guidelines, facts, and terminology.
         </p>
       </div>
+
+      {/* One-Click Demo Personas */}
+      <div className="space-y-3 bg-[#fbf9f4] border border-[#ddd5c4] p-4">
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-[11px] uppercase tracking-[0.04em] font-semibold text-[#1f1c18]">
+            Quick persona sign-in
+          </span>
+          <span className="font-mono text-[10px] text-[#5e574c] uppercase">
+            One-click
+          </span>
+        </div>
+        <p className="text-xs text-[#5e574c]">
+          Select a demo persona to explore role-specific permissions and review workflows:
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {DEMO_ROLES.map((persona) => {
+            const isSelected = activeDemo === persona.role && isPending;
+            return (
+              <button
+                key={persona.role}
+                type="button"
+                disabled={isPending || isGoogleLoading}
+                onClick={() => handleDemoLogin(persona.role)}
+                className="p-2.5 text-left border border-[#ddd5c4] bg-[#fffdf8] hover:bg-[#f5f1e8] hover:border-[#1f1c18] transition-all duration-120 cursor-pointer disabled:opacity-50"
+                aria-label={`Sign in as ${persona.title}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-xs text-[#1f1c18]">{persona.title}</span>
+                  <span className="font-mono text-[9px] uppercase text-[#5e574c]">
+                    {isSelected ? '...' : 'Go →'}
+                  </span>
+                </div>
+                <span className="text-[10px] text-[#5e574c] block truncate mt-0.5">
+                  {persona.desc.split(',')[0]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Demo Accounts Panel with Copy Buttons */}
+      <details className="border border-[#ddd5c4] bg-[#fffdf8] p-3 text-xs group">
+        <summary className="font-mono text-[11px] uppercase tracking-[0.04em] text-[#1f1c18] cursor-pointer flex items-center justify-between font-semibold">
+          <span>Demo credentials & manual login info</span>
+          <span className="text-[#5e574c] group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <div className="mt-3 pt-3 border-t border-[#ddd5c4] space-y-3">
+          <p className="text-[#5e574c] text-[11px] leading-relaxed">
+            Demo workspace with synthetic data only. Anyone can sign in with these accounts.
+          </p>
+
+          <div className="space-y-2 font-mono text-[11px]">
+            {DEMO_ROLES.map((persona) => (
+              <div
+                key={persona.role}
+                className="flex items-center justify-between bg-[#fbf9f4] p-1.5 border border-[#ede7dc]"
+              >
+                <div className="min-w-0 pr-2">
+                  <span className="text-[#1f1c18] font-semibold uppercase text-[10px] block">
+                    {persona.title}
+                  </span>
+                  <span className="text-[#5e574c] truncate block">{persona.email}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(persona.email, `email-${persona.role}`)}
+                  className="px-2 py-0.5 border border-[#ddd5c4] bg-[#fffdf8] hover:bg-[#f5f1e8] text-[10px] uppercase tracking-wider shrink-0"
+                  aria-label={`Copy ${persona.title} email`}
+                >
+                  {copiedField === `email-${persona.role}` ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+            ))}
+
+            <div className="flex items-center justify-between bg-[#fbf9f4] p-1.5 border border-[#ede7dc]">
+              <div>
+                <span className="text-[#1f1c18] font-semibold uppercase text-[10px] block">
+                  Shared password
+                </span>
+                <span className="text-[#5e574c]">{sharedDemoPassword}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => copyToClipboard(sharedDemoPassword, 'password')}
+                className="px-2 py-0.5 border border-[#ddd5c4] bg-[#fffdf8] hover:bg-[#f5f1e8] text-[10px] uppercase tracking-wider shrink-0"
+                aria-label="Copy demo password"
+              >
+                {copiedField === 'password' ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </details>
 
       {/* Mode Segmented Tabs: Sign in vs Create account */}
       <div className="flex border-b border-[#ddd5c4]" role="tablist" aria-label="Authentication mode">
@@ -379,51 +490,6 @@ export function AuthCard({ initialMode = 'signin', initialError = null }: AuthCa
           </Button>
         </form>
       )}
-
-      {/* Demo Accounts List */}
-      <div className="border-t border-[#ddd5c4] pt-5 space-y-3">
-        <div>
-          <span className="font-mono text-[11px] uppercase tracking-[0.04em] text-[#5e574c] block">
-            Demo workspace: Verdant Skin (fictional)
-          </span>
-          <p className="text-[12px] text-[#5e574c] mt-0.5">
-            Select a persona to sign in directly:
-          </p>
-        </div>
-
-        <div className="border border-[#ddd5c4] divide-y divide-[#ddd5c4]">
-          {DEMO_ROLES.map((persona) => {
-            const isSelected = activeDemo === persona.role && isPending;
-
-            return (
-              <button
-                key={persona.role}
-                type="button"
-                disabled={isPending || isGoogleLoading}
-                onClick={() => handleDemoLogin(persona.role)}
-                className="w-full p-3 text-left bg-[#fffdf8] hover:bg-[#f5f1e8] transition-colors duration-120 flex items-center justify-between gap-3 cursor-pointer disabled:opacity-50"
-              >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm text-[#1f1c18]">
-                      {persona.title}
-                    </span>
-                    <span className="font-mono text-[10px] text-[#5e574c]">
-                      {persona.email}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-[#5e574c] truncate mt-0.5">
-                    {persona.desc}
-                  </p>
-                </div>
-                <span className="font-mono text-[11px] uppercase text-[#1f1c18] shrink-0">
-                  {isSelected ? 'Signing in...' : 'Select'}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 }

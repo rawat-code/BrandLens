@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireRole, UnauthorizedError, ForbiddenError } from '@/lib/auth';
 import { getAdminClient } from '@/lib/supabase/admin';
 import { logAudit } from '@/lib/audit';
+import { isDemoMode } from '@/lib/demo-mode';
 
 const StartFreshSchema = z.object({
   confirmationName: z.string().trim().min(1, 'Confirmation name is required'),
@@ -11,6 +12,26 @@ const StartFreshSchema = z.object({
 export async function POST(request: Request) {
   try {
     const { profile } = await requireRole(['admin']);
+
+    if (isDemoMode()) {
+      await logAudit({
+        org_id: profile.org_id,
+        actor: profile.id,
+        action: 'org.start_fresh_blocked',
+        detail: {
+          reason: 'Start fresh is disabled in demo mode to protect shared showcase data',
+          timestamp: new Date().toISOString(),
+        },
+      });
+
+      return NextResponse.json(
+        {
+          error:
+            'Start fresh is disabled in demo mode to protect shared showcase data. Turn off DEMO_MODE in server settings to allow full resets.',
+        },
+        { status: 403 }
+      );
+    }
 
     const body = await request.json();
     const parsed = StartFreshSchema.safeParse(body);

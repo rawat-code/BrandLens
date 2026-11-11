@@ -43,6 +43,37 @@ export function SettingsClientView({
   const [isResetting, setIsResetting] = useState(false);
   const [resetMessage, setResetMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  // Restore demo modal state
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
+
+  const handleRestoreDemo = async () => {
+    setIsRestoring(true);
+    setResetMessage(null);
+
+    try {
+      const res = await fetch('/api/settings/restore-demo', {
+        method: 'POST',
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to restore demo content');
+      }
+
+      setIsRestoreModalOpen(false);
+      setResetMessage({
+        type: 'success',
+        text: 'Demo guidelines, clinical facts, terminology entries, and showcase content drafts have been restored.',
+      });
+      router.refresh();
+    } catch (err: unknown) {
+      setResetMessage({ type: 'error', text: (err as Error).message });
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
   const handleSaveName = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editedName.trim()) {
@@ -258,7 +289,42 @@ export function SettingsClientView({
         </dl>
       </section>
 
-      {/* Section 3: Danger Zone */}
+      {/* Section 3: Demo Showcase Management */}
+      <section className="bg-[#fffdf8] border border-[#ddd5c4] p-6 space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="font-serif text-2xl font-medium text-[#1f1c18] tracking-tight">
+              Demo showcase content
+            </h2>
+            <p className="text-sm text-[#5e574c] mt-1">
+              Restore default Verdant Skin guidelines, facts, terms, and showcase submission drafts.
+            </p>
+          </div>
+          <span className="text-[11px] font-mono uppercase tracking-wider px-2 py-0.5 border border-[#1f6b3a] text-[#1f6b3a]">
+            Idempotent
+          </span>
+        </div>
+
+        <div className="text-sm text-[#1f1c18] leading-relaxed space-y-3">
+          <p>
+            If any default showcase submissions or guidelines were removed during testing, this will safely re-populate
+            them without overwriting your custom drafts or audit history.
+          </p>
+
+          <div className="pt-2 flex justify-end">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsRestoreModalOpen(true)}
+            >
+              Restore demo content...
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 4: Danger Zone */}
       <section className="bg-[#fffdf8] border border-[#ddd5c4] border-t-4 border-t-[#b3261e] p-6 space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -362,6 +428,42 @@ export function SettingsClientView({
               </Button>
             </div>
           </form>
+        </div>
+      </Dialog>
+      {/* Restore Demo Dialog */}
+      <Dialog
+        isOpen={isRestoreModalOpen}
+        onClose={() => setIsRestoreModalOpen(false)}
+        title="Restore demo content"
+        description="Re-populate default Verdant Skin showcase drafts, guidelines, and facts."
+      >
+        <div className="space-y-4 text-sm text-[#1f1c18]">
+          <p>
+            This action restores any missing baseline showcase submissions (Showcases A through E) and foundational brand library
+            materials. Existing user-created drafts and audit log entries will not be deleted.
+          </p>
+
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsRestoreModalOpen(false)}
+              disabled={isRestoring}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={handleRestoreDemo}
+              disabled={isRestoring}
+              isLoading={isRestoring}
+            >
+              {isRestoring ? 'Restoring...' : 'Confirm restore'}
+            </Button>
+          </div>
         </div>
       </Dialog>
     </div>

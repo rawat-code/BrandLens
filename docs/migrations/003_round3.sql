@@ -59,3 +59,4 @@ ALTER TABLE guideline_gaps ENABLE ROW LEVEL SECURITY;
 -- Index for fast lookup by org_id and status
 CREATE INDEX IF NOT EXISTS idx_guideline_gaps_org_id ON guideline_gaps(org_id);
 CREATE INDEX IF NOT EXISTS idx_guideline_gaps_status ON guideline_gaps(status);
+

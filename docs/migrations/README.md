@@ -33,3 +33,4 @@ All migration scripts are strictly idempotent:
 - Uses `CREATE TABLE IF NOT EXISTS` for new relational tables (`guideline_versions`, `guideline_gaps`).
 - Row Level Security (RLS) is enabled immediately on all new tables with zero public access policies, enforcing server-mediated service-role queries only.
 - Does not modify or drop existing data, foreign keys, or audit logs.
+

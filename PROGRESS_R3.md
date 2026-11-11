@@ -2,8 +2,8 @@
 
 > Tracking implementation status across all Round 3 stages. Updated after every numbered item.
 
-- STAGE 0 - AUDIT AND MIGRATION: DONE - Completed Stage 0.1 audit; authored idempotent migration docs/migrations/003_round3.sql and docs/migrations/README.md; awaiting Supabase migration confirmation.
-- STAGE A - DEMO ACCESS ON THE LOGIN PAGE: PENDING - Demo credentials panel, DEMO_MODE protections, restore demo content button, and tests.
+- STAGE 0 - AUDIT AND MIGRATION: DONE - Completed Stage 0.1 audit; authored idempotent migration docs/migrations/003_round3.sql and docs/migrations/README.md; Supabase migration confirmed executed.
+- STAGE A - DEMO ACCESS ON THE LOGIN PAGE: DONE - AuthCard updated with quick persona sign-in grid and copyable demo credentials panel, DEMO_MODE protection implemented in start-fresh, restore-demo endpoint created, and demo_mode.test.ts passing.
 - STAGE B - IMPROVEMENT 1 (FINDINGS BACKED BY SOURCES): PENDING - Citation metrics in ai_runs, source_hash and quote_verified, stale-source detection, and UI grounding panel.
 - STAGE C - IMPROVEMENT 2 (SUGGESTIONS KEEPING MEANING): PENDING - Pure deterministic intent-guard.ts, dual-pass check in suggest.ts, what-changed chips, and audit-logged accept-anyway overrides.
 - STAGE D - IMPROVEMENT 3 (GUIDELINE HEALTH CLOSED LOOP): PENDING - Guideline version history with diffs, before-and-after impact tracking with sample guard, and contradiction conflict detection.
