@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   detectFileType,
   extractTextFromFile,
-  DEFAULT_MAX_FILE_SIZE,
 } from '@/lib/content/file-extract';
 import { POST } from '@/app/api/content/import-file/route';
 import { NextRequest } from 'next/server';
@@ -119,7 +118,7 @@ describe('POST /api/content/import-file Route Handler', () => {
     const { requireRole } = await import('@/lib/auth');
     vi.mocked(requireRole).mockResolvedValueOnce({
       profile: { id: 'usr-1', org_id: 'org-1', role: 'creator', email: 'c@test.com', full_name: 'Creator' },
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof requireRole>>);
 
     const formData = new FormData();
     const req = new NextRequest('http://localhost:3000/api/content/import-file', {
@@ -139,7 +138,7 @@ describe('POST /api/content/import-file Route Handler', () => {
 
     vi.mocked(requireRole).mockResolvedValueOnce({
       profile: { id: 'usr-1', org_id: 'org-1', role: 'creator', email: 'c@test.com', full_name: 'Creator' },
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof requireRole>>);
 
     const formData = new FormData();
     formData.append('file', new Blob([validPdfBuffer], { type: 'application/pdf' }), 'test.pdf');
@@ -168,7 +167,7 @@ describe('POST /api/content/import-file Route Handler', () => {
     const { requireRole } = await import('@/lib/auth');
     vi.mocked(requireRole).mockResolvedValueOnce({
       profile: { id: 'usr-1', org_id: 'org-1', role: 'creator', email: 'c@test.com', full_name: 'Creator' },
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof requireRole>>);
 
     const formData = new FormData();
     formData.append('file', new Blob(['console.log(1)'], { type: 'text/javascript' }), 'script.js');

@@ -53,7 +53,7 @@ describe('Stage A: Demo Mode and Demo User Protection', () => {
 
   describe('assertUserMutationAllowed', () => {
     it('blocks mutations on canonical demo users and records audit log', async () => {
-      const logAuditSpy = vi.spyOn(auditModule, 'logAudit').mockResolvedValue({} as any);
+      const logAuditSpy = vi.spyOn(auditModule, 'logAudit').mockResolvedValue({ id: 'audit-1' } as unknown as Awaited<ReturnType<typeof auditModule.logAudit>>);
 
       const result = await assertUserMutationAllowed({
         targetEmail: 'creator@verdant.demo',
@@ -77,7 +77,7 @@ describe('Stage A: Demo Mode and Demo User Protection', () => {
     });
 
     it('allows mutations on non-demo accounts without audit block', async () => {
-      const logAuditSpy = vi.spyOn(auditModule, 'logAudit').mockResolvedValue({} as any);
+      const logAuditSpy = vi.spyOn(auditModule, 'logAudit').mockResolvedValue({ id: 'audit-1' } as unknown as Awaited<ReturnType<typeof auditModule.logAudit>>);
 
       const result = await assertUserMutationAllowed({
         targetEmail: 'new-teammate@verdant.com',

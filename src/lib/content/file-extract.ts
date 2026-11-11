@@ -54,8 +54,18 @@ export async function extractTextFromDocx(buffer: Buffer): Promise<string> {
   return result.value || '';
 }
 
+interface PDFParseInstance {
+  getText: (options?: { pageJoiner?: string }) => Promise<{ text?: string }>;
+  destroy?: () => Promise<void> | void;
+}
+
+interface PDFModuleShape {
+  PDFParse?: new (options: { data: Buffer | Uint8Array }) => PDFParseInstance;
+  default?: (buffer: Buffer) => Promise<{ text?: string }>;
+}
+
 export async function extractTextFromPdf(buffer: Buffer): Promise<string> {
-  const pdfModule: any = await import('pdf-parse');
+  const pdfModule = (await import('pdf-parse')) as unknown as PDFModuleShape;
 
   if (pdfModule.PDFParse) {
     const parser = new pdfModule.PDFParse({ data: buffer });
@@ -75,7 +85,8 @@ export async function extractTextFromPdf(buffer: Buffer): Promise<string> {
   }
 
   if (typeof pdfModule === 'function') {
-    const res = await pdfModule(buffer);
+    const fn = pdfModule as unknown as (b: Buffer) => Promise<{ text?: string }>;
+    const res = await fn(buffer);
     return res.text || '';
   }
 

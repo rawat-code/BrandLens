@@ -360,7 +360,6 @@ async function main() {
     `);
     
     // Poll DB for version update
-    let versionUpdated = false;
     for (let i = 0; i < 15; i++) {
       await sleep(1000);
       const { data: contentAfterAccept } = await supabase
@@ -369,7 +368,6 @@ async function main() {
         .eq('id', contentId)
         .single();
       if ((contentAfterAccept?.current_version || 1) >= 2) {
-        versionUpdated = true;
         console.log(`Version incremented to ${contentAfterAccept?.current_version} at ${i + 1}s.`);
         break;
       }
@@ -416,7 +414,6 @@ async function main() {
     `);
 
     // Poll DB for status transition to in_review
-    let statusInReview = false;
     for (let i = 0; i < 15; i++) {
       await sleep(1000);
       const { data: contentAfterSubmit } = await supabase
@@ -425,7 +422,6 @@ async function main() {
         .eq('id', contentId)
         .single();
       if (contentAfterSubmit?.status === 'in_review') {
-        statusInReview = true;
         console.log(`Status changed to in_review at ${i + 1}s.`);
         break;
       }

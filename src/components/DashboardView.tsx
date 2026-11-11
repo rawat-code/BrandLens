@@ -29,6 +29,7 @@ interface DashboardViewProps {
 export function DashboardView({
   initialContents,
   reviewQueue,
+  profile,
   canCreate,
   isCreator,
   isApprover,

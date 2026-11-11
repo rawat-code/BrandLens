@@ -30,7 +30,7 @@ describe('Concurrency & Optimistic Locking (409 Conflict)', () => {
 
       vi.mocked(requireRole).mockResolvedValueOnce({
         profile: { id: 'mgr-1', org_id: 'org-1', role: 'manager', email: 'm@verdant.demo', full_name: 'Manager' },
-      } as any);
+      } as unknown as Awaited<ReturnType<typeof requireRole>>);
 
       const mockAdmin = {
         from: vi.fn().mockReturnValue({
@@ -52,7 +52,7 @@ describe('Concurrency & Optimistic Locking (409 Conflict)', () => {
           }),
         }),
       };
-      vi.mocked(getAdminClient).mockReturnValue(mockAdmin as any);
+      vi.mocked(getAdminClient).mockReturnValue(mockAdmin as unknown as ReturnType<typeof getAdminClient>);
 
       const req = new NextRequest('http://localhost:3000/api/content/cnt-1/transition', {
         method: 'POST',
@@ -75,7 +75,7 @@ describe('Concurrency & Optimistic Locking (409 Conflict)', () => {
 
       vi.mocked(requireRole).mockResolvedValueOnce({
         profile: { id: 'mgr-1', org_id: 'org-1', role: 'manager', email: 'm@verdant.demo', full_name: 'Manager' },
-      } as any);
+      } as unknown as Awaited<ReturnType<typeof requireRole>>);
 
       const mockAdmin = {
         from: vi.fn((table: string) => {
@@ -129,7 +129,7 @@ describe('Concurrency & Optimistic Locking (409 Conflict)', () => {
           return {};
         }),
       };
-      vi.mocked(getAdminClient).mockReturnValue(mockAdmin as any);
+      vi.mocked(getAdminClient).mockReturnValue(mockAdmin as unknown as ReturnType<typeof getAdminClient>);
 
       const req = new NextRequest('http://localhost:3000/api/content/cnt-1/transition', {
         method: 'POST',
@@ -152,7 +152,7 @@ describe('Concurrency & Optimistic Locking (409 Conflict)', () => {
 
       vi.mocked(requireRole).mockResolvedValueOnce({
         profile: { id: 'usr-1', org_id: 'org-1', role: 'creator', email: 'c@verdant.demo', full_name: 'Creator' },
-      } as any);
+      } as unknown as Awaited<ReturnType<typeof requireRole>>);
 
       const mockAdmin = {
         from: vi.fn((table: string) => {
@@ -188,7 +188,7 @@ describe('Concurrency & Optimistic Locking (409 Conflict)', () => {
           return {};
         }),
       };
-      vi.mocked(getAdminClient).mockReturnValue(mockAdmin as any);
+      vi.mocked(getAdminClient).mockReturnValue(mockAdmin as unknown as ReturnType<typeof getAdminClient>);
 
       const req = new NextRequest('http://localhost:3000/api/findings/fnd-1/accept', {
         method: 'POST',
@@ -208,7 +208,7 @@ describe('Concurrency & Optimistic Locking (409 Conflict)', () => {
 
       vi.mocked(requireRole).mockResolvedValueOnce({
         profile: { id: 'usr-1', org_id: 'org-1', role: 'creator', email: 'c@verdant.demo', full_name: 'Creator' },
-      } as any);
+      } as unknown as Awaited<ReturnType<typeof requireRole>>);
 
       const mockAdmin = {
         from: vi.fn((table: string) => {
@@ -243,7 +243,7 @@ describe('Concurrency & Optimistic Locking (409 Conflict)', () => {
           return {};
         }),
       };
-      vi.mocked(getAdminClient).mockReturnValue(mockAdmin as any);
+      vi.mocked(getAdminClient).mockReturnValue(mockAdmin as unknown as ReturnType<typeof getAdminClient>);
 
       const req = new NextRequest('http://localhost:3000/api/findings/fnd-1/dispute', {
         method: 'POST',

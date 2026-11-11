@@ -382,14 +382,6 @@ export function Note({
                   </Button>
                 </>
               )}
-                      onEditThenAccept?.(f);
-                    }}
-                    disabled={isProcessingAction}
-                  >
-                    Edit
-                  </Button>
-                </>
-              )}
 
               <Button
                 variant="ghost"

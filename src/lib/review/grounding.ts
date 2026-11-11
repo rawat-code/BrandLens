@@ -6,11 +6,7 @@
 
 // Pure synchronous SHA-256 implementation
 function sha256Sync(ascii: string): string {
-  const mathPow = Math.pow;
-  const maxWord = mathPow(2, 32);
   const lengthProperty = 'length';
-  let i = 0;
-  let j = 0;
   let result = '';
 
   const words: number[] = [];
@@ -32,7 +28,6 @@ function sha256Sync(ascii: string): string {
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
   ];
 
-  let compositeClearHex = '';
   for (let idx = 0; idx < ascii[lengthProperty]; idx++) {
     const code = ascii.charCodeAt(idx);
     words[idx >> 2] |= (code & 0xff) << (24 - (idx % 4) * 8);

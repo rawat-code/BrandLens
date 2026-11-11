@@ -5,8 +5,8 @@ import { getSessionProfile } from '@/lib/auth';
 import { getAdminClient } from '@/lib/supabase/admin';
 import { AppShell } from '@/components/AppShell';
 import { calculateInsights } from '@/lib/insights/aggregation';
-import { detectConflicts, type PossibleConflict } from '@/lib/insights/conflicts';
-import { calculateProposalImpact, type ProposalImpactResult } from '@/lib/insights/impact';
+import { detectConflicts } from '@/lib/insights/conflicts';
+import { calculateProposalImpact } from '@/lib/insights/impact';
 import { InsightsClientView } from '@/components/insights/InsightsClientView';
 import type {
   Finding,
