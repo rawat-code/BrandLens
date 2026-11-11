@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import type { Finding } from '@/lib/types';
+import { computeWordDiff } from '@/lib/diff';
 
 export interface NoteProps {
   finding: Finding;
@@ -259,19 +260,25 @@ export function Note({
       {/* Suggestion Block: Diff & Intent line */}
       {f.suggestion && (
         <div className="space-y-2 pt-2 border-t border-[#ddd5c4]">
-          <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center justify-between text-xs flex-wrap gap-1">
             <span className="font-mono text-[11px] uppercase tracking-[0.04em] text-[#5e574c]">
               Suggested correction
             </span>
 
             {/* Intent line */}
             {f.intent_check === 'preserved' ? (
-              <span className="font-mono text-[11px] font-medium text-[#1f6b3a] flex items-center gap-1">
-                <span>Meaning preserved</span>
+              <span className="inline-flex items-center gap-1 font-mono text-[11px] font-medium text-[#1f6b3a] bg-[#f0f9f3] px-1.5 py-0.5 border border-[#1f6b3a]">
+                <svg className="w-3 h-3 text-[#1f6b3a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Intent Preserved</span>
               </span>
             ) : f.intent_check === 'changed' ? (
-              <span className="font-mono text-[11px] font-medium text-[#8a5a00] flex items-center gap-1">
-                <span>Meaning may have changed</span>
+              <span className="inline-flex items-center gap-1 font-mono text-[11px] font-medium text-[#8a5a00] bg-[#fef9ec] px-1.5 py-0.5 border border-[#8a5a00]">
+                <svg className="w-3 h-3 text-[#8a5a00]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>Intent Changed</span>
               </span>
             ) : null}
           </div>
@@ -286,11 +293,55 @@ export function Note({
             </div>
           </div>
 
-          {f.intent_note && (
+          {/* What changed: word-level chips */}
+          {(() => {
+            if (!f.excerpt) return null;
+            const diffs = computeWordDiff(f.excerpt, f.suggestion);
+            const added = diffs.filter((d) => d.type === 'insert' && d.value.trim().length > 0);
+            const removed = diffs.filter((d) => d.type === 'delete' && d.value.trim().length > 0);
+
+            if (added.length === 0 && removed.length === 0) return null;
+
+            return (
+              <div className="space-y-1 pt-0.5">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-[#5e574c] block">
+                  What changed:
+                </span>
+                <div className="flex flex-wrap gap-1.5 items-center">
+                  {removed.map((r, i) => (
+                    <span
+                      key={`rem-${i}`}
+                      className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono bg-[#fdf2f2] text-[#b3261e] border border-[#b3261e] line-through"
+                    >
+                      - {r.value.trim()}
+                    </span>
+                  ))}
+                  {added.map((a, i) => (
+                    <span
+                      key={`add-${i}`}
+                      className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono bg-[#f0f9f3] text-[#1f6b3a] border border-[#1f6b3a]"
+                    >
+                      + {a.value.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Intent Reasons / Notes */}
+          {Array.isArray(f.intent_reasons) && f.intent_reasons.length > 0 ? (
+            <div className="p-2 bg-[#fef9ec] border border-[#8a5a00] text-[11px] font-mono text-[#8a5a00] space-y-0.5">
+              <span className="font-semibold block uppercase text-[10px]">Guard analysis:</span>
+              {f.intent_reasons.map((r, i) => (
+                <div key={i}>• {String(r)}</div>
+              ))}
+            </div>
+          ) : f.intent_note ? (
             <p className="text-[12px] text-[#5e574c] italic">
               Note: {f.intent_note}
             </p>
-          )}
+          ) : null}
         </div>
       )}
 
@@ -304,13 +355,18 @@ export function Note({
                   <Button
                     variant="primary"
                     size="sm"
+                    className={
+                      f.intent_check === 'changed'
+                        ? 'bg-[#8a5a00] hover:bg-[#8a5a00]/90 border-[#8a5a00]'
+                        : ''
+                    }
                     onClick={(e) => {
                       e.stopPropagation();
                       onAccept?.(f);
                     }}
                     disabled={isProcessingAction}
                   >
-                    Accept
+                    {f.intent_check === 'changed' ? 'Accept anyway...' : 'Accept'}
                   </Button>
 
                   <Button
@@ -318,6 +374,14 @@ export function Note({
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
+                      onEditThenAccept?.(f);
+                    }}
+                    disabled={isProcessingAction}
+                  >
+                    Edit
+                  </Button>
+                </>
+              )}
                       onEditThenAccept?.(f);
                     }}
                     disabled={isProcessingAction}

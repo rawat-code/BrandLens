@@ -4,6 +4,7 @@ import { redact } from '@/lib/review/redact';
 import { retrieve } from '@/lib/review/retrieve';
 import { judgeContentWithAi } from '@/lib/review/judge';
 import { enrichFindingsWithSuggestionsAndIntent } from '@/lib/review/suggest';
+import { checkIntent } from '@/lib/review/intent-guard';
 import { logAudit } from '@/lib/audit';
 import type { Finding, Content, ContentVersion, Guideline, Fact, Term } from '@/lib/types';
 
@@ -174,6 +175,20 @@ export async function runReview(contentId: string, actorId: string): Promise<Rev
     } catch (enrichErr) {
       console.warn('Intent check failed, keeping existing findings:', (enrichErr as Error).message);
     }
+  } else if (content.confidential) {
+    // For confidential drafts, fixed rules & deterministic intent guard alone decide
+    combinedFindings = combinedFindings.map((f) => {
+      if (f.suggestion && f.excerpt) {
+        const guard = checkIntent(f.excerpt, f.suggestion);
+        return {
+          ...f,
+          intent_check: guard.verdict,
+          intent_reasons: guard.reasons,
+          intent_note: 'Checked by fixed rules only: meaning preserved.',
+        };
+      }
+      return f;
+    });
   }
 
   // 7. Persist findings to database (replace previous for this version)

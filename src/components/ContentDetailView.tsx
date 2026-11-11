@@ -101,6 +101,10 @@ export function ContentDetailView({
   const [customSuggestionText, setCustomSuggestionText] = useState('');
   const [isProcessingAction, setIsProcessingAction] = useState(false);
 
+  // Intent override modal state (Accept anyway)
+  const [intentOverrideFinding, setIntentOverrideFinding] = useState<Finding | null>(null);
+  const [intentOverrideReason, setIntentOverrideReason] = useState('');
+
   // History diff selection
   const [diffCompareVersion, setDiffCompareVersion] = useState<number>(
     versions.length > 1 ? versions[1].version : 1
@@ -269,20 +273,30 @@ export function ContentDetailView({
     }
   };
 
-  // Accept Finding Suggestion
-  const handleAcceptFinding = async (finding: Finding) => {
+  // Accept Finding Suggestion (with override protection if intent changed)
+  const handleAcceptFinding = async (finding: Finding, overrideReason?: string) => {
+    // If meaning changed and no justification is provided yet, prompt for override reason
+    if (finding.intent_check === 'changed' && !overrideReason) {
+      setIntentOverrideFinding(finding);
+      setIntentOverrideReason('');
+      return;
+    }
+
     setIsProcessingAction(true);
     try {
       const res = await fetch(`/api/findings/${finding.id}/accept`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          override_reason: overrideReason || undefined,
+        }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to accept finding');
 
       setFindings((prev) =>
-        prev.map((f) => (f.id === finding.id ? { ...f, status: 'accepted' as const } : f))
+        prev.map((f) => (f.id === finding.id ? { ...f, status: 'accepted' as const, intent_override_reason: overrideReason } : f))
       );
 
       if (data.new_version) {
@@ -292,10 +306,18 @@ export function ContentDetailView({
         setEditorBody(data.new_version.body);
       }
 
+      setIntentOverrideFinding(null);
+      setIntentOverrideReason('');
+
       setReRunPromptMessage(
         `Applied fix for ${finding.category}. Version ${data.new_version?.version || 'created'}. Re-run review to audit.`
       );
-      setBannerMessage({ text: 'Suggestion accepted and draft version updated.', type: 'success' });
+      setBannerMessage({
+        text: overrideReason
+          ? 'Suggestion accepted with logged intent override.'
+          : 'Suggestion accepted and draft version updated.',
+        type: 'success',
+      });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to accept finding';
       setBannerMessage({ text: msg, type: 'error' });
@@ -1100,6 +1122,78 @@ export function ContentDetailView({
             </Button>
           </div>
         </form>
+      </Dialog>
+
+      {/* INTENT OVERRIDE JUSTIFICATION DIALOG (Accept Anyway) */}
+      <Dialog
+        isOpen={Boolean(intentOverrideFinding)}
+        onClose={() => {
+          setIntentOverrideFinding(null);
+          setIntentOverrideReason('');
+        }}
+        title="Accept with intent override"
+        description="This suggestion was flagged because it alters the original meaning or voice. An explicit justification is required to accept this change into the audit trail."
+      >
+        {intentOverrideFinding && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (intentOverrideFinding && intentOverrideReason.trim()) {
+                handleAcceptFinding(intentOverrideFinding, intentOverrideReason.trim());
+              }
+            }}
+            className="space-y-4"
+          >
+            <div className="p-3 bg-[#fef9ec] border border-[#8a5a00] text-xs font-mono text-[#8a5a00] space-y-1">
+              <span className="font-semibold block uppercase text-[10px]">Guard analysis:</span>
+              {Array.isArray(intentOverrideFinding.intent_reasons) && intentOverrideFinding.intent_reasons.length > 0 ? (
+                intentOverrideFinding.intent_reasons.map((r, i) => <div key={i}>• {String(r)}</div>)
+              ) : (
+                <div>• {intentOverrideFinding.intent_note || 'Suggestion alters original phrasing or claims'}</div>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="intent-override-reason" className="block text-[11px] font-mono uppercase tracking-wider text-[#5e574c] mb-1.5">
+                Override justification (required)
+              </label>
+              <Textarea
+                id="intent-override-reason"
+                required
+                rows={3}
+                value={intentOverrideReason}
+                onChange={(e) => setIntentOverrideReason(e.target.value)}
+                placeholder="State why altering original meaning is acceptable for compliance..."
+                autoFocus
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIntentOverrideFinding(null);
+                  setIntentOverrideReason('');
+                }}
+                disabled={isProcessingAction}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                className="bg-[#8a5a00] hover:bg-[#8a5a00]/90 border-[#8a5a00]"
+                disabled={!intentOverrideReason.trim() || isProcessingAction}
+                isLoading={isProcessingAction}
+              >
+                Confirm accept anyway
+              </Button>
+            </div>
+          </form>
+        )}
       </Dialog>
     </div>
   );

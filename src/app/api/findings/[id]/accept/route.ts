@@ -58,6 +58,24 @@ export async function POST(
       return NextResponse.json({ error: 'This finding has no suggestion to apply' }, { status: 400 });
     }
 
+    const overrideReason =
+      typeof requestJson.override_reason === 'string' && requestJson.override_reason.trim()
+        ? requestJson.override_reason.trim()
+        : typeof requestJson.intent_override_reason === 'string' && requestJson.intent_override_reason.trim()
+        ? requestJson.intent_override_reason.trim()
+        : null;
+
+    // Enforce justification override if intent may have changed
+    if (finding.intent_check === 'changed' && !overrideReason) {
+      return NextResponse.json(
+        {
+          error:
+            'This suggestion alters original meaning. An explicit override justification is required to accept anyway.',
+        },
+        { status: 400 }
+      );
+    }
+
     // 4. Fetch current version body
     const { data: versionData, error: versionError } = await admin
       .from('content_versions')
@@ -123,18 +141,21 @@ export async function POST(
       .update({
         status: 'accepted',
         suggestion: appliedSuggestion,
+        intent_override_reason: overrideReason,
       })
       .eq('id', finding.id);
 
     // 9. Log audit
+    const actionName = overrideReason ? 'finding.accept_override' : 'finding.accept';
     await logAudit({
       org_id: content.org_id,
       actor: profile.id,
-      action: 'finding.accept',
+      action: actionName,
       content_id: content.id,
       detail: {
         finding_id: finding.id,
         rule_key: finding.rule_key,
+        override_reason: overrideReason,
         previous_version: content.current_version,
         new_version: nextVersion,
       },

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { Finding } from '@/lib/types';
 import { callGeminiJson } from '@/lib/ai/gemini';
+import { checkIntent } from './intent-guard';
 
 export interface IntentCheckItem {
   id: string;
@@ -156,7 +157,7 @@ export async function enrichFindingsWithSuggestionsAndIntent(
     });
   }
 
-  // 2. Identify findings with suggestions for batched intent check
+  // 2. Identify findings with suggestions for dual-pass intent check
   const intentCheckItems: IntentCheckItem[] = [];
 
   enrichedFindings.forEach((f, idx) => {
@@ -177,19 +178,49 @@ export async function enrichFindingsWithSuggestionsAndIntent(
   try {
     const intentResults = await runBatchedIntentCheck(intentCheckItems);
     return enrichedFindings.map((f, idx) => {
+      if (!f.suggestion || !f.excerpt) return f;
       const itemId = `f-${idx}`;
-      const res = intentResults.get(itemId);
-      if (res) {
+      const guard = checkIntent(f.excerpt, f.suggestion);
+      const aiRes = intentResults.get(itemId);
+
+      // Dual-pass enforcement: verdict is 'preserved' ONLY IF both guard AND AI confirm
+      let finalVerdict: 'preserved' | 'changed' = 'preserved';
+      const reasons = [...guard.reasons];
+
+      if (guard.verdict === 'changed') {
+        finalVerdict = 'changed';
+      }
+      if (aiRes && aiRes.verdict === 'changed') {
+        finalVerdict = 'changed';
+        if (aiRes.note && !reasons.includes(aiRes.note)) {
+          reasons.push(aiRes.note);
+        }
+      }
+
+      const note =
+        aiRes?.note ||
+        (reasons.length > 0 ? reasons.join('; ') : 'Meaning preserved.');
+
+      return {
+        ...f,
+        intent_check: finalVerdict,
+        intent_reasons: reasons,
+        intent_note: note,
+      };
+    });
+  } catch (err) {
+    console.warn('Batched intent check failed, falling back to deterministic guard:', (err as Error).message);
+    return enrichedFindings.map((f) => {
+      if (f.suggestion && f.excerpt) {
+        const guard = checkIntent(f.excerpt, f.suggestion);
         return {
           ...f,
-          intent_check: res.verdict,
-          intent_note: res.note,
+          intent_check: guard.verdict,
+          intent_reasons: guard.reasons,
+          intent_note: guard.reasons.join('; ') || 'Checked by deterministic guard.',
         };
       }
       return f;
     });
-  } catch (err) {
-    console.warn('Batched intent check failed, preserving existing suggestions:', (err as Error).message);
-    return enrichedFindings;
   }
 }
