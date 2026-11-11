@@ -5,12 +5,15 @@ import { getSessionProfile } from '@/lib/auth';
 import { getAdminClient } from '@/lib/supabase/admin';
 import { AppShell } from '@/components/AppShell';
 import { calculateInsights } from '@/lib/insights/aggregation';
+import { detectConflicts, type PossibleConflict } from '@/lib/insights/conflicts';
+import { calculateProposalImpact, type ProposalImpactResult } from '@/lib/insights/impact';
 import { InsightsClientView } from '@/components/insights/InsightsClientView';
 import type {
   Finding,
   Content,
   Profile,
   Fact,
+  Term,
   Guideline,
   GuidelineProposal,
 } from '@/lib/types';
@@ -76,6 +79,7 @@ export default async function InsightsPage() {
     profilesRes,
     guidelinesRes,
     factsRes,
+    termsRes,
     proposalsRes,
   ] = await Promise.all([
     admin.from('contents').select('*').eq('org_id', orgId),
@@ -83,6 +87,7 @@ export default async function InsightsPage() {
     admin.from('profiles').select('*').eq('org_id', orgId),
     admin.from('guidelines').select('*').eq('org_id', orgId).order('title'),
     admin.from('facts').select('*').eq('org_id', orgId),
+    admin.from('terms').select('*').eq('org_id', orgId),
     admin.from('guideline_proposals').select('*').eq('org_id', orgId).order('created_at', { ascending: false }),
   ]);
 
@@ -91,6 +96,7 @@ export default async function InsightsPage() {
   const profiles = (profilesRes.data || []) as Profile[];
   const guidelines = (guidelinesRes.data || []) as Guideline[];
   const facts = (factsRes.data || []) as Fact[];
+  const terms = (termsRes.data || []) as Term[];
   const proposals = (proposalsRes.data || []) as GuidelineProposal[];
 
   // Filter findings belonging to contents of this organization
@@ -107,6 +113,23 @@ export default async function InsightsPage() {
     proposals,
   });
 
+  // Detect potential contradictions across guidelines, clinical facts, and terms
+  const possibleConflicts = detectConflicts({ guidelines, facts, terms });
+
+  // Compute empirical before-and-after impact for applied proposals
+  const proposalsWithImpact = proposals
+    .filter((p) => p.status === 'approved' && p.applied_at)
+    .map((p) => {
+      const relatedFindings = p.rule_key
+        ? orgFindings.filter((f) => f.rule_key === p.rule_key)
+        : orgFindings;
+      const impact = calculateProposalImpact({
+        appliedAt: p.applied_at,
+        findings: relatedFindings,
+      });
+      return { proposal: p, impact };
+    });
+
   const isDemoActive = contents.some((c) => c.title && c.title.includes('[Demo History]'));
 
   return (
@@ -117,6 +140,8 @@ export default async function InsightsPage() {
         userRole={profile.role}
         isDemoHistoryActive={isDemoActive}
         orgName={profile.org_name}
+        possibleConflicts={possibleConflicts}
+        proposalsWithImpact={proposalsWithImpact}
       />
     </AppShell>
   );

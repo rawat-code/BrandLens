@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import type { Guideline, Fact, Term, Profile } from '@/lib/types';
+import type { Guideline, Fact, Term, Profile, GuidelineVersion } from '@/lib/types';
 import type { User } from '@supabase/supabase-js';
+import { computeWordDiff } from '@/lib/diff';
 import {
   parseGuidelinesMarkdown,
   type ParsedGuideline,
@@ -64,6 +65,30 @@ export function LibraryManager({
     title: string;
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Guideline revision history modal state
+  const [historyGuideline, setHistoryGuideline] = useState<Guideline | null>(null);
+  const [historyVersions, setHistoryVersions] = useState<GuidelineVersion[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+
+  const openHistoryModal = async (g: Guideline) => {
+    setHistoryGuideline(g);
+    setHistoryVersions([]);
+    setIsLoadingHistory(true);
+    setHistoryError(null);
+
+    try {
+      const res = await fetch(`/api/guidelines/${g.id}/versions`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to fetch guideline versions');
+      setHistoryVersions(data.versions || []);
+    } catch (err: unknown) {
+      setHistoryError((err as Error).message);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
 
   // Form fields
   const [gTitle, setGTitle] = useState('');
@@ -498,32 +523,41 @@ export function LibraryManager({
                     <td className="px-5 py-3.5 align-top font-mono text-[12px] text-[#5e574c] whitespace-nowrap">
                       v{g.version}
                     </td>
-                    {isAdmin && (
-                      <td className="px-5 py-3.5 align-top text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-3 text-xs">
-                          <button
-                            type="button"
-                            onClick={() => openEditModal(g)}
-                            className="font-medium text-[#1f1c18] underline underline-offset-2 hover:text-[#5e574c] cursor-pointer"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setDeleteTarget({
-                                type: 'guidelines',
-                                id: g.id,
-                                title: g.title,
-                              })
-                            }
-                            className="font-medium text-[#b3261e] underline underline-offset-2 hover:opacity-75 cursor-pointer"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    )}
+                    <td className="px-5 py-3.5 align-top text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-3 text-xs">
+                        <button
+                          type="button"
+                          onClick={() => openHistoryModal(g)}
+                          className="font-medium text-[#1f1c18] underline underline-offset-2 hover:text-[#5e574c] cursor-pointer"
+                        >
+                          History
+                        </button>
+                        {isAdmin && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(g)}
+                              className="font-medium text-[#1f1c18] underline underline-offset-2 hover:text-[#5e574c] cursor-pointer"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setDeleteTarget({
+                                  type: 'guidelines',
+                                  id: g.id,
+                                  title: g.title,
+                                })
+                              }
+                              className="font-medium text-[#b3261e] underline underline-offset-2 hover:opacity-75 cursor-pointer"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -1099,6 +1133,133 @@ export function LibraryManager({
                 isLoading={isImporting}
               >
                 {isImporting ? 'Importing...' : `Import ${parsedGuidelines.length} guidelines`}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Dialog>
+
+      {/* GUIDELINE REVISION HISTORY & DIFF DIALOG */}
+      <Dialog
+        isOpen={Boolean(historyGuideline)}
+        onClose={() => {
+          setHistoryGuideline(null);
+          setHistoryVersions([]);
+        }}
+        title={`Guideline revision history: ${historyGuideline?.title || ''}`}
+        description={`Current version v${historyGuideline?.version || 1} · Category: ${historyGuideline?.category || 'general'}`}
+      >
+        {historyGuideline && (
+          <div className="space-y-4 text-xs">
+            {isLoadingHistory ? (
+              <div className="p-8 text-center text-[#5e574c] font-mono">
+                Loading version history...
+              </div>
+            ) : historyError ? (
+              <div className="p-3 bg-[#fffdf8] border border-[#b3261e] text-[#b3261e]">
+                {historyError}
+              </div>
+            ) : historyVersions.length === 0 ? (
+              <div className="p-6 bg-[#f5f1e8] border border-[#ddd5c4] space-y-2">
+                <span className="font-mono text-[11px] uppercase tracking-wider font-semibold text-[#1f1c18] block">
+                  Version 1 (Initial Baseline)
+                </span>
+                <p className="text-[#5e574c] leading-relaxed">
+                  {historyGuideline.body}
+                </p>
+                {historyGuideline.clarification && (
+                  <div className="p-2 bg-[#fffdf8] border border-[#ddd5c4] mt-2">
+                    <span className="font-mono text-[10px] text-[#1f1c18] uppercase block">Clarification:</span>
+                    <span className="text-[#5e574c]">{historyGuideline.clarification}</span>
+                  </div>
+                )}
+                <p className="text-[11px] text-[#5e574c] italic pt-1">
+                  This guideline is at its initial revision. When clarification proposals are approved, version snapshots and word-level diffs will appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                {historyVersions.map((v, idx) => {
+                  const prevVer = historyVersions[idx + 1];
+                  const currentText = `${v.body}\n${v.clarification || ''}`;
+                  const prevText = prevVer ? `${prevVer.body}\n${prevVer.clarification || ''}` : null;
+                  const diffs = prevText ? computeWordDiff(prevText, currentText) : [];
+
+                  return (
+                    <div key={v.id || idx} className="p-4 bg-[#fbf9f4] border border-[#ddd5c4] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[11px] uppercase font-semibold text-[#1f1c18] bg-[#fffdf8] px-1.5 py-0.5 border border-[#ddd5c4]">
+                            v{v.version}
+                          </span>
+                          <span className="text-[#5e574c] font-mono text-[10px]">
+                            {v.created_at ? new Date(v.created_at).toLocaleDateString() : 'Baseline'}
+                          </span>
+                        </div>
+                        {v.change_note && (
+                          <span className="text-[11px] text-[#5e574c] italic">
+                            {v.change_note}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-[#1f1c18] leading-relaxed">
+                        {v.body}
+                      </p>
+
+                      {v.clarification && (
+                        <div className="p-2.5 bg-[#fffdf8] border border-[#ddd5c4] text-xs">
+                          <strong className="font-mono text-[10px] uppercase text-[#1f1c18] block mb-0.5">
+                            Application guidance:
+                          </strong>
+                          <span className="text-[#5e574c]">{v.clarification}</span>
+                        </div>
+                      )}
+
+                      {/* Word diff with previous revision */}
+                      {prevText && diffs.length > 0 && (
+                        <div className="space-y-1 pt-1 border-t border-[#ddd5c4]">
+                          <span className="font-mono text-[10px] uppercase tracking-wider text-[#5e574c] block">
+                            Word diff vs v{prevVer.version}:
+                          </span>
+                          <div className="p-2.5 bg-[#f5f1e8] border border-[#ddd5c4] font-mono text-[11px] leading-relaxed break-words">
+                            {diffs.map((d, dIdx) => {
+                              if (d.type === 'insert') {
+                                return (
+                                  <span key={dIdx} className="bg-[#d4edda] text-[#155724] px-0.5">
+                                    {d.value}
+                                  </span>
+                                );
+                              }
+                              if (d.type === 'delete') {
+                                return (
+                                  <span key={dIdx} className="bg-[#f8d7da] text-[#721c24] line-through px-0.5">
+                                    {d.value}
+                                  </span>
+                                );
+                              }
+                              return <span key={dIdx}>{d.value}</span>;
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setHistoryGuideline(null);
+                  setHistoryVersions([]);
+                }}
+              >
+                Close
               </Button>
             </div>
           </div>
