@@ -1,5 +1,8 @@
 # BrandLens: Final Verification & Hand-Off Report
 
+> **Last verified against code:** 2026-11-07  
+> **Note:** For the final audited Round 2 deliverables, see [`docs/PLAN_VS_BUILT.md`](docs/PLAN_VS_BUILT.md) and [`docs/SUBMISSION_SUMMARY.md`](docs/SUBMISSION_SUMMARY.md).
+
 This report summarizes the outcome of the comprehensive 8-stage final polish and end-to-end verification run for **BrandLens** (Inkloom AI Hackathon Round 2 build), adhering strictly to [`AGENTS.md`](AGENTS.md).
 
 ---
@@ -57,7 +60,7 @@ Log in to your **Vercel Dashboard** > **BrandLens Project** > **Settings** > **E
 - `GEMINI_API_KEY`
 - `GEMINI_MODEL` (e.g. `gemini-3.5-flash-lite` or `gemini-1.5-flash`)
 - `GEMINI_FALLBACK_MODEL` (e.g. `gemini-3.1-flash-lite` or `gemini-1.5-flash-8b`)
-- `DEMO_PASSWORD` (`verdant12110`)
+- `DEMO_PASSWORD` (provided in the submission form)
 
 ### Step 3: Run Database Cleanup & Seed on Production
 If you want the production Supabase database to mirror the clean showcase data:
@@ -98,4 +101,4 @@ npm run seed
 Submit your project on the Inkloom AI Hackathon portal with:
 - Public GitHub repository link
 - Live Vercel deployment link
-- Admin demo credentials (`admin@verdant.demo` / `verdant12110`)
+- Admin demo credentials (`admin@verdant.demo` / password provided in the submission form)

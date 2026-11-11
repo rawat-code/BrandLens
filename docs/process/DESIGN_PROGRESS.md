@@ -1,5 +1,7 @@
 # BrandLens: Redline UI Progress
 
+> Note (2026-11-07): Historical build progress log for Round 2. See [`docs/PLAN_VS_BUILT.md`](docs/PLAN_VS_BUILT.md) and [`docs/SUBMISSION_SUMMARY.md`](docs/SUBMISSION_SUMMARY.md) for final audited deliverables.
+
 - STAGE A - AUDIT: DONE
 - STAGE B - TOKENS, FONTS AND BASE COMPONENTS: DONE
 - STAGE C - SHELL AND COPY: DONE
