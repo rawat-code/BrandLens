@@ -1,0 +1,53 @@
+# BrandLens Round 3 Progress
+
+> Tracking implementation status across all Round 3 stages. Updated after every numbered item.
+
+- STAGE 0 - AUDIT AND MIGRATION: DONE - Completed Stage 0.1 audit; authored idempotent migration docs/migrations/003_round3.sql and docs/migrations/README.md; awaiting Supabase migration confirmation.
+- STAGE A - DEMO ACCESS ON THE LOGIN PAGE: PENDING - Demo credentials panel, DEMO_MODE protections, restore demo content button, and tests.
+- STAGE B - IMPROVEMENT 1 (FINDINGS BACKED BY SOURCES): PENDING - Citation metrics in ai_runs, source_hash and quote_verified, stale-source detection, and UI grounding panel.
+- STAGE C - IMPROVEMENT 2 (SUGGESTIONS KEEPING MEANING): PENDING - Pure deterministic intent-guard.ts, dual-pass check in suggest.ts, what-changed chips, and audit-logged accept-anyway overrides.
+- STAGE D - IMPROVEMENT 3 (GUIDELINE HEALTH CLOSED LOOP): PENDING - Guideline version history with diffs, before-and-after impact tracking with sample guard, and contradiction conflict detection.
+- STAGE E - SUPPORTED CONTENT FORMATS: PENDING - Server-side DOCX and PDF text import with mammoth and pdf-parse, memory-only handling, and 10,000 char limits.
+- STAGE F - JUDGE-PROOFING: PENDING - Role-aware onboarding card, sample post button, 409 concurrency protection, error boundaries, and full supabase/schema.sql.
+- STAGE G - TESTING RECORD AND DOCUMENTATION: PENDING - 10 browser journeys in docs/TESTING.md, CHANGELOG.md, PRIVACY_SECURITY.md, ACCESSIBILITY.md, and ROUND3_PDF_INPUT.md.
+- STAGE H - FINAL CHECKS: PENDING - Lint, test, build verification, temporary data cleanup, and FINAL_REPORT_R3.md.
+- PASS 2 - EXTENDED ENHANCEMENTS: PENDING - Extra [T2] items (B.6, B.7, C.4, C.5, D.6, D.7, E.2, G.7) awaiting user PASS2 instruction.
+
+---
+
+## Stage 0.1 Audit: What Exists vs. What is Missing
+
+### 1. Improvement 1: Findings Backed by Sources
+- **What Exists**:
+  - `src/lib/review/judge.ts`: AI prompt requires source citations (`source_type`, `source_id`, `source_quote`). Verifies quote substring against candidate texts.
+  - `src/lib/review/pipeline.ts`: Downgrades ungrounded findings to `needs_human_check = true` with source fields cleared.
+  - `eval/RESULTS.md`: 1.3% abstention rate measured.
+- **What is Missing**:
+  - Tracking of citation counts (`citations_total`, `citations_verified`, `citations_downgraded`) in `ai_runs`.
+  - Storing `source_version`, `source_hash` (SHA-256), and `quote_verified` on every finding.
+  - Stale-source detection: detecting if a library source changed or was deleted since the review and showing "Source changed since this review" / "Source no longer exists" with a re-run button.
+  - UI `[✓ Verified verbatim]` badge with distinct icon and text label.
+  - "Grounding" panel in AI disclosure tab displaying verification metrics.
+
+### 2. Improvement 2: Suggestions Keeping Creator's Meaning
+- **What Exists**:
+  - `src/lib/review/suggest.ts`: AI rewrite prompt and secondary Gemini intent check (`preserved` vs `changed`) with plain-English notes.
+  - `src/components/ContentDetailView.tsx`: Margin cards showing suggestions with intent badge (`Meaning preserved` / `Meaning may have changed`).
+  - `src/app/api/findings/[id]/accept/route.ts`: Non-destructive version creation `v(N+1)` upon human accept.
+- **What is Missing**:
+  - Pure deterministic module `src/lib/review/intent-guard.ts` checking numbers/percentages/prices/dates, URLs/@mentions/#hashtags, brand terms, negation words, length ratio (0.5–1.6), and promotional inflation.
+  - Dual-pass enforcement in `suggest.ts`: `preserved` requires guard pass AND AI confirmation. For confidential drafts, guard alone decides.
+  - Storing `intent_reasons` jsonb in findings.
+  - UI "What changed" chip diffs (added/removed words).
+  - "Accept anyway" workflow when intent is `changed`, requiring typed override justification stored in `intent_override_reason` and logged to `audit_log`.
+
+### 3. Improvement 3: Guideline Health as a Closed Loop
+- **What Exists**:
+  - `src/lib/insights/aggregation.ts` & `src/lib/insights/health.ts`: 30-day aggregations and ambiguity score calculation.
+  - `src/app/api/insights/proposals/generate/route.ts`: Gemini generates revised guideline wording based on disputes.
+  - `src/app/api/insights/proposals/[id]/decision/route.ts`: Role-based approval updating guideline text.
+- **What is Missing**:
+  - `guideline_versions` table tracking version history with change notes and diffs in `/library`.
+  - Impact tracking module computing before-and-after dispute/dismiss rates within 30-day windows around `applied_at`, with $<5$ finding "Not enough data yet" safety guard.
+  - Pure contradiction detection `src/lib/insights/conflicts.ts` surfacing "Possible conflicts" between guidelines, facts, and terms.
+  - Labeling all synthetic records with `is_demo = true` and rendering `[Demo Data]` badges.
