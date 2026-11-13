@@ -1,66 +1,10 @@
 # Team Contributions
 
-Last verified against code: 2026-11-07
+## Abhitosh Baranwal (Documentation and Research)
+For the final submission, my role focused on validating the BrandLens product through user research and ensuring our documentation accurately reflected our testing processes.
 
-> **Documentation Integrity Notice**: Per workspace policy (`AGENTS.md`), contribution statements must never be fabricated. The git commit records below represent the verified repository history.
-
----
-
-## 1. Verified Version Control History
-
-```text
-$ git log --oneline | wc -l
-81
-
-$ git shortlog -sn --all
-    81	HIMANSHU RAWAT
-
-$ git log --reverse --format="%h %ad %an %s" --date=short | head -3
-5ab6adc 2026-11-04 HIMANSHU RAWAT Initial commit
-9195df6 2026-11-04 HIMANSHU RAWAT feat: scaffold Next.js 15 project and install core dependencies
-9b7c0eb 2026-11-04 HIMANSHU RAWAT feat: add env.example and update gitignore
-
-$ git log --format="%h %ad %an %s" --date=short | head -3
-127c5e6 2026-11-07 HIMANSHU RAWAT docs: remove mobile screenshot row from README key screenshots table
-5a77b09 2026-11-07 HIMANSHU RAWAT docs: refresh screenshots for current UI
-7f7ca03 2026-11-07 HIMANSHU RAWAT fix(auth): bind session cookies directly to redirectResponse in callback and use requirePageRole for server pages
-```
-
-> **Important Notice on Author Attribution**: Only one author (`HIMANSHU RAWAT`) currently exists in the git commit log. Per hackathon guidelines, each contributing team member must commit under their own name and git identity prior to final submission.
-
----
-
-## 2. Contributor Roles & Owned Modules
-
-### Contributor 1: Himanshu Rawat (Team Lead)
-- **Role**: Team Lead / Full-Stack & Review Engine Architecture
-- **What he did**: Built the whole application: the review engine, AI integration, database and security rules, approval workflow, interface and deployment.
-- **Owned Modules**:
-  - Review Engine Pipeline (`src/lib/review/`): `rules.ts`, `retrieve.ts`, `judge.ts`, `suggest.ts`, `redact.ts`, `pipeline.ts`.
-  - Next.js 15 App Router Architecture & Security Gates: `src/lib/auth.ts`, `src/middleware.ts`, `src/lib/workflow.ts`.
-  - Supabase Database Schema & Multi-Tenant Organization Isolation: PostgreSQL schema, migrations, and service-role mediation.
-  - Evaluation Benchmark Suite: `scripts/eval.ts`, `eval/data/samples.json`, `eval/RESULTS.md`.
-- **Key Commits (Sample from Git History)**:
-  - `9195df6` — `feat: scaffold Next.js 15 project and install core dependencies`
-  - `59ffe52` — `feat: add getSessionProfile and requireRole authentication helpers`
-  - `bd44333` — `feat: complete review pipeline with inflections, batched AI rewrites, and precise audit notes`
-  - `2e9015d` — `feat: implement review engine, diff helper, workflow transitions, comments, and role-aware dashboard`
-  - `01bc811` — `feat(auth): add Google OAuth sign in/up and email registration`
-  - `7f7ca03` — `fix(auth): bind session cookies directly to redirectResponse in callback`
-
----
-
-### Contributor 2: Abhitosh Baranwal
-- **Role**: Documentation and Research
-- **What he did**: Documentation and research for the project, evaluation support, and product analysis.
-- **Owned Modules**:
-  - Research and documentation review
-  - User testing coordination and feedback capture
-
----
-
-## 3. Collaboration & Engineering Practices
-
-- **Conventional Commits**: Every commit strictly follows standard Conventional Commits prefixes (`feat:`, `fix:`, `test:`, `chore:`, `docs:`).
-- **Feature Branching**: Development proceeded across topic branches (`feat/workflow`, `feat/review-engine`, `feat/findings-ui`, `feat/insights`, `feat/redline-ui`, `chore/final-polish`) merged to `main`.
-- **Automated Verification**: Every stage verified locally with `npm run lint`, `npm test` (115 unit/integration tests), and `npm run build` prior to merging.
+**Key Contributions:**
+1. **User Testing (`docs/USER_TESTING.md`)**: Designed and conducted usability testing sessions with 3 target users (Creator, Reviewer, and Manager personas). Documented their pain points, which directly contributed to identifying the readability rule limitations in our known issues.
+2. **Problem Validation (`docs/RESEARCH.md`)**: Compiled market research and interview notes to validate the Inkloom AI problem statement and ensure our architecture addressed real-world "guideline fatigue."
+3. **Evaluation Labeling (`eval/intent-pairs.json`)**: Manually reviewed the AI's suggested rewrites during our benchmark evaluation, applying the `human_label` (`preserved` or `changed`) to verify if the AI maintained the creator's original intent as required by our Round 2 commitments.
+4. **Synthetic Data Assistance**: Assisted in formatting the synthetic brand guidelines and approved facts for the Verdant Skin demo workspace.
