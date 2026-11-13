@@ -1,0 +1,23 @@
+[
+  {
+    "id": "post_01",
+    "original_text": "Verdant Skin is the absolute best and cures all acne overnight.",
+    "suggested_rewrite": "Verdant Skin offers premium formulations designed to support clear, healthy-looking skin.",
+    "human_label": "changed",
+    "reviewer_note": "Meaning changed because original made an absolute medical claim which had to be removed."
+  },
+  {
+    "id": "post_02",
+    "original_text": "Grab our summer bundle now, 50% off!",
+    "suggested_rewrite": "Explore our summer collection today.",
+    "human_label": "changed",
+    "reviewer_note": "Promotion removed due to expired fact rule."
+  },
+  {
+    "id": "post_03",
+    "original_text": "Make sure to wash your face with our hydrating cleanser every morning.",
+    "suggested_rewrite": "We recommend using our hydrating cleanser each morning to start your routine.",
+    "human_label": "preserved",
+    "reviewer_note": "Core instruction remains identical."
+  }
+]
